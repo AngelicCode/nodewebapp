@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up</title>
+
+    <style>
+      .error-message{
+        color:red;
+        font-size: 0.75rem;
+        display: none;
+      }
+    </style>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for eye icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  </head>
+
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-5xl bg-white shadow-2xl rounded-xl overflow-hidden flex">
+      
+      <!-- Left Side - Sign Up Form -->
+      <div class="w-1/2 p-10">
+        <h2 class="text-3xl font-bold mb-8 text-blue-600">Create Account</h2>
+        <form id="signform" action="/signup" method="POST"      class="space-y-5">
+          
+          <!-- Full Name -->
+          <div>
+            <label for="name" class="block mb-1 font-semibold">Full Name</label>
+            <input type="text" id="name" name="name" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+            <div id="error1" class="error-message"></div>
+
+          </div>
+
+          <!-- Email Address -->
+          <div>
+            <label for="email" class="block mb-1 font-semibold">Email Address</label>
+            <input type="email" id="email" name="email" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+            <div id="error2" class="error-message"></div>
+
+          </div>
+
+          <!-- Phone Number -->
+          <div>
+            <label for="phone" class="block mb-1 font-semibold">Phone Number</label>
+            <input type="tel" id="phone" name="phone" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+            <div id="error3" class="error-message"></div>
+
+          </div>
+
+          <!-- Password -->
+          <div class="relative">
+            <label for="password" class="block mb-1 font-semibold">Password</label>
+            <input type="password" id="password" name="password" required class="w-full border border-gray-300 p-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <!-- Eye icon -->
+            <span class="absolute top-9 right-3 cursor-pointer text-gray-500" onclick="togglePassword('password', this)">
+              <i class="fas fa-eye"></i>
+            </span>
+
+            <div id="error4" class="error-message"></div>
+
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="relative">
+            <label for="confirmPassword" class="block mb-1 font-semibold">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required class="w-full border border-gray-300 p-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <!-- Eye icon -->
+            <span class="absolute top-9 right-3 cursor-pointer text-gray-500" onclick="togglePassword('confirmPassword', this)">
+              <i class="fas fa-eye"></i>
+            </span>
+
+            <div id="error5" class="error-message"></div>
+
+          </div>
+
+          <%if(locals.message && message.length>0){%>
+            <div class="alert alert-danger text-center">
+              <%=message%>
+              </div>
+            <%}%>
+
+          <!-- Buttons -->
+          <div class="flex justify-between items-center mt-6">
+            <!-- Sign Up -->
+            <button type="submit" id="signupBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700">
+              Sign Up
+            </button>
+
+            <!-- Google Sign Up -->
+            <a href="/auth/google" id="googleSignup" class="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100">
+              <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Icon" class="w-5 h-5">
+              Sign up with Google
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Side - Updated Image Path -->
+      <div class="w-1/2 bg-blue-50 flex items-center justify-center">
+        <img src="/img/bottle.jpg" alt="Water Bottle" class="object-cover h-full w-full">
+      </div>
+    </div>
+
+    <!-- Toggle Password Visibility -->
+    <script>
+
+      const nameid = document.getElementById("name");
+      const emailid = document.getElementById("email");
+      const phoneid = document.getElementById("phone");
+      const passid = document.getElementById("password");
+      const cpassid = document.getElementById("confirmPassword");
+
+      const error1 = document.getElementById("error1");
+      const error2 = document.getElementById("error2");
+      const error3 = document.getElementById("error3");
+      const error4 = document.getElementById("error4");
+      const error5 = document.getElementById("error5");
+
+      const signform = document.getElementById("signform");
+
+
+      function nameValidateChecking(e){
+        const nameval = nameid.value;
+        const namepattern = /^[A-Za-z\s]+$/;
+
+        if(nameval.trim() ==="" ){
+          error1.style.display="block";
+          error1.innerHTML="Please enter a valid name"
+
+        }else if(!namepattern.test(nameval)){
+          error1.style.display="block";
+          error1.innerHTML="Name can only contain alphabets and spaces";
+
+        }else{
+          error1.style.display="none";
+          error1.innerHTML="";
+        }
+
+      };
+
+      function emailValidateChecking(e){
+        const emailval = emailid.value;
+        const emailpattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+
+        if(!emailpattern.test(emailval)){
+          error2.style.display="block";
+          error2.innerHTML="Invalid Format"
+        }else{
+          error2.style.display="none";
+          error2.innerHTML="";
+        }
+
+      };
+
+      function phoneValidateChecking(e){
+        const phoneval = phoneid.value;
+
+        if(phoneval.trim()===""){
+          error3.style.display="block";
+          error3.innerHTML="Enter valid phone number"
+        }else if(phoneval.length<10 || phoneval.length>10){
+          error3.style.display="block";
+          error3.innerHTML="Enter 10 didgit";
+        }else{
+          error3.style.display="none";
+          error3.innerHTML="";
+        }
+
+      };
+
+      function passValidateChecking(e){
+        const passval = passid.value;
+        const cpassval = cpassid.value;
+        const alpha = /[a-zA-Z]/;
+        const digit = /\d/;
+
+        if(passval.length<8){
+          error4.style.display="block";
+          error4.innerHTML="Should contain atleast 8 characters";
+        }else if(!alpha.test(passval) || !digit.test(passval)){
+          error4.style.display="block";
+          error4.innerHTML="Should contain numbers and alphabets";
+        }else{
+          error4.style.display="none";
+          error4.innerHTML="";
+        }
+
+        if(passval !== cpassval){
+          error5.style.display="block";
+          error5.innerHTML="Password do not match";
+        }else{
+          error5.style.display="none";
+          error5.innerHTML="";
+        }
+
+      };
+
+
+ 
+      document.addEventListener("DOMContentLoaded",function(){
+        signform.addEventListener("submit",function(e){
+
+          nameValidateChecking();
+          emailValidateChecking();
+          phoneValidateChecking();
+          passValidateChecking();
+
+          if(
+            !nameid ||
+            !emailid ||
+            !phoneid ||
+            !passid ||
+            !error1 ||
+            !error2 ||
+            !error3 ||
+            !error4 ||
+            !error5 ||
+            !signform
+          ){
+            console.error("One or more elements not found");
+          }
+
+          if(
+            error1.innerHTML ||
+            error2.innerHTML ||
+            error3.innerHTML ||
+            error4.innerHTML ||
+            error5.innerHTML 
+          ){
+            e.preventDefault();
+          }
+
+        })
+
+      });
+
+
+
+
+      function togglePassword(fieldId, iconElement) {
+        const field = document.getElementById(fieldId);
+        const icon = iconElement.querySelector('i');
+
+        if (field.type === "password") {
+          field.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          field.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      }
+    </script>
+  </body>
+  </html>
+
+
+  
