@@ -102,9 +102,11 @@
         <div class="container">
           <nav class="navbar navbar-expand-lg navbar-light w-100">
             <!-- Brand and toggle get grouped for better mobile display -->
+             <div class="logo">
             <a class="navbar-brand logo_h" href="index.html">
               <img src="img/logo.png" alt="Logo" style="max-height: 95px" />
             </a>
+          </div>
             <button
               class="navbar-toggler"
               type="button"
@@ -125,7 +127,7 @@
             >
               <div class="row w-100 mr-0">
                 <div class="col-lg-7 pr-0">
-                  <ul class="nav navbar-nav center_nav pull-right">
+                  <ul class="nav navbar-nav center_nav pull-right" style="display: flex;justify-content: end;margin-right: 69px;">
                     <li class="nav-item active">
                       <a class="nav-link" href="/">Home</a>
                     </li>
@@ -190,7 +192,7 @@
 
                 <div class="col-lg-5 pr-0">
                   <ul
-                    class="nav navbar-nav navbar-right right_nav pull-right align-items-center"
+                    class="nav navbar-nav navbar-right right_nav pull-right align-items-center" style="display: flex;justify-content: end;margin-left: 20px;"
                   >
                     <% if (user) { %>
                     <!-- Dropdown for logged-in user -->
@@ -275,7 +277,7 @@
             menu.classList.toggle("show"); // Toggle 'show' class on the dropdown menu
           });
         });
-        
+
     </script>
   </body>
 </html>

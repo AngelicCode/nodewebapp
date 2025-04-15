@@ -6,6 +6,7 @@ const session = require("express-session");
 const passport = require("./config/passport");
 const db = require("./config/db");
 const userRouter = require("./routes/userRouter");
+const adminRouter = require("./routes/adminRouter");
 db();
 
 
@@ -43,7 +44,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/",userRouter);
-
+app.use("/admin",adminRouter);
 
 
 const PORT = process.env.PORT || 3000; 
