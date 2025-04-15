@@ -19,7 +19,7 @@ app.use(session({
   cookie:{
     secure:false,
     httpOnly:true,
-    maxAge:72*60*60*1000
+    maxAge:72*60*60*1000,
 
   }
 
@@ -36,6 +36,11 @@ app.use((req,res,next)=>{
 app.set("view engine","ejs");
 app.set("views",[path.join(__dirname,'views/user'),path.join(__dirname,'views/admin')]);
 app.use(express.static(path.join(__dirname,"public")));
+
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
+});
 
 app.use("/",userRouter);
 

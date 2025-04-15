@@ -18,7 +18,19 @@ const pageNotFound = async (req,res)=>{
 const loadHomepage = async (req,res)=>{
 
   try{
-    return res.render("home");
+    const user = req.session.user;
+
+    if(user){
+
+      res.render("home",{user});
+
+      /*const userData = await User.findOne({_id:user._id});
+      //res.render("home",{user:userData});
+      req.session.user = userData;*/
+
+    }else{
+    return res.render("home",{user:null} );
+  }
 
   }catch(error){
     console.log("Home page not found");
@@ -136,11 +148,12 @@ const signup = async (req,res)=>{
 
 const securePassword = async(password)=>{
   try{
-    const passwordHash = await bcrypt.hash(password,10)
+    const passwordHash = await bcrypt.hash(password,10);
     return passwordHash;
 
   }catch(error){
-
+    console.error("Password hashing error:", error);
+    throw error;
   }
 }
 
@@ -161,21 +174,23 @@ const verifyOtp = async (req,res)=>{
       })
 
       await saveUserData.save();
-      req.session.user = saveUserData._id;
-      res.json({ success:true, redirectUrl:"/login" });
+     // req.session.user = saveUserData._id;
+
+     req.session.userOtp = null;
+     req.session.userData = null;
+     
+     return res.json({ success:true, redirectUrl:"/login" })
 
     }else{
-      res.status(400).json({success:false, message:"Invalid OTP, Please try again"});
+     return res.status(400).json({success:false, message:"Invalid OTP, Please try again"});
     }
 
   }catch(error){
     console.error("Error Verifying OTP",error);
-    res.status(500).json({success:false, message:"An error occured"});
+    return res.status(500).json({success:false, message:"An error occured"});
 
   }
-  
-
-};
+  };
 
 const resendOtp = async (req,res)=>{
   try{
@@ -193,7 +208,7 @@ const resendOtp = async (req,res)=>{
 
     if(emailSent){
       console.log("Resend OTP:",otp);
-      res.status(200).json({success:true,message:"Failed to resend OTP. Please try again"});
+      res.status(200).json({success:true,message:"OTP resend successfully."});
     }
 
   }catch(error){
@@ -235,7 +250,13 @@ const login = async (req,res)=>{
       return res.render("login",{message:"Incorrect Password"});
     }
 
-    req.session.user = findUser._id;
+    req.session.user = {
+      _id: findUser._id,
+      name: findUser.name,
+      email: findUser.email,
+      phone: findUser.phone,
+    };
+
     res.redirect("/");
 
   }catch(error){

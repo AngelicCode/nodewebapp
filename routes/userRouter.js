@@ -13,9 +13,21 @@ router.post("/verify-otp",userController.verifyOtp);
 router.post("/resend-otp",userController.resendOtp);
 
 router.get("/auth/google",passport.authenticate("google",{scope:["profile","email"]}));
-router.get("/auth/google/callback",passport.authenticate("google",{failureRedirect:"/signup"}),(req,res)=>{
-  res.redirect("/");
-});
+
+router.get("/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/signup" }),
+  (req, res) => {
+    // Save to session manually
+    req.session.user = {
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      phone: req.user.phone,
+    };
+    res.redirect("/");
+  }
+);
+
 
 router.get("/login",userController.loadLogin);
 router.post("/login",userController.login);

@@ -130,6 +130,14 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- jQuery (needed for AJAX) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
   <script>
     document.getElementById("otp").focus();
 
@@ -151,23 +159,7 @@
       }, 1000);
     }
 
-    function resendOtp() {
-      clearInterval(interval);
-      timer = 60;
-      document.getElementById("otp").disabled = false;
-      timerElement.classList.remove("expired");
-      timerElement.textContent = timer;
-      startTimer();
-
-      Swal.fire({
-        icon: 'success',
-        title: 'OTP Resent!',
-        text: 'Please check your email for the new code.',
-        confirmButtonColor: '#2563eb'
-      });
-    }
-
-    startTimer();
+   startTimer();
 
     function validateOTPForm(){
       const otpInput = document.getElementById("otp").value;
@@ -243,16 +235,6 @@
       return false;
 
     }
-
-  </script>
-  
-
-  <!-- jQuery (needed for AJAX) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- SweetAlert2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
+</script>
 </body>
 </html>
