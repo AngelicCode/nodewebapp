@@ -84,11 +84,10 @@
         }
       }
 
-        .btn:active {
-          background-color: #000 !important;
-          color: #fff !important;
-        }
-
+      .btn:active {
+        background-color: #000 !important;
+        color: #fff !important;
+      }
     </style>
   </head>
 
@@ -104,9 +103,7 @@
           <div class="input-group input-group-sm border border-1 border-grey rounded-pill mx-auto" style="max-width: 500px; padding-top: 10px; border-width: 0px !important;">
             <input type="text" class="form-control border-0 rounded-pill" placeholder="Search categories" name="search" />
             <div style="margin-top: -5px;">
-              <button class="btn" type="submit" style="border-width: 3px;">
-                Search
-              </button>
+              <button class="btn" type="submit" style="border-width: 3px;">Search</button>
             </div>
           </div>
         </form>
@@ -118,7 +115,6 @@
           <div class="row">
             <!-- Form -->
             <div class="col-md-3">
-
               <form method="post" action="/admin/addCategory" onsubmit="return handleFormSubmit(event)">
                 <div class="mb-3">
                   <label for="name" class="form-label">Name</label>
@@ -156,14 +152,8 @@
                     <% categories.forEach((category, index) => { %>
                       <tr>
                         <td><%= index + 1 %></td>
-                  
-                        <!-- Name -->
                         <td><%= category.name %></td>
-                  
-                        <!-- Description -->
                         <td><%= category.description %></td>
-                  
-                        <!-- Offer Price -->
                         <td>
                           <% if (category.categoryOffer && category.categoryOffer > 0) { %>
                             ₹<%= category.categoryOffer %>
@@ -171,38 +161,29 @@
                             — 
                           <% } %>
                         </td>
-                  
-                        <!-- Offer Actions: Add & Remove -->
                         <td>
                           <a href="/admin/add-offer/<%= category._id %>" class="btn btn-success btn-sm mb-1">Add Offer</a><br>
                           <a href="/admin/remove-offer/<%= category._id %>" class="btn btn-warning btn-sm">Remove Offer</a>
                         </td>
-                  
-                        <!-- Status (Dropdown) -->
                         <td>
-                          <form action="/admin/change-status/<%= category._id %>" method="POST">
-                            <select name="status" onchange="this.form.submit()" class="form-control form-control-sm">
-                              <option value="Listed" <%= category.isListed ? 'selected' : '' %>>Listed</option>
-                              <option value="Unlisted" <%= !category.isListed ? 'selected' : '' %>>Unlisted</option>
-                            </select>
-                          </form>
+                          <select data-id="<%= category._id %>" class="form-control form-control-sm status-dropdown" disabled>
+                            <option value="Listed" <%= category.isListed ? 'selected' : '' %>>Listed</option>
+                            <option value="Unlisted" <%= !category.isListed ? 'selected' : '' %>>Unlisted</option>
+                          </select>
                         </td>
-                  
-                        <!-- List / Unlist Buttons (both shown always) -->
                         <td>
-                          <a href="/admin/list-category/<%= category._id %>" class="btn btn-info btn-sm mb-1">List</a><br>
-                          <a href="/admin/unlist-category/<%= category._id %>" class="btn btn-secondary btn-sm">Unlist</a>
+                          <% if (category.isListed) { %>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleCategoryStatus('<%= category._id %>', false, this)">Unlist</button>
+                          <% } else { %>
+                            <button class="btn btn-info btn-sm mb-1" onclick="toggleCategoryStatus('<%= category._id %>', true, this)">List</button>
+                          <% } %>
                         </td>
-                  
-                        <!-- Edit Button -->
                         <td>
                           <a href="/admin/edit-category/<%= category._id %>" class="btn btn-primary btn-sm">Edit</a>
                         </td>
                       </tr>
                     <% }); %>
                   </tbody>
-                  
-                  
                 </table>
               </div>
             </div>
@@ -225,88 +206,117 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
     <script>
-
       function handleFormSubmit(event){
         event.preventDefault();
-        if(!validateForm()){
-          return 
-        }
+        if(!validateForm()) return;
+
         const name = document.getElementsByName("name")[0].value;
         const description = document.getElementById("description").value;
 
-        fetch("/admin/addCategory",{
-          method:"POST",
-          headers:{
-            "content-type":"application/json"
-          },
-          body:JSON.stringify({name,description})
+        fetch("/admin/addCategory", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name, description })
         })
-        .then(response=>{
-          if(!response.ok){
-            return response.json().then(err =>{
-              throw new Error(err.error);
-            })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.error); });
           }
           return response.json();
         })
-        .then(data=>{
+        .then(data => {
           location.reload();
         })
-        .catch(error=>{
-          if(error.message === "Category already exists"){
-            Swal.fire({
-              icon:"error",
-              title:"Oops",
-              text:"Category already exists"
-
-            })
-          }else{
-            Swal.fire({
-              icon:"error",
-              title:"Oops",
-              text:"An error occured while adding the category",
-            })
-          }
-        })
+        .catch(error => {
+          Swal.fire({
+            icon: "error",
+            title: "Oops",
+            text: error.message === "Category already exists" 
+              ? "Category already exists" 
+              : "An error occurred while adding the category"
+          });
+        });
       }
 
       function validateForm(){
         clearErrorMessages();
         const name = document.getElementsByName("name")[0].value.trim();
         const description = document.getElementById("description").value.trim();
-        isValid = true;
+        let isValid = true;
 
         if(name === ""){
           displayErrorMessage("name-error", "Please enter a name");
           isValid = false;
-        }else if(!/^[a-zA-Z\s]+$/.test(name)){
-          displayErrorMessage(
-            "name-error",
-            "Category name should contain only alphabetic characters"
-          );
+        } else if(!/^[a-zA-Z\s]+$/.test(name)){
+          displayErrorMessage("name-error", "Category name should contain only alphabetic characters");
           isValid = false;
         }
+
         if(description === ""){
           displayErrorMessage("description-error","Please enter a description");
           isValid = false;
         }
+
         return isValid;
       }
 
       function displayErrorMessage(elementId,message){
-        var errorElement = document.getElementById(elementId);
+        const errorElement = document.getElementById(elementId);
         errorElement.innerText = message;
         errorElement.style.display = "block";
       }
 
       function clearErrorMessages(){
         const errorElements = document.getElementsByClassName("error-message");
-        Array.from(errorElements).forEach((element)=>{
-          element.innerText="";
-          element.style.display="none";
+        Array.from(errorElements).forEach(element => {
+          element.innerText = "";
+          element.style.display = "none";
         });
       }
 
+      function toggleCategoryStatus(categoryId, makeListed, button) {
+        const url = makeListed
+          ? `/admin/unlistCategory?id=${categoryId}`
+          : `/admin/listCategory?id=${categoryId}`;
+
+        fetch(url)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Status update failed");
+            }
+
+            const dropdown = document.querySelector(`select[data-id="${categoryId}"]`);
+            if (dropdown) {
+              dropdown.value = makeListed ? "Listed" : "Unlisted";
+            }
+
+            if (makeListed) {
+              button.innerText = "Unlist";
+              button.className = "btn btn-secondary btn-sm";
+              button.setAttribute("onclick", `toggleCategoryStatus('${categoryId}', false, this)`);
+            } else {
+              button.innerText = "List";
+              button.className = "btn btn-info btn-sm mb-1";
+              button.setAttribute("onclick", `toggleCategoryStatus('${categoryId}', true, this)`);
+            }
+
+            Swal.fire({
+              icon: "success",
+              title: "Status Updated",
+              text: `Category is now ${makeListed ? "Listed" : "Unlisted"}`,
+              timer: 1500,
+              showConfirmButton: false
+            });
+          })
+          .catch(err => {
+            console.error("Error:", err);
+            Swal.fire({
+              icon: "error",
+              title: "Oops!",
+              text: "Failed to update category status."
+            });
+          });
+      }
     </script>
 
   <%- include("../../views/partials/admin/footer") %>
