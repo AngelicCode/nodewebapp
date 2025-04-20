@@ -1,0 +1,312 @@
+  <%- include("../../views/partials/admin/header") %>
+
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"/>
+    <style>
+      .form-label {
+        margin-bottom: 8px;
+      }
+
+      .form-control, textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        border-radius: 5px;
+      }
+
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+
+      .table td, .table th {
+        vertical-align: middle;
+      }
+
+      .error-message {
+        color: red;
+        font-size: 0.9rem;
+      }
+
+      .pagination-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .pagination a,
+      .pagination .current-page {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 0 4px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #333;
+      }
+
+      .pagination a:hover {
+        background-color: #f0f0f0;
+      }
+
+      @media (max-width: 768px) {
+        .form-control, textarea {
+          font-size: 14px;
+        }
+
+        .table-responsive {
+          overflow-x: auto;
+        }
+
+        .col-md-3, .col-md-8 {
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 10px !important;
+        }
+
+        .input-group {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .input-group input,
+        .input-group button {
+          width: 100% !important;
+          margin-top: 5px;
+        }
+      }
+
+        .btn:active {
+          background-color: #000 !important;
+          color: #fff !important;
+        }
+
+    </style>
+  </head>
+
+  <body>
+    <section class="content-main">
+      <div class="content-header mb-3">
+        <h2 class="content-title card-title">Category Management</h2>
+      </div>
+
+      <!-- Search Bar -->
+      <header class="card-header text-center mb-4">
+        <form action="/admin/category/" method="get">
+          <div class="input-group input-group-sm border border-1 border-grey rounded-pill mx-auto" style="max-width: 500px; padding-top: 10px; border-width: 0px !important;">
+            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search categories" name="search" />
+            <div style="margin-top: -5px;">
+              <button class="btn" type="submit" style="border-width: 3px;">
+                Search
+              </button>
+            </div>
+          </div>
+        </form>
+      </header>
+
+      <!-- Form + Table -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <!-- Form -->
+            <div class="col-md-3">
+
+              <form method="post" action="/admin/addCategory" onsubmit="return handleFormSubmit(event)">
+                <div class="mb-3">
+                  <label for="name" class="form-label">Name</label>
+                  <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Stainless Bottles" required>
+                  <div id="name-error" class="error-message"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="description" class="form-label">Description</label>
+                  <textarea name="description" id="description" class="form-control" placeholder="Enter a short description" required></textarea>
+                  <div id="description-error" class="error-message"></div>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Create Category</button>
+              </form>
+            </div>
+
+            <!-- Table -->
+            <div class="col-md-8 offset-md-1">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Offer Price</th>
+                      <th>Offer</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                      <th>Edit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% categories.forEach((category, index) => { %>
+                      <tr>
+                        <td><%= index + 1 %></td>
+                  
+                        <!-- Name -->
+                        <td><%= category.name %></td>
+                  
+                        <!-- Description -->
+                        <td><%= category.description %></td>
+                  
+                        <!-- Offer Price -->
+                        <td>
+                          <% if (category.categoryOffer && category.categoryOffer > 0) { %>
+                            ₹<%= category.categoryOffer %>
+                          <% } else { %>
+                            — 
+                          <% } %>
+                        </td>
+                  
+                        <!-- Offer Actions: Add & Remove -->
+                        <td>
+                          <a href="/admin/add-offer/<%= category._id %>" class="btn btn-success btn-sm mb-1">Add Offer</a><br>
+                          <a href="/admin/remove-offer/<%= category._id %>" class="btn btn-warning btn-sm">Remove Offer</a>
+                        </td>
+                  
+                        <!-- Status (Dropdown) -->
+                        <td>
+                          <form action="/admin/change-status/<%= category._id %>" method="POST">
+                            <select name="status" onchange="this.form.submit()" class="form-control form-control-sm">
+                              <option value="Listed" <%= category.isListed ? 'selected' : '' %>>Listed</option>
+                              <option value="Unlisted" <%= !category.isListed ? 'selected' : '' %>>Unlisted</option>
+                            </select>
+                          </form>
+                        </td>
+                  
+                        <!-- List / Unlist Buttons (both shown always) -->
+                        <td>
+                          <a href="/admin/list-category/<%= category._id %>" class="btn btn-info btn-sm mb-1">List</a><br>
+                          <a href="/admin/unlist-category/<%= category._id %>" class="btn btn-secondary btn-sm">Unlist</a>
+                        </td>
+                  
+                        <!-- Edit Button -->
+                        <td>
+                          <a href="/admin/edit-category/<%= category._id %>" class="btn btn-primary btn-sm">Edit</a>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                  
+                  
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container">
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <a href="?page=<%= i %><%= search ? `&search=${search}` : '' %>" class="<%= currentPage === i ? 'current-page' : '' %>">
+            <%= i %>
+          </a>
+        <% } %>
+      </div>
+
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script>
+
+      function handleFormSubmit(event){
+        event.preventDefault();
+        if(!validateForm()){
+          return 
+        }
+        const name = document.getElementsByName("name")[0].value;
+        const description = document.getElementById("description").value;
+
+        fetch("/admin/addCategory",{
+          method:"POST",
+          headers:{
+            "content-type":"application/json"
+          },
+          body:JSON.stringify({name,description})
+        })
+        .then(response=>{
+          if(!response.ok){
+            return response.json().then(err =>{
+              throw new Error(err.error);
+            })
+          }
+          return response.json();
+        })
+        .then(data=>{
+          location.reload();
+        })
+        .catch(error=>{
+          if(error.message === "Category already exists"){
+            Swal.fire({
+              icon:"error",
+              title:"Oops",
+              text:"Category already exists"
+
+            })
+          }else{
+            Swal.fire({
+              icon:"error",
+              title:"Oops",
+              text:"An error occured while adding the category",
+            })
+          }
+        })
+      }
+
+      function validateForm(){
+        clearErrorMessages();
+        const name = document.getElementsByName("name")[0].value.trim();
+        const description = document.getElementById("description").value.trim();
+        isValid = true;
+
+        if(name === ""){
+          displayErrorMessage("name-error", "Please enter a name");
+          isValid = false;
+        }else if(!/^[a-zA-Z\s]+$/.test(name)){
+          displayErrorMessage(
+            "name-error",
+            "Category name should contain only alphabetic characters"
+          );
+          isValid = false;
+        }
+        if(description === ""){
+          displayErrorMessage("description-error","Please enter a description");
+          isValid = false;
+        }
+        return isValid;
+      }
+
+      function displayErrorMessage(elementId,message){
+        var errorElement = document.getElementById(elementId);
+        errorElement.innerText = message;
+        errorElement.style.display = "block";
+      }
+
+      function clearErrorMessages(){
+        const errorElements = document.getElementsByClassName("error-message");
+        Array.from(errorElements).forEach((element)=>{
+          element.innerText="";
+          element.style.display="none";
+        });
+      }
+
+    </script>
+
+  <%- include("../../views/partials/admin/footer") %>

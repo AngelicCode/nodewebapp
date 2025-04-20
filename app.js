@@ -7,6 +7,8 @@ const passport = require("./config/passport");
 const db = require("./config/db");
 const userRouter = require("./routes/userRouter");
 const adminRouter = require("./routes/adminRouter");
+const { pageerror } = require("./controllers/admin/adminController");
+
 db();
 
 
@@ -45,7 +47,7 @@ app.use((req, res, next) => {
 
 app.use("/",userRouter);
 app.use("/admin",adminRouter);
-
+app.get("/pageerror",pageerror);
 
 const PORT = process.env.PORT || 3000; 
 app.listen(PORT,()=>{

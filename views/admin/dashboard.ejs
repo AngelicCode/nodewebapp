@@ -1,0 +1,83 @@
+  <%- include("../../views/partials/admin/header") %>
+
+  <style>
+    .content-main {
+      min-height: calc(100vh - 130px);
+    }
+
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 25px;
+    }
+
+    .dashboard-card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .dashboard-icon {
+      font-size: 32px;
+      color: #3399ff;
+      margin-bottom: 10px;
+    }
+
+    .dashboard-title {
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .dashboard-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #000;
+    }
+  </style>
+
+  <section class="content-main">
+    <div class="content-header mb-4">
+      <div>
+        <h2 class="content-title card-title">Dashboard</h2>
+        <p>Welcome back, Admin! Here’s a quick overview of your water bottle store.</p>
+      </div>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="dashboard-title">Total Orders</div>
+        <div class="dashboard-value">120</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-users"></i></div>
+        <div class="dashboard-title">Customers</div>
+        <div class="dashboard-value">75</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-bottle-water"></i></div>
+        <div class="dashboard-title">Products</div>
+        <div class="dashboard-value">45</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-rupee-sign"></i></div>
+        <div class="dashboard-title">Revenue</div>
+        <div class="dashboard-value">₹18,500</div>
+      </div>
+    </div>
+  </section>
+
+  <%- include("../../views/partials/admin/footer") %>

@@ -1,0 +1,184 @@
+    <!DOCTYPE HTML>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <title>QuickSip Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/img/logo-icon.png" type="image/x-icon">
+
+    <!-- CSS -->
+    <link href="/admin-assets/css/main.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.6/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <!-- JS -->
+    <script src="https://kit.fontawesome.com/16d4885483.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <style>
+
+        .main-header {
+        padding: 10px 20px;
+        height: 60px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .main-header h4 {
+        font-size: 18px;
+        margin-bottom: 0;
+        }
+
+        .main-header img.img-xs {
+        width: 32px;
+        height: 32px;
+        }
+
+
+        html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        background-color: #f9fafa;
+        }
+
+        .navbar {
+        background-color: #4db8ff;
+        }
+
+        .navbar-aside {
+        background-color: #cceeff;
+        width: 250px;
+        min-height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        overflow-y: auto;
+        }
+
+        .main-wrap {
+        margin-left: 250px;
+        padding: 20px;
+        min-height: 100vh;
+        background-color: #f9fafa;
+        display: flex;
+        flex-direction: column;
+        }
+
+        .menu-aside {
+        padding-left: 0;
+        margin-top: 20px;
+        }
+
+        .menu-item {
+        list-style: none;
+        width: 100%;
+        }
+
+        .menu-item a.menu-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: #00334d;
+        text-decoration: none;
+        font-weight: 500;
+        }
+
+        .menu-item a.menu-link i {
+        width: 20px;
+        min-width: 20px;
+        text-align: center;
+        margin-right: 10px;
+        }
+
+        .menu-item a.menu-link:hover,
+        .menu-item a.menu-link.active {
+        background-color: #3399ff;
+        color: #ffffff;
+        border-radius: 0 20px 20px 0;
+        }
+
+        .dropdown-menu {
+        background-color: #e0f7ff;
+        }
+
+        .dropdown-item:hover {
+        background-color: #3399ff;
+        color: #ffffff;
+        }
+
+        .brand-wrap img.logo {
+        display: block;
+        margin: 0 auto;
+        }
+    </style>
+    </head>
+    <body>
+    <div class="screen-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="navbar-aside" id="offcanvas_aside">
+        <div class="aside-top d-flex justify-content-between align-items-center p-3">
+        <a href="/admin" class="brand-wrap">
+            <img src="/img/logo.png" class="logo" alt="QuickSip Admin Logo" style="height: 77px;">
+        </a>
+        <button class="btn btn-icon btn-aside-minimize">
+            <i class="text-muted material-icons md-menu_open"></i>
+        </button>
+        </div>
+
+        <nav>
+        <ul class="menu-aside list-unstyled">
+            <li class="menu-item"><a class="menu-link" href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/users"><i class="fas fa-users"></i> Customers</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/category"><i class="fas fa-tags"></i> Category</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/brands"><i class="fas fa-star"></i> Brands</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/addProducts"><i class="fas fa-plus-circle"></i> Add Product</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/products"><i class="fas fa-bottle-water"></i> Products</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/coupon"><i class="fas fa-ticket-alt"></i> Coupons</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/banner"><i class="fas fa-image"></i> Banners</a></li>
+            <li class="menu-item"><a class="menu-link" href="/admin/orderList"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+        </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <main class="main-wrap">
+        <header class="main-header navbar d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-icon btn-mobile me-3" data-trigger="#offcanvas_aside">
+            <i class="fas fa-bars"></i>
+            </button>
+            <h4 class="mb-0">QuickSip Admin</h4>
+        </div>
+        <div>
+            <ul class="nav">
+
+                <li class="nav-item dropdown">
+                    <a class="dropdown-toggle nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <img class="img-xs rounded-circle" src="/admin-assets/imgs/avatar2.png" alt="Admin">
+                    </a>
+
+            <!---<li class="nav-item dropdown">
+                <a class="dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                <img class="img-xs rounded-circle" src="/admin-assets/imgs/avatar2.png" alt="Admin">
+                </a>--->
+                
+                <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item text-danger" href="/admin/logout">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </a>
+                </div>
+            </li>
+            </ul>
+        </div>
+        </header>
+
+        <!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    </body>
+    </html>
