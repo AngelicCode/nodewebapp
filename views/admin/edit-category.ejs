@@ -1,45 +1,122 @@
-  <%- include("../../views/partials/admin/header") %>
+    <%- include("../../views/partials/admin/header") %>
 
-  <div class="container py-5">
-      <div class="row justify-content-center">
-          <div class="col-md-8 col-lg-6">
-              <h3 class="mb-4 text-center font-weight-bold text-primary">Edit Category</h3>
-              
-              <form method="POST" action="/admin/editCategory/<%= category._id %>">
-                  <!-- Name -->
-                  <div class="form-group mb-4">
-                      <label for="categoryName" class="font-weight-bold">Category Name</label>
-                      <input
-                          type="text"
-                          id="categoryName"
-                          name="categoryName"
-                          class="form-control border rounded"
-                          value="<%= category.name %>"
-                          required
-                      />
-                  </div>
+    <div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+        <h3 class="mb-4 text-center font-weight-bold text-primary">Edit Category</h3>
 
-                  <!-- Description -->
-                  <div class="form-group mb-4">
-                      <label for="description" class="font-weight-bold">Description</label>
-                      <textarea
-                          id="description"
-                          name="description"
-                          class="form-control border rounded"
-                          rows="4"
-                          required
-                      ><%= category.description %></textarea>
-                  </div>
+        <form id="editCategoryForm" data-id="<%= category._id %>" data-original-name="<%= category.name %>" data-original-description="<%= category.description %>">
+            <!-- Category Name -->
+            <div class="form-group mb-4">
+            <label for="categoryName" class="font-weight-bold">Category Name</label>
+            <input
+                type="text"
+                id="categoryName"
+                name="categoryName"
+                class="form-control border rounded"
+                value="<%= category.name %>"
+                required
+            />
+            </div>
 
-                  <!-- Submit -->
-                  <div class="d-flex justify-content-end">
-                      <button type="submit" class="btn btn-primary px-4">
-                          Update Category
-                      </button>
-                  </div>
-              </form>
-          </div>
-      </div>
-  </div>
+            <!-- Description -->
+            <div class="form-group mb-4">
+            <label for="description" class="font-weight-bold">Description</label>
+            <textarea
+                id="description"
+                name="description"
+                class="form-control border rounded"
+                rows="4"
+                required
+            ><%= category.description %></textarea>
+            </div>
 
-  <%- include("../../views/partials/admin/footer") %>
+            <!-- Submit -->
+            <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary px-4">Update Category</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+    document.getElementById("editCategoryForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const categoryId = this.dataset.id;
+        const categoryName = document.getElementById("categoryName").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const originalName = this.dataset.originalName.trim();
+        const originalDescription = this.dataset.originalDescription.trim();
+
+        // If no changes, skip confirm prompt
+        const isChanged = categoryName !== originalName || description !== originalDescription;
+
+        const proceedUpdate = async () => {
+        try {
+            const res = await fetch(`/admin/editCategory/${categoryId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ categoryName, description }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status === "updated") {
+            Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: "Category updated successfully",
+            }).then(() => {
+                window.location.href = "/admin/category";
+            });
+            } else if (res.ok && data.status === "no_change") {
+            Swal.fire({
+                icon: "info",
+                title: "No Changes",
+                text: "No changes were made to the category.",
+            });
+            } else if (data.error) {
+            Swal.fire({
+                icon: "error",
+                title: "Update Failed",
+                text: data.error,
+            });
+            } else {
+            throw new Error("Unknown error occurred");
+            }
+        } catch (error) {
+            console.error("AJAX error:", error);
+            Swal.fire({
+            icon: "error",
+            title: "Server Error",
+            text: "Something went wrong. Please try again later.",
+            });
+        }
+        };
+
+        if (isChanged) {
+        const confirmResult = await Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to update this category?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#aaa",
+            confirmButtonText: "Yes, update it!",
+        });
+
+        if (confirmResult.isConfirmed) {
+            proceedUpdate();
+        }
+        } else {
+        proceedUpdate(); // skip confirmation if no changes
+        }
+    });
+    </script>
+
+    <%- include("../../views/partials/admin/footer") %>

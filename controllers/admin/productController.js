@@ -10,7 +10,7 @@ const getProductAddPage = async (req, res) => {
     const categories = await Category.find({ isListed: true }); // Fetch listed categories
     res.render("product-add", {
       categories, 
-      
+
     });
   } catch (error) {
     console.error(error);
