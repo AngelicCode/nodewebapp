@@ -1,9 +1,182 @@
-  <footer class="admin-footer text-center py-3 mt-4 border-top">
-    <div class="container">
-      <p class="mb-0 text-muted">© <%= new Date().getFullYear() %> QuickSip | All rights reserved.</p>
-     <!-- <small class="text-secondary">Designed for internal dashboard management</small>--->
-    </div>
-  </footer>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickSip - Premium Water Bottles</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #1a73e8;
+      --secondary-color: #f2f9ff;
+      --accent-color: #0d6efd;
+      --text-color: #333;
+      --light-text: #6c757d;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    
+    main {
+      flex: 1;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0d47a1;
+      border-color: #0d47a1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+      background-color: var(--primary-color);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card {
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .admin-footer {
+      background: linear-gradient(to right, #f8f9fa, #e9f7fe);
+      padding: 2rem 0;
+      border-top: 1px solid #e9ecef;
+      margin-top: auto;
+    }
+    
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .footer-logo img {
+      height: 70px;
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+    
+    .footer-links a {
+      color: var(--text-color);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .footer-links a:hover {
+      color: var(--primary-color);
+    }
+    
+    .social-links {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .social-links a {
+      color: var(--light-text);
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
+    }
+    
+    .social-links a:hover {
+      color: var(--primary-color);
+      transform: translateY(-3px);
+    }
+    
+    .copyright {
+      width: 100%;
+      text-align: center;
+      margin-top: -0.5rem;
+      color: var(--light-text);
+      font-size: 14px;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+      
+      .footer-links, .social-links {
+        justify-content: center;
+        margin: 1rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <!-- Main content would go here -->
+    
+    <!-- Modern Footer -->
+    <footer class="admin-footer">
+      <div class="container"style="padding:-60px">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <img src="/img/logo.png" alt="QuickSip Logo">
+          </div>
+          
+        </div>
+        
+        <!---<div class="btn-group mt-4">
+          <button class="btn btn-primary">Shop Now</button>
+          <button class="btn btn-outline-primary">Learn More</button>
+        </div>--->
+        
+        <div class="copyright">
+          <p class="mb-0">© <%= new Date().getFullYear() %> QuickSip | All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  </main>
 
   <!-- JS Libraries -->
   <script src="/admin-assets/js/vendors/jquery-3.6.0.min.js"></script>
@@ -15,14 +188,5 @@
   <script src="/admin-assets/js/main.js"></script>
   <script src="/admin-assets/js/custom-chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    .admin-footer {
-      background-color: #f2f9ff;
-      font-size: 14px;
-      margin-top: auto;
-    }
-  </style>
-  </main>
-  </body>
-  </html>
+</body>
+</html>

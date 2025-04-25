@@ -4,7 +4,8 @@ const bcrypt = require("bcrypt");
 
 
 const pageerror = async (req,res)=>{
-  res.render("admin/admin-error");
+  
+  res.render("admin-error");
 }
 
 const loadLogin = (req,res)=>{
@@ -69,6 +70,8 @@ const logout = async (req,res)=>{
 
   }
 }
+
+
 
 module.exports = {
   loadLogin,login,loadDashboard,pageerror,logout

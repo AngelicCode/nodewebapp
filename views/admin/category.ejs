@@ -207,7 +207,7 @@
     .error-message {
       color: #e53e3e;
       font-size: 0.8rem;
-      margin-top: -10px;
+      margin-top: 10px;
       margin-bottom: 10px;
     }
 
@@ -402,13 +402,13 @@
               <form method="post" action="/admin/addCategory" onsubmit="return handleFormSubmit(event)">
                 <div class="mb-3">
                   <label for="name" class="form-label">Category Name</label>
-                  <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Stainless Bottles" required>
+                  <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Stainless Bottles" >
                   <div id="name-error" class="error-message"></div>
                 </div>
 
                 <div class="mb-3">
                   <label for="description" class="form-label">Description</label>
-                  <textarea name="description" id="description" class="form-control" placeholder="Enter a short description" rows="4" required></textarea>
+                  <textarea name="description" id="description" class="form-control" placeholder="Enter a short description" rows="4" ></textarea>
                   <div id="description-error" class="error-message"></div>
                 </div>
 

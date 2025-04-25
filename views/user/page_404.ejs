@@ -10,11 +10,11 @@
       margin: 0;
       padding: 0;
     }
-
+    
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+      color: #2c3e50;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,48 +22,88 @@
       height: 100vh;
       text-align: center;
     }
-
+    
     .container {
-      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 90%;
+      position: relative;
     }
-
+    
+    .water-drop {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 60px;
+      color: #2196f3;
+    }
+    
     h1 {
       font-size: 6rem;
-      color: #ff6b6b;
+      color: #2196f3;
+      font-weight: 700;
+      letter-spacing: -2px;
+      margin-bottom: 10px;
     }
-
+    
     h2 {
       font-size: 2rem;
       margin: 10px 0;
+      color: #3498db;
+      font-weight: 600;
     }
-
+    
     p {
-      margin-top: 10px;
-      font-size: 1rem;
+      margin: 20px 0 30px;
+      font-size: 1.1rem;
+      color: #7f8c8d;
+      line-height: 1.6;
     }
-
-    a {
-      margin-top: 20px;
+    
+    .btn {
       display: inline-block;
       text-decoration: none;
       color: #fff;
-      background-color: #007bff;
-      padding: 10px 20px;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
+      background-color: #2196f3;
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+      text-transform: uppercase;
+      font-size: 0.9rem;
     }
-
-    a:hover {
-      background-color: #0056b3;
+    
+    .btn:hover {
+      background-color: #1976d2;
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(33, 150, 243, 0.4);
+    }
+    
+    .bottle-icon {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      fill: #2196f3;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <svg class="bottle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M15,19L15,4L10,4L10,19L15,19M16,2L16,1L9,1L9,2L16,2M10,22L15,22C16.1046,22 17,21.1046 17,20L17,16L8,16L8,20C8,21.1046 8.8954,22 10,22ZM12,5C13.6569,5 15,6.3431 15,8L15,14C15,15.6569 13.6569,17 12,17C10.3431,17 9,15.6569 9,14L9,8C9,6.3431 10.3431,5 12,5Z" />
+    </svg>
     <h1>404</h1>
     <h2>Page Not Found</h2>
-    <p>The page you’re looking for doesn’t exist or has been moved.</p>
-    <a href="/">Go Back Home</a>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <a href="/" class="btn">Go Back Home</a>
   </div>
 </body>
 </html>

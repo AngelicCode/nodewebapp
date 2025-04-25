@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
+
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customerController");
 const categoryController = require("../controllers/admin/categoryController");
 const productController = require("../controllers/admin/productController");
+const brandController = require("../controllers/admin/brandController");
+
 const {userAuth,adminAuth} = require("../middlewares/auth");
 const multer = require("multer");
 const storage = require("../helpers/multer");
@@ -32,8 +35,13 @@ router.get("/unlistCategory",adminAuth,categoryController.getUnlistCategory);
 router.get("/editCategory",adminAuth,categoryController.getEditCategory);
 router.post("/editCategory/:id",adminAuth,categoryController.editCategory);
 
+
 //Product management
 router.get("/addProducts",adminAuth,productController.getProductAddPage);
 /*router.post("/addProducts",adminAuth,uploads.array("images",4),productController.addProducts);*/
+
+//Brand Management
+router.get("/brands",adminAuth,brandController.getBrandPage);
+router.post("/addBrand",adminAuth,uploads.single("image"),brandController.addBrand);
 
 module.exports = router;
