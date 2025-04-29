@@ -22,66 +22,66 @@ const getBrandPage = async (req,res)=>{
   }
 }
 
-const addBrand = async(req,res)=>{
-  try{
-    const brand = req.body.name;
-    const findBrand = await Brand.findOne({brand});
-    if(!findBrand){
-      const image = req.file.filename;
-      const newBrand = new Brand({
-        brandName : brand,
-        brandImage : image,
-      })
-      await newBrand.save();
-      res.redirect("/admin/brands");
-    }
-
-  } catch(error){
-    res.redirect("/pageerror");
-
-  }
-
-}
-
-const blockBrand = async(req,res)=>{
-  try {
-    const id = req.query.id;
-    await Brand.updateOne({_id:id},{$set:{isBlocked:true}});
-    res.redirect("/admin/brands");
-
-  } catch (error) {
-    res.redirect("/pageerror");
-  }
-
-};
-
-  const unBlockBrand = async (req,res)=>{
-    try{
-      const id = req.query.id;
-      await Brand.updateOne({_id:id},{$set:{isBlocked:false}});
-      res.redirect("/admin/brands");
-
-    }catch(error){
-      res.redirect("/pageerror");
-    }
-
-  };
-
-  const deleteBrand = async(req,res)=>{
+  const addBrand = async (req, res) => {
     try {
-      const {id} = req.query;
-      if(!id){
-        return res.status(400).redirect("/pageerror");
+      const brand = req.body.name.trim();
+
+      const findBrand = await Brand.findOne({
+        brandName: { $regex: new RegExp("^" + brand + "$", "i") }
+      });
+
+      if (findBrand) {
+        return res.status(409).json({ success: false, message: "Brand already exists" });
+  
       }
-      await Brand.deleteOne({_id:id});
-      res.redirect("/admin/brands");
 
+      const image = req.file.filename;
+
+      const newBrand = new Brand({
+        brandName: brand,
+        brandImage: image,
+      });
+
+      await newBrand.save();
+      res.status(201).json({ success: true, message: "Brand added successfully", brand: newBrand });
     } catch (error) {
-      console.error("Error deleting brand:",error);
-      res.status(500).redirect("/pageerror");
+      console.error("Error adding brand:", error);
+      res.status(500).json({ success: false, message: "Server Error" });
     }
-
   };
+
+    const blockBrand = async (req, res) => {
+      try {
+        const id = req.body.id;
+        await Brand.updateOne({ _id: id }, { $set: { isBlocked: true } });
+        res.json({ success: true, message: "Brand blocked successfully" });
+      } catch (error) {
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
+
+
+    const unBlockBrand = async (req, res) => {
+      try {
+        const id = req.body.id;
+        await Brand.updateOne({ _id: id }, { $set: { isBlocked: false } });
+        res.json({ success: true, message: "Brand unblocked successfully" });
+      } catch (error) {
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
+    
+
+    const deleteBrand = async (req, res) => {
+      try {
+        const id = req.body.id;
+        await Brand.deleteOne({ _id: id });
+        res.json({ success: true, message: "Brand deleted successfully" });
+      } catch (error) {
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
+  
 
 
 

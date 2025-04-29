@@ -357,6 +357,14 @@
            <div class="col-md-4">
              <div class="brand-form-container">
                <h4 class="brand-form-title">Add New Brand</h4>
+
+               <% if (typeof errorMessage !== 'undefined') { %>
+                <div class="alert alert-danger" role="alert">
+                  <%= errorMessage %>
+                </div>
+              <% } %>
+              
+
                <form method="post" action="/admin/addBrand" enctype="multipart/form-data">
                  <div class="mb-4">
                    <label for="brand_name" class="form-label">Brand Name</label>
@@ -404,58 +412,36 @@
  
                    <%data.reverse().forEach((brand,index)=>{%>
  
-                   <tr>
-                     <td><strong><%=brand.brandName%></strong></td>
-                     <td>
-                       <div class="brand-logo-container">
-                         <img
-                           src="/uploads/re-image/<%=brand.brandImage[0]%>"
-                           alt="<%=brand.brandName%>"
-                           class="brand-logo"
-                         />
-                       </div>
-                     </td>
-                     <td>
-                       <%if(brand.isBlocked === true){%>
-
-                         <span class="badge alert-danger">Blocked</span>
-                         
-                         <%}else{%>
- 
-                       <span class="badge alert-success">Active</span>
-                           <%}%>
- 
-                     </td>
-                     <td>
-                       <div class="action-buttons">
-                         
-                         <%if(brand.isBlocked === false){%>
- 
-                          <button class="btn action-button block-btn" style="background-color: #c79b00; color: white;" data-href="/admin/blockBrand?id=<%=brand._id%>">
-                            Block
-                          </button>
-                          
-                           
-                         <%}else{%>
- 
-                           <button class="btn btn-success action-button unblock-btn" data-href="/admin/unBlockBrand?id=<%=brand._id%>">
-                             Unblock
-                           </button>
-                         
-                           <%}%>
- 
-                           <button class="btn btn-danger action-button delete-btn" data-href="/admin/deleteBrand?id=<%=brand._id%>">
-                             Delete
-                           </button>
- 
-                       </div>
-                     </td>
-                   </tr>
-                   <tr>
+                    <tr id="brand-row-<%= brand._id %>">
+                      <td><strong><%= brand.brandName %></strong></td>
+                      <td>
+                        <div class="brand-logo-container">
+                          <img src="/uploads/re-image/<%= brand.brandImage[0] %>" alt="<%= brand.brandName %>" class="brand-logo" />
+                        </div>
+                      </td>
+                      <td class="brand-status">
+                        <% if (brand.isBlocked) { %>
+                          <span class="badge alert-danger">Blocked</span>
+                        <% } else { %>
+                          <span class="badge alert-success">Active</span>
+                        <% } %>
+                      </td>
+                      <td class="brand-actions">
+                        <div class="action-buttons">
+                          <% if (!brand.isBlocked) { %>
+                            <button class="btn btn-warning" onclick="confirmBlockBrand('<%= brand._id %>', '<%= brand.brandName %>')">Block</button>
+                          <% } else { %>
+                            <button class="btn btn-success" onclick="confirmUnblockBrand('<%= brand._id %>', '<%= brand.brandName %>')">Unblock</button>
+                          <% } %>
+                          <button class="btn btn-danger" onclick="confirmDeleteBrand('<%= brand._id %>', '<%= brand.brandName %>')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    
+                    <tr>
                    
- 
- 
-                   <%})%>
+                    <%})%>
                  </tbody>
                </table>
              </div>
@@ -464,7 +450,7 @@
        </div>
      </div>
  
-     <div class="pagination-container">
+     <!--<div class="pagination-container">
        <div class="pagination">
          <a href="#">&laquo;</a>
          <a href="#">1</a>
@@ -472,42 +458,199 @@
          <a href="#">3</a>
          <a href="#">&raquo;</a>
        </div>
-     </div>
+     </div>--->
    </section>
  
    
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
    <script>
-     // Generic confirmation handler
-     function handleAction(selector, title, text, icon, confirmButtonText) {
-       document.querySelectorAll(selector).forEach(button => {
-         button.addEventListener('click', function () {
-           const url = this.getAttribute('data-href');
-   
-           Swal.fire({
-             title: title,
-             text: text,
-             icon: icon,
-             showCancelButton: true,
-             confirmButtonColor: '#3085d6',
-             cancelButtonColor: '#d33',
-             confirmButtonText: confirmButtonText
-           }).then((result) => {
-             if (result.isConfirmed) {
-               window.location.href = url;
+
+    const addBrandForm = document.querySelector('form[action="/admin/addBrand"]');
+
+    addBrandForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(addBrandForm);
+
+      try {
+        const response = await fetch('/admin/addBrand', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Show SweetAlert success message
+          Swal.fire({
+            icon: 'success',
+            title: 'Brand Added',
+            text: result.message,
+            timer: 1500,
+            showConfirmButton: false
+          });
+
+          const tableBody = document.querySelector("table tbody");
+          const brand = result.brand;
+
+          const newRow = document.createElement("tr");
+          newRow.id = `brand-row-${brand._id}`;
+          newRow.dataset.name = brand.brandName;
+
+          newRow.innerHTML = `
+            <td><strong>${brand.brandName}</strong></td>
+            <td>
+              <div class="brand-logo-container">
+                <img src="/uploads/re-image/${brand.brandImage[0]}" alt="${brand.brandName}" class="brand-logo" />
+              </div>
+            </td>
+            <td>
+              <span class="badge alert-success">Active</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-warning" onclick="confirmBlockBrand('${brand._id}', '${brand.brandName}')">Block</button>
+                <button class="btn btn-danger" onclick="confirmDeleteBrand('${brand._id}', '${brand.brandName}')">Delete</button>
+              </div>
+            </td>
+          `;
+
+          tableBody.prepend(newRow);
+          addBrandForm.reset();
+        } else {
+          // Show SweetAlert error message
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: result.message
+          });
+        }
+      } catch (error) {
+        console.error("Error adding brand:", error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Something went wrong',
+          text: 'Please try again later'
+        });
+      }
+    });
+
+     function confirmBlockBrand(id, name) {
+       Swal.fire({
+         title: `Block "${name}"?`,
+         text: "This will block the brand from being shown to users.",
+         icon: "warning",
+         showCancelButton: true,
+         confirmButtonColor: "#d33",
+         confirmButtonText: "Yes, block it!"
+       }).then((result) => {
+         if (result.isConfirmed) {
+           fetch('/admin/blockBrand', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ id })
+
+           }).then(res => res.json()).then(data => {
+             if (data.success) {
+               Swal.fire("Blocked!", data.message, "success").then(() => {
+                 updateBrandRow(id, true);
+               });
+             } else {
+               Swal.fire("Error!", data.message, "error");
              }
            });
-         });
+         }
        });
      }
    
-     // Initialize for different actions
-     handleAction('.block-btn', 'Are you sure?', 'You are about to block this brand.', 'warning', 'Yes, Block it!');
-     handleAction('.unblock-btn', 'Are you sure?', 'You are about to unblock this brand.', 'question', 'Yes, Unblock it!');
-     handleAction('.delete-btn', 'Are you sure?', 'This action will permanently delete the brand.', 'error', 'Yes, Delete it!');
-   </script>
+     function confirmUnblockBrand(id, name) {
+       Swal.fire({
+         title: `Unblock "${name}"?`,
+         text: "This will make the brand visible again.",
+         icon: "info",
+         showCancelButton: true,
+         confirmButtonColor: "#28a745",
+         confirmButtonText: "Yes, unblock it!"
+
+       }).then((result) => {
+         if (result.isConfirmed) {
+           fetch('/admin/unBlockBrand', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ id })
+
+           }).then(res => res.json()).then(data => {
+             if (data.success) {
+               Swal.fire("Unblocked!", data.message, "success").then(() => {
+                 updateBrandRow(id, false);
+               });
+             } else {
+               Swal.fire("Error!", data.message, "error");
+             }
+           });
+         }
+       });
+     }
    
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
- 
+     function confirmDeleteBrand(id, name) {
+       Swal.fire({
+         title: `Delete "${name}"?`,
+         text: "This cannot be undone.",
+         icon: "error",
+         showCancelButton: true,
+         confirmButtonColor: "#d33",
+         confirmButtonText: "Yes, delete it!"
+       }).then((result) => {
+         if (result.isConfirmed) {
+           fetch('/admin/deleteBrand', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ id })
+
+           }).then(res => res.json()).then(data => {
+             if (data.success) {
+               Swal.fire("Deleted!", data.message, "success").then(() => {
+                 document.getElementById(`brand-row-${id}`).remove();
+               });
+             } else {
+               Swal.fire("Error!", data.message, "error");
+             }
+           });
+         }
+       });
+     }
+   
+     // Dynamically update the block/unblock buttons
+     function updateBrandRow(brandId, isBlocked) {
+  const row = document.getElementById(`brand-row-${brandId}`);
+  if (!row) return;
+
+  
+  const statusCell = row.querySelector('.brand-status');
+  if (statusCell) {
+    statusCell.innerHTML = isBlocked
+      ? `<span class="badge alert-danger">Blocked</span>`
+      : `<span class="badge alert-success">Active</span>`;
+  }
+
+  
+  const actionsCell = row.querySelector('.brand-actions .action-buttons');
+  if (actionsCell) {
+    actionsCell.innerHTML = isBlocked
+      ? `
+        <button class="btn btn-success" onclick="confirmUnblockBrand('${brandId}', 'Brand')">Unblock</button>
+        <button class="btn btn-danger" onclick="confirmDeleteBrand('${brandId}', 'Brand')">Delete</button>
+      `
+      : `
+        <button class="btn btn-warning" onclick="confirmBlockBrand('${brandId}', 'Brand')">Block</button>
+        <button class="btn btn-danger" onclick="confirmDeleteBrand('${brandId}', 'Brand')">Delete</button>
+      `;
+  }
+}
+
+   </script>
+
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
  
    <%- include("../../views/partials/admin/footer") %>
