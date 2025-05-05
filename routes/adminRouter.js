@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customerController");
 const categoryController = require("../controllers/admin/categoryController");
@@ -36,7 +37,8 @@ router.post("/editCategory/:id",adminAuth,categoryController.editCategory);
 
 //Product management
 router.get("/addProducts",adminAuth,productController.getProductAddPage);
-/*router.post("/addProducts",adminAuth,uploads.array("images",4),productController.addProducts);*/
+router.post("/addProducts",adminAuth,uploads.array("images",4),productController.addProducts);
+router.get("/products",adminAuth,productController.getAllProducts);
 
 //Brand Management
  router.get("/brands",adminAuth,brandController.getBrandPage);

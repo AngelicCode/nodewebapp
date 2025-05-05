@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
 
 <!-- JS -->
-<script src="https://kit.fontawesome.com/16d4885483.js" crossorigin="anonymous"></script>
+<!---<script src="https://kit.fontawesome.com/16d4885483.js" crossorigin="anonymous"></script>--->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
 <style>
@@ -144,13 +144,13 @@
     }
 
     /* Main Content Wrapper */
+    @media (max-width: 992px) {
     .main-wrap {
-        margin-left: var(--sidebar-width);
-        padding: 30px 40px;
-        min-height: 100vh;
-        transition: all 0.3s ease;
-        position: relative;
+        margin-left: 0;
+        padding: 20px;
     }
+}
+
 
     /* Header Styles */
     .main-header {
@@ -208,7 +208,7 @@
     }
 
     .dropdown-menu {
-        background-color: #ffffff;
+        background-color: var(--light-blue);
         border: none;
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
         border-radius: 12px;
@@ -447,9 +447,14 @@
     </nav>
 </aside>
 
+
+<div class="screen-overlay"></div>
+
+
 <!-- Main Content Wrapper -->
 <main class="main-wrap">
     <header class="main-header">
+        
         <div class="d-flex align-items-center">
             <button class="btn btn-icon me-3" data-trigger="#offcanvas_aside">
                 <i class="fas fa-bars"></i>
@@ -518,5 +523,15 @@
             });
         });
     </script>
+    <script>
+        $('[data-trigger="#offcanvas_aside"]').on('click', function (e) {
+          e.preventDefault();
+          $('.navbar-aside').toggleClass('show');
+          $('.screen-overlay').toggleClass('show');
+        });
+      </script>
+      <!-- Bootstrap JS Bundle (includes Popper for dropdowns) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
