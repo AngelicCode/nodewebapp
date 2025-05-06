@@ -338,15 +338,17 @@
                     <a href="#" class="btn btn-info btn-sm">Remove</a>
                   </div>
                 </td>
-                <td>50</td>
+                <td><%= data[i].quantity %></td>
                 <td>
+
                   <div class="action-buttons">
-                    <% if (data[i].isBlocked === false) { %>
-                      <a href="/admin/blockProduct?id=<%=data[i]._id%>" class="btn btn-success btn-sm">Block</a>
-                    <% } else { %>
-                      <a href="/admin/unblockProduct?id=<%=data[i]._id%>" class="btn btn-danger btn-sm">Unblock</a>
-                    <% } %>
+                    <button id="btn-<%= data[i]._id %>"
+                            class="btn btn-sm <%= data[i].isBlocked ? 'btn-success' : 'btn-danger' %>"
+                            onclick="toggleProductBlock('<%= data[i]._id %>', `<%= data[i].isBlocked ? '\'unblockProduct\'' : '\'blockProduct\'' %>`)">
+                      <%= data[i].isBlocked ? 'Unblock' : 'Block' %>
+                    </button>
                   </div>
+                  
                   
                 </td>
                 <td>
@@ -489,6 +491,40 @@
       }
     });
   </script>
+  <script>
+    async function toggleProductBlock(productId, action) {
+      try {
+        
+        if(action[0] == "'"){
+
+          action = action.slice(1,action.length-1)
+        }
+        
+        const response = await fetch(`/admin/${action}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: productId })
+        });
+        const result = await response.json();
+  
+        if (result.success) {
+          const button = document.querySelector(`#btn-${productId}`);
+          button.textContent = result.isBlocked ? "Unblock" : "Block";
+          button.className = result.isBlocked ? "btn btn-success" : "btn btn-danger";
+          button.setAttribute("onclick", `toggleProductBlock('${productId}', '${result.isBlocked ? "unblockProduct" : "blockProduct"}')`);
+        } else {
+          alert("Failed to update product status.");
+        }
+        action = ""
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while updating the product.");
+      }
+    }
+  </script>
+  
 
   <%- include("../../views/partials/admin/footer") %>
 </body>

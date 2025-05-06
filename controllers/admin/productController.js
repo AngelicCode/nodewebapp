@@ -69,7 +69,7 @@ const getAllProducts = async (req, res) => {
     const search = req.query.search?.trim() || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
-
+    console.log(search)
     const [category, brand] = await Promise.all([
       Category.find({ isListed: true }),
       Brand.find({ isBlocked: false }),
@@ -81,15 +81,10 @@ const getAllProducts = async (req, res) => {
     if (search) {
       query.productName = { $regex: new RegExp(search, "i") };
     }
-
+    
     const productData = await Product.find(query)
-      .populate({
-        path: "brand",
-        match: search
-          ? { brandName: { $regex: new RegExp(search, "i") } }
-          : {},
-      })
-      .populate("category")
+    
+      .populate("category brand")
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
@@ -112,29 +107,27 @@ const getAllProducts = async (req, res) => {
 };
 
 
-const blockProduct = async (req,res)=>{
+const blockProduct = async (req, res) => {
   try {
-    let id= req.query.id;
-    await Product.updateOne({_id:id},{$set:{isBlocked:true}});
-    res.redirect("/admin/products");
-
+    const { id } = req.body;
+    await Product.updateOne({ _id: id }, { $set: { isBlocked: true } });
+    res.status(200).json({ success: true, isBlocked: true });
   } catch (error) {
-    res.redirect("/pageerror");
+    console.error("Block product error:", error);
+    res.json({ success: false });
   }
+};
 
-}
-
-const unblockProduct = async (req,res)=>{
+const unblockProduct = async (req, res) => {
   try {
-    let id = req.query.id;
-    await Product.updateOne({_id:id},{$set:{isBlocked:false}});
-    res.redirect("/admin/products");
-
+    const { id } = req.body;
+    await Product.updateOne({ _id: id }, { $set: { isBlocked: false } });
+    res.status(200).json({ success: true, isBlocked: false });
   } catch (error) {
-    res.redirect("/pageerror");
+    console.error("Unblock product error:", error);
+    res.json({ success: false });
   }
-
-}
+};
 
 module.exports = {
   getProductAddPage,addProducts,getAllProducts,blockProduct,unblockProduct,

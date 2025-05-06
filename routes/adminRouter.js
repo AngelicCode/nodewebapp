@@ -39,8 +39,8 @@ router.post("/editCategory/:id",adminAuth,categoryController.editCategory);
 router.get("/addProducts",adminAuth,productController.getProductAddPage);
 router.post("/addProducts",adminAuth,uploads.array("images",4),productController.addProducts);
 router.get("/products",adminAuth,productController.getAllProducts);
-router.get("/blockProduct",adminAuth,productController.blockProduct);
-router.get("/unblockProduct",adminAuth,productController.unblockProduct);
+router.post("/blockProduct",adminAuth,productController.blockProduct);
+router.post("/unblockProduct",adminAuth,productController.unblockProduct);
 
 
 
