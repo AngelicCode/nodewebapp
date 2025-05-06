@@ -360,8 +360,8 @@
               <div class="form-col">
                 <label class="form-label">Brand</label>
                 <select name="brand" class="form-select">
-                  <% brand.forEach(b => { %>
-                  <option value="<%= b.brandName %>"><%= b.brandName %></option>
+                  <% brand.forEach(function(br) { %>
+                    <option value="<%= br._id %>"><%= br.brandName %></option>
                   <% }) %>
                 </select>
                 <div id="brand-error" class="error-message"></div>

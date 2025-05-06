@@ -297,7 +297,7 @@
 
     <!-- Search Bar -->
     <div class="search-container">
-      <form action="" method="get" style="display: flex; width: 100%;">
+      <form action="/admin/products" method="get" style="display: flex; width: 100%;">
         <input type="text" placeholder="Search products or brands" name="search" />
         <button type="submit">Search</button>
       </form> 
@@ -325,7 +325,8 @@
               <%for(let i=data.length-1;i>=0;i--){%>
               <tr>
                 <td><%=data[i].productName%></td>
-                <td><%=data[i].brands%></td>
+                <td><%= data[i].brand.brandName %></td>
+
                 <td><%=data[i].category.name%></td>
                 <td><%=data[i].salePrice%></td>
                 <td>
@@ -340,61 +341,20 @@
                 <td>50</td>
                 <td>
                   <div class="action-buttons">
-                    <a href="#" class="btn btn-danger btn-sm">Block</a>
+                    <% if (data[i].isBlocked === false) { %>
+                      <a href="/admin/blockProduct?id=<%=data[i]._id%>" class="btn btn-success btn-sm">Block</a>
+                    <% } else { %>
+                      <a href="/admin/unblockProduct?id=<%=data[i]._id%>" class="btn btn-danger btn-sm">Unblock</a>
+                    <% } %>
                   </div>
+                  
                 </td>
                 <td>
                   <a href="#" class="btn btn-primary btn-sm">Edit</a>
                 </td>
               </tr>
-              <tr>
-                <td>S'well Bottle</td>
-                <td>S'well</td>
-                <td>Stainless Steel</td>
-                <td>₹1500</td>
-                <td>
-                  <span class="badge bg-light">—</span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="#" class="btn btn-success btn-sm">Add Offer</a>
-                    <a href="#" class="btn btn-info btn-sm">Remove</a>
-                  </div>
-                </td>
-                <td>35</td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="#" class="btn btn-success btn-sm">Unblock</a>
-                  </div>
-                </td>
-                <td>
-                  <a href="#" class="btn btn-primary btn-sm">Edit</a>
-                </td>
-              </tr>
-              <tr>
-                <td>Klean Kanteen</td>
-                <td>Klean Kanteen</td>
-                <td>Sports</td>
-                <td>₹950</td>
-                <td>
-                  <span class="badge bg-success">₹825</span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="#" class="btn btn-success btn-sm">Add Offer</a>
-                    <a href="#" class="btn btn-info btn-sm">Remove</a>
-                  </div>
-                </td>
-                <td>42</td>
-                <td>
-                  <div class="action-buttons">
-                    <a href="#" class="btn btn-danger btn-sm">Block</a>
-                  </div>
-                </td>
-                <td>
-                  <a href="#" class="btn btn-primary btn-sm">Edit</a>
-                </td>
-              </tr>
+              
+              
               <%}%>
             </tbody>
           </table>

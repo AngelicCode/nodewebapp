@@ -66,48 +66,76 @@ const addProducts = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const page = req.query.page || 1;
+    const search = req.query.search?.trim() || "";
+    const page = parseInt(req.query.page) || 1;
     const limit = 4;
 
-    const productData = await Product.find({
-      $or: [
-        { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
-        { brand: { $regex: new RegExp(".*" + search + ".*", "i") } }
-      ]
-    })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .populate("category")
-    .exec();
+    const [category, brand] = await Promise.all([
+      Category.find({ isListed: true }),
+      Brand.find({ isBlocked: false }),
+    ]);
 
-    const count = await Product.countDocuments({
-      $or: [
-        { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
-        { brand: { $regex: new RegExp(".*" + search + ".*", "i") } }
-      ]
-    });
+    // Build product query
+    const query = {}; 
 
-    const category = await Category.find({ isListed: true });
-    const brand = await Brand.find({ isBlocked: false });
-
-    if (category && brand) {
-      res.render("products", {
-        data: productData,
-        currentPage: page,
-        totalPages: Math.ceil(count / limit),
-        cat: category,
-        brand: brand
-      });
-    } else {
-      return res.redirect("/admin/products?error=Failed to load products");
+    if (search) {
+      query.productName = { $regex: new RegExp(search, "i") };
     }
+
+    const productData = await Product.find(query)
+      .populate({
+        path: "brand",
+        match: search
+          ? { brandName: { $regex: new RegExp(search, "i") } }
+          : {},
+      })
+      .populate("category")
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
+
+    const filteredProducts = productData.filter(p => p.brand !== null);
+
+    const totalCount = await Product.countDocuments(query); // FIXED: match query with filtering
+
+    res.render("products", {
+      data: filteredProducts,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+      cat: category,
+      brand: brand,
+    });
   } catch (error) {
     console.error("Error loading products:", error);
-    return res.redirect("/admin/products?error=Failed to load products");
+    res.redirect("/admin/products?error=Failed to load products");
   }
 };
 
+
+const blockProduct = async (req,res)=>{
+  try {
+    let id= req.query.id;
+    await Product.updateOne({_id:id},{$set:{isBlocked:true}});
+    res.redirect("/admin/products");
+
+  } catch (error) {
+    res.redirect("/pageerror");
+  }
+
+}
+
+const unblockProduct = async (req,res)=>{
+  try {
+    let id = req.query.id;
+    await Product.updateOne({_id:id},{$set:{isBlocked:false}});
+    res.redirect("/admin/products");
+
+  } catch (error) {
+    res.redirect("/pageerror");
+  }
+
+}
+
 module.exports = {
-  getProductAddPage,addProducts,getAllProducts,
+  getProductAddPage,addProducts,getAllProducts,blockProduct,unblockProduct,
 }
