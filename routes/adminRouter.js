@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
+const multer = require("multer");
 
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customerController");
@@ -8,48 +8,50 @@ const categoryController = require("../controllers/admin/categoryController");
 const productController = require("../controllers/admin/productController");
 const brandController = require("../controllers/admin/brandController");
 
-const {userAuth,adminAuth} = require("../middlewares/auth");
-const multer = require("multer");
-const storage = require("../helpers/multer");
-const uploads = multer({storage:storage});
+const { userAuth, adminAuth } = require("../middlewares/auth");
+const { storage, fileFilter } = require("../helpers/multer");
 
+// Create Multer instance
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
-router.get("/pageerror",adminController.pageerror);
-router.get("/login",adminController.loadLogin);
-router.post("/login",adminController.login);
-router.get("/",adminAuth,adminController.loadDashboard);
-router.get("/logout",adminController.logout);
+router.get("/pageerror", adminController.pageerror);
+router.get("/login", adminController.loadLogin);
+router.post("/login", adminController.login);
+router.get("/", adminAuth, adminController.loadDashboard);
+router.get("/logout", adminController.logout);
 
-//Customer management
-router.get("/users",adminAuth,customerController.customerInfo);
+// Customer management
+router.get("/users", adminAuth, customerController.customerInfo);
+router.get("/blockCustomer", adminAuth, customerController.customerBlocked);
+router.get("/unblockCustomer", adminAuth, customerController.customerunBlocked);
 
-router.get("/blockCustomer",adminAuth,customerController.customerBlocked);
-router.get("/unblockCustomer",adminAuth,customerController.customerunBlocked);
+// Category management
+router.get("/category", adminAuth, categoryController.categoryInfo);
+router.post("/addCategory", adminAuth, categoryController.addCategory);
+router.get("/listCategory", adminAuth, categoryController.getListCategory);
+router.get("/unlistCategory", adminAuth, categoryController.getUnlistCategory);
+router.get("/editCategory", adminAuth, categoryController.getEditCategory);
+router.post("/editCategory/:id", adminAuth, categoryController.editCategory);
 
-//Category management
-router.get("/category",adminAuth,categoryController.categoryInfo);
-router.post("/addCategory",adminAuth,categoryController.addCategory);
-router.get("/listCategory",adminAuth,categoryController.getListCategory);
-router.get("/unlistCategory",adminAuth,categoryController.getUnlistCategory);
-router.get("/editCategory",adminAuth,categoryController.getEditCategory);
-router.post("/editCategory/:id",adminAuth,categoryController.editCategory);
+// Product management
+router.get("/addProducts", adminAuth, productController.getProductAddPage);
+router.post("/addProducts", adminAuth, upload.array("images", 4), productController.addProducts);
+router.get("/products", adminAuth, productController.getAllProducts);
+router.post("/blockProduct", adminAuth, productController.blockProduct);
+router.post("/unblockProduct", adminAuth, productController.unblockProduct);
+router.get("/editProduct", adminAuth, productController.getEditProduct);
+router.post("/editProduct/:id", adminAuth, upload.array("images", 4), productController.editProduct);
+router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 
-
-//Product management
-router.get("/addProducts",adminAuth,productController.getProductAddPage);
-router.post("/addProducts",adminAuth,uploads.array("images",4),productController.addProducts);
-router.get("/products",adminAuth,productController.getAllProducts);
-router.post("/blockProduct",adminAuth,productController.blockProduct);
-router.post("/unblockProduct",adminAuth,productController.unblockProduct);
-
-
-
-//Brand Management
- router.get("/brands",adminAuth,brandController.getBrandPage);
- router.post("/addBrand",adminAuth,uploads.single("image"),brandController.addBrand);
- router.post("/blockBrand",adminAuth,brandController.blockBrand);
- router.post("/unBlockBrand",adminAuth,brandController.unBlockBrand);
- router.post("/deleteBrand",adminAuth,brandController.deleteBrand);
-
+// Brand Management
+router.get("/brands", adminAuth, brandController.getBrandPage);
+router.post("/addBrand", adminAuth, upload.single("image"), brandController.addBrand);
+router.post("/blockBrand", adminAuth, brandController.blockBrand);
+router.post("/unBlockBrand", adminAuth, brandController.unBlockBrand);
+router.post("/deleteBrand", adminAuth, brandController.deleteBrand);
 
 module.exports = router;
