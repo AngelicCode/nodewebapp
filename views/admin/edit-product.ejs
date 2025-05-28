@@ -486,26 +486,37 @@
               </div>
 
               <!-- Image Upload -->
-              <div class="card mb-4">
-                <div class="card-header">
-                  <h4>Upload New Images</h4>
-                </div>
-                <div class="card-body">
-                  <% for(let i=1; i<=4; i++) { %>
-                  <div class="image-upload-section">
-                    <label class="form-label">Image <%=i%></label>
-                    <img src="" alt="" id="imgView<%=i%>" class="preview-image">
-                    <input class="form-control" type="file" name="images" id="input<%=i%>" accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, <%=i%>)">
-                    <div id="images-error<%=i%>" class="error-message"></div>
-                    
-                    <div class="image-cropper" id="cropperContainer<%=i%>">
-                      <div id="cropper<%=i%>" style="width: 100%; max-height: 300px;"></div>
-                      <button type="button" id="saveButton<%=i%>" class="btn btn-primary btn-sm mt-2">Save Cropped Image</button>
-                    </div>
-                  </div>
-                  <% } %>
-                </div>
-              </div>
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>Upload New Images</h4>
+  </div>
+  <div class="card-body">
+    <% for(let i = 1; i <= 4; i++) { %>
+    <div class="image-upload-section mb-4">
+      <label class="form-label">Image <%= i %></label>
+
+      <!-- File Input -->
+      <input
+        class="form-control"
+        type="file"
+        name="images"
+        id="input<%= i %>"
+        accept="image/png, image/jpeg, image/jpg"
+        onchange="viewImage(event, <%= i %>)"
+      />
+
+      <!-- Error Message -->
+      <div id="images-error<%= i %>" class="error-message text-danger mb-2"></div>
+
+      <!-- Cropper Container -->
+      <div class="image-cropper" id="cropperContainer<%= i %>" style="display: none;">
+        <div id="cropper<%= i %>" style="width: 100%; max-height: 300px;"></div>
+        <button type="button" id="saveButton<%= i %>" class="btn btn-primary btn-sm mt-2">Save Cropped Image</button>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
 
               <!-- Action Buttons -->
               <div class="action-buttons">
