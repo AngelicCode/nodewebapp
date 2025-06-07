@@ -1,14 +1,13 @@
+  <%-include("../../views/partials/user/header")%>
 
-<%-include("../../views/partials/user/header")%>
-
-<!--================Home Banner Area =================-->
+  <!--================Home Banner Area =================-->
   <section class="home_banner_area mb-40">
     <div class="banner_inner d-flex align-items-center">
       <div class="container">
         <div class="banner_content row">
           <div class="col-lg-12">
             <h3><span>REFILL</span> <br>REUSE</br><span>REFRESH</span></h3>
-            <h4>“ Your Everyday Hydration Companion. ”</h4>
+            <h4>"Your Everyday Hydration Companion."</h4>
           </div>
         </div>
       </div>
@@ -20,26 +19,6 @@
   <section class="feature-area section_gap_bottom_custom">
     <div class="container">
       <div class="row" style="display: flex; justify-content:space-evenly;">
-        <!--<div class="col-lg-3 col-md-6">
-          <div class="single-feature">
-            <a href="#" class="title">
-              <i class="flaticon-money"></i>
-              <h3>Money back gurantee</h3>
-            </a>
-            <p>Shall open divide a one</p>
-          </div>
-        </div>-->
-
-        <!--<div class="col-lg-3 col-md-6">
-          <div class="single-feature">
-            <a href="#" class="title">
-              <i class="flaticon-truck"></i>
-              <h3>Free Delivery</h3>
-            </a>
-            <p>Shall open divide a one</p>
-          </div>
-        </div>--->
-
         <div class="col-lg-3 col-md-6">
           <div class="single-feature">
             <a href="#" class="title">
@@ -98,10 +77,8 @@
                 <h4>Brim Stainless steel water bottle</h4>
               </a>
               <div class="mt-3">
-                <span class="mr-4">&#8377;
-                  300.00</span>
-                <del>&#8377;
-                  400.00</del>
+                <span class="mr-4">&#8377;300.00</span>
+                <del>&#8377;400.00</del>
               </div>
             </div>
           </div>
@@ -110,7 +87,9 @@
         <div class="col-lg-4 col-md-6">
           <div class="single-product">
             <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/feature-product/f-p-2.gif" alt="" />
+              <!-- GIF product with animation controls -->
+              <img class="img-fluid w-100" src="img/product/feature-product/f-p-2.gif" alt="Collapsible water bottle" 
+                  style="image-rendering: auto;" />
               <div class="p_icon">
                 <a href="#">
                   <i class="ti-eye"></i>
@@ -128,10 +107,8 @@
                 <h4>The coLLapsible water bottle</h4>
               </a>
               <div class="mt-3">
-                <span class="mr-4">&#8377;
-                  499.00</span>
-                <del>&#8377;
-                  599.00</del>
+                <span class="mr-4">&#8377;499.00</span>
+                <del>&#8377;599.00</del>
               </div>
             </div>
           </div>
@@ -158,10 +135,8 @@
                 <h4>Borosilicate Glass Water Bottle</h4>
               </a>
               <div class="mt-3">
-                <span class="mr-4">&#8377;
-                  100.00</span>
-                <del>&#8377;
-                  200.00</del>
+                <span class="mr-4">&#8377;100.00</span>
+                <del>&#8377;200.00</del>
               </div>
             </div>
           </div>
@@ -177,7 +152,7 @@
       <div class="row justify-content-center">
         <div class="offset-lg-4 col-lg-6 text-center">
           <div class="offer_content">
-            <h3 class="text-uppercase mb-40">all men’s collection</h3>
+            <h3 class="text-uppercase mb-40">all men's collection</h3>
             <h2 class="text-uppercase">50% off</h2>
             <a href="#" class="main_btn mb-20 mt-5">Discover Now</a>
             <p>Limited Time Offer</p>
@@ -195,17 +170,29 @@
         <div class="col-lg-12">
           <div class="main_title">
             <h2><span>New Arrivals</span></h2>
-            <p>Bring called seed first of third give itself now ment</p>
+            <p>Discover our latest arrivals, crafted for every sip.</p>
           </div>
         </div>
       </div>
 
+      
       <div class="row">
         <% for (let i = 0; i < products.length; i++) { %>
           <div class="col-lg-3 col-md-4 col-sm-6 mt-4">
             <div class="single-product">
-              <div class="product-img">
-                <img class="img-fluid w-100" src="/uploads/product-images/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
+              <div class="product-img"  style="height: 259px;">
+                <% 
+                  const imgFile = products[i].productImage[0];
+                  const isGif = imgFile.toLowerCase().endsWith('.gif');
+                  /*console.log('Image file:', imgFile, 'Is GIF:', isGif); // Debugging line*/
+                %>
+                <img class="img-fluid w-100" 
+                    src="/uploads/product-images/<%= imgFile %>" 
+                    alt="<%= products[i].productName %>"
+                    <% if (isGif) { %>
+                      style="image-rendering: auto;"
+                    <% } %>  
+                />
                 <div class="p_icon">
                   <a href="/productDetails?id=<%= products[i]._id %>">
                     <i class="ti-eye"></i>
@@ -224,8 +211,8 @@
                 </a>
                 <div class="mt-3">
                   <span class="mr-4">₹<%= products[i].salePrice %></span>
-                  <% if (products[i].originalPrice && products[i].originalPrice > products[i].salePrice) { %>
-                    <del>₹<%= products[i].originalPrice %></del>
+                  <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                    <del>₹<%= products[i].regularPrice %></del>
                   <% } %>
                 </div>
               </div>
@@ -233,253 +220,8 @@
           </div>
         <% } %>
       </div>
-
     </div>
   </section>
   <!--================ End New Product Area =================-->
-
-  <!--================ Inspired Product Area =================-->
-  <!-- <section class="inspired_product_area section_gap_bottom_custom">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-12">
-          <div class="main_title">
-            <h2><span>Inspired products</span></h2>
-            <p>Bring called seed first of third give itself now ment</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i1.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i2.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i3.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i4.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i5.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i6.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i7.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="single-product">
-            <div class="product-img">
-              <img class="img-fluid w-100" src="img/product/inspired-product/i8.jpg" alt="" />
-              <div class="p_icon">
-                <a href="#">
-                  <i class="ti-eye"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-heart"></i>
-                </a>
-                <a href="#">
-                  <i class="ti-shopping-cart"></i>
-                </a>
-              </div>
-            </div>
-            <div class="product-btm">
-              <a href="#" class="d-block">
-                <h4>Latest men’s sneaker</h4>
-              </a>
-              <div class="mt-3">
-                <span class="mr-4">$25.00</span>
-                <del>$35.00</del>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section> -->
-  <!--================ End Inspired Product Area =================-->
-
-  
-
 
   <%-include("../../views/partials/user/footer")%>

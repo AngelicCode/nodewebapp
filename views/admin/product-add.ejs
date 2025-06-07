@@ -347,7 +347,7 @@
 
     <div class="row">
       <div class="col-lg-8 mx-auto">
-        <form id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
+        <form onsubmit="return validateForm()" id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
           <!-- Basic Info Section -->
           <div class="form-section">
             <h4 class="section-title">Basic Information</h4>
@@ -407,23 +407,15 @@
           <div class="form-section">
             <h4 class="section-title">Category</h4>
             <div class="form-row">
-              <div class="form-col присо1st.computer();
-              if (typeof window !== 'undefined') {
-                window.__lc = window.__lc || {};
-                window.__lc.license = 13759202;
-                (function(n,t){function i(n){return t._h?t._h.apply(null,n):t(n)}t=function(){return t._d?t._d.apply(null,arguments):t._h&&t._h.apply(null,[].concat([null].concat([].slice.call(arguments,0))))}t._h=function(n){return t._d?t._d.apply(null,[].concat([null].concat([].slice.call(arguments,0)))):n}t._d=function(t,i,r){return e&&e[t]?e[t].apply(n,[].concat([].slice.call(arguments,1))):i||n}}t._p&&t._p.push([n,i,r])}(window,[],{chat:!0,popup:!0}))();
-              } else {
-                (function(d, w, c) { w.lc = w.lc || function() { (w.lc.q = w.lc.q || []).push(arguments); }; var s = d.createElement('script'); s.src = 'https://v2.livechatinc.com/app.js'; s.async = true; var h = d.getElementsByTagName('script')[0]; h.parentNode.insertBefore(s, h); })(document, window, console);
-              }
-            </script>
-            <div class="form-col">
-              <label class="form-label">Product Category</label>
-              <select name="category" class="form-select">
-                <% categories.forEach(cat => { %>
-                <option value="<%= cat._id %>"><%= cat.name %></option>
-                <% }) %>
-              </select>
-              <div id="category-error" class="error-message"></div>
+              <div class="form-col">
+                <label class="form-label">Product Category</label>
+                <select name="category" class="form-select">
+                  <% categories.forEach(cat => { %>
+                    <option value="<%= cat._id %>"><%= cat.name %></option>
+                  <% }) %>
+                </select>
+                <div id="category-error" class="error-message"></div>
+              </div>
             </div>
           </div>
           
@@ -440,7 +432,7 @@
               <div id="images-error" class="error-message"></div>
               
               <!-- Cropper Modal -->
-              <div class="modal fade" id="cropModal" tabindex="-1" >
+              <div class="modal fade" id="cropModal" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -479,10 +471,21 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
   <script>
+
+    function validateForm() {
+  const files = document.querySelector('[name="images"]').files;
+  if (files.length === 0) {
+    alert("Please select at least one image");
+    return false;
+  }
+  return true;
+}
+
     // Global variables
     let currentCropper = null;
     let currentFileIndex = null;
     const croppedImages = [];
+    const fileTypes = []; // Array to store original file MIME types
 
     // Check CropperJS availability
     function checkCropperAvailability() {
@@ -554,11 +557,11 @@
         e.preventDefault();
         uploadBox.classList.add('drag-over');
       });
-      
+
       uploadBox.addEventListener('dragleave', () => {
         uploadBox.classList.remove('drag-over');
       });
-      
+
       uploadBox.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadBox.classList.remove('drag-over');
@@ -567,43 +570,51 @@
         }
       });
 
-      // Image management
-      function addFiles(newFiles) {
-        const availableSlots = 4 - croppedImages.length;
-        
-        if (newFiles.length > availableSlots) {
-          Swal.fire('Error', `You can only add ${availableSlots} more image(s)`, 'error');
-          return;
-        }
-        
-        Array.from(newFiles).slice(0, availableSlots).forEach(file => {
-          if (!file.type.match('image.*')) {
-            Swal.fire('Error', 'Only image files are allowed', 'error');
-            return;
-          }
-          
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            openCropper(e.target.result, croppedImages.length);
-          };
-          reader.onerror = () => {
-            Swal.fire('Error', 'Failed to read image file', 'error');
-          };
-          reader.readAsDataURL(file);
-        });
+      
+function addFiles(newFiles) {
+  const availableSlots = 4 - croppedImages.length;
+
+  if (newFiles.length > availableSlots) {
+    Swal.fire('Error', `You can only add ${availableSlots} more image(s)`, 'error');
+    return;
+  }
+
+  Array.from(newFiles).slice(0, availableSlots).forEach((file, index) => {
+    if (!file.type.match('image.*')) {
+      Swal.fire('Error', 'Only image files are allowed', 'error');
+      return;
+    }
+
+    fileTypes[croppedImages.length + index] = file.type;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (file.type === 'image/gif') {
+        croppedImages[croppedImages.length + index] = e.target.result;
+        renderThumbnails();
+        updateFileInput();
+      } else {
+        openCropper(e.target.result, croppedImages.length + index);
       }
+    };
+    reader.onerror = () => {
+      Swal.fire('Error', 'Failed to read image file', 'error');
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
       function renderThumbnails() {
         imagePreview.innerHTML = '';
-        
-          croppedImages.forEach((imgSrc, index) => {
+
+        croppedImages.forEach((imgSrc, index) => {
           const thumbnail = document.createElement('div');
           thumbnail.className = 'thumbnail';
           thumbnail.dataset.index = index;
-          
+
           const img = document.createElement('img');
           img.src = imgSrc;
-          
+
           const cropBtn = document.createElement('button');
           cropBtn.className = 'btn btn-sm btn-outline-primary crop-btn';
           cropBtn.innerHTML = '<i class="fas fa-crop"></i> Crop';
@@ -612,7 +623,7 @@
             e.stopPropagation();
             openCropper(imgSrc, index);
           });
-          
+
           const removeBtn = document.createElement('button');
           removeBtn.className = 'btn btn-sm btn-outline-danger remove-btn';
           removeBtn.innerHTML = '<i class="fas fa-times"></i>';
@@ -621,12 +632,12 @@
             e.stopPropagation();
             removeImage(index);
           });
-          
+
           const btnGroup = document.createElement('div');
           btnGroup.className = 'thumbnail-actions';
           btnGroup.appendChild(cropBtn);
           btnGroup.appendChild(removeBtn);
-          
+
           thumbnail.appendChild(img);
           thumbnail.appendChild(btnGroup);
           imagePreview.appendChild(thumbnail);
@@ -636,9 +647,9 @@
       function openCropper(imageSrc, index) {
         currentFileIndex = index;
         const cropButton = document.getElementById('cropButton');
-        
+
         if (!cropButton) return;
-        
+
         cropButton.disabled = true;
         cropButton.innerHTML = 'Loading...';
 
@@ -682,10 +693,10 @@
       cropButton.addEventListener('click', function(e) {
         e.preventDefault();
         if (!currentCropper) return;
-        
+
         cropButton.disabled = true;
         cropButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
-        
+
         const croppedCanvas = currentCropper.getCroppedCanvas({
           width: 800,
           height: 800,
@@ -694,8 +705,12 @@
           fillColor: '#fff',
           imageSmoothingQuality: 'high'
         });
-        
+
         if (croppedCanvas) {
+          // Use the original file type or fallback to JPEG
+          const mimeType = fileTypes[currentFileIndex] || 'image/jpeg';
+          const quality = mimeType === 'image/png' || mimeType === 'image/gif' ? 1 : 0.9;
+
           croppedCanvas.toBlob((blob) => {
             const reader = new FileReader();
             reader.onload = () => {
@@ -716,7 +731,7 @@
               cropButton.disabled = false;
             };
             reader.readAsDataURL(blob);
-          }, 'image/jpeg', 0.9);
+          }, mimeType, quality);
         } else {
           Swal.fire('Error', 'Failed to crop image', 'error');
           cropButton.innerHTML = 'Crop & Save';
@@ -729,7 +744,7 @@
         cropModalEl.addEventListener('shown.bs.modal', function() {
           const cropperImage = document.getElementById('cropperImage');
           if (!cropperImage || !cropperImage.complete) return;
-          
+
           try {
             if (!currentCropper) {
               currentCropper = initializeCropper(cropperImage);
@@ -758,21 +773,23 @@
 
       function removeImage(index) {
         croppedImages.splice(index, 1);
+        fileTypes.splice(index, 1); // Remove the corresponding file type
         renderThumbnails();
         updateFileInput();
       }
-      
+
       function updateFileInput() {
         const dt = new DataTransfer();
         croppedImages.forEach((dataURL, index) => {
           const arr = dataURL.split(',');
-          const mime = arr[0].match(/:(.*?);/)[1];
+          const mime = fileTypes[index] || 'image/jpeg'; // Use stored MIME type
           const bstr = atob(arr[1]);
           const u8arr = new Uint8Array(bstr.length);
           for (let i = 0; i < bstr.length; i++) {
             u8arr[i] = bstr.charCodeAt(i);
           }
-          dt.items.add(new File([u8arr], `image_${index}.jpg`, { type: mime }));
+          const fileName = `image_${index}.${mime.split('/')[1]}`; // Use original extension
+          dt.items.add(new File([u8arr], fileName, { type: mime }));
         });
         imageInput.files = dt.files;
       }
@@ -780,45 +797,45 @@
       function validateForm() {
         clearErrorMessages();
         let isValid = true;
-        
+
         const productName = document.getElementsByName('productName')[0].value.trim();
         if (!productName) {
           displayErrorMessage('productName-error', 'Product name is required');
           isValid = false;
         }
-        
+
         const description = document.getElementsByName('description')[0].value.trim();
         if (!description) {
           displayErrorMessage('description-error', 'Description is required');
           isValid = false;
         }
-        
+
         const regularPrice = document.getElementsByName('regularPrice')[0].value;
         if (!regularPrice || isNaN(regularPrice) || parseFloat(regularPrice) <= 0) {
           displayErrorMessage('regularPrice-error', 'Valid regular price is required');
           isValid = false;
         }
-        
+
         const salePrice = document.getElementsByName('salePrice')[0].value;
         if (salePrice && (isNaN(salePrice) || parseFloat(salePrice) <= 0)) {
           displayErrorMessage('salePrice-error', 'Valid sale price is required');
           isValid = false;
         }
-        
+
         const quantity = document.getElementsByName('quantity')[0].value;
         if (!quantity || isNaN(quantity) || parseInt(quantity) < 0) {
           displayErrorMessage('quantity-error', 'Valid quantity is required');
           isValid = false;
         }
-        
+
         if (croppedImages.length === 0) {
           displayErrorMessage('images-error', 'At least one image is required');
           isValid = false;
         }
-        
+
         return isValid;
       }
-      
+
       function displayErrorMessage(elementId, message) {
         const errorElement = document.getElementById(elementId);
         if (errorElement) {
@@ -826,14 +843,14 @@
           errorElement.style.display = 'block';
         }
       }
-      
+
       function clearErrorMessages() {
         document.querySelectorAll('.error-message').forEach(el => {
           el.textContent = '';
           el.style.display = 'none';
         });
       }
-      
+
       form.addEventListener('submit', function(e) {
         if (!validateForm()) {
           e.preventDefault();
@@ -851,7 +868,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const success = urlParams.get('success');
       const error = urlParams.get('error');
-  
+
       if (success) {
         Swal.fire({
           icon: 'success',
@@ -863,7 +880,7 @@
         // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
-  
+
       if (error) {
         Swal.fire({
           icon: 'error',

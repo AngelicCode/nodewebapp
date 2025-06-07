@@ -1,6 +1,7 @@
 const User = require('../../models/userSchema');
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
+const Brand = require("../../models/brandSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
@@ -295,4 +296,96 @@ const logout = async (req,res)=>{
   }
 }
 
-module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout}
+const loadShoppingPage = async (req, res) => {
+  try {
+    const user = req.session.user;
+    
+    // Get all active categories and brands for filters
+    const [categories, brands] = await Promise.all([
+      Category.find({ isListed: true }),
+      Brand.find({ isBlocked: false })
+    ]);
+
+    // Pagination and filtering setup
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12; // Products per page
+    const skip = (page - 1) * limit;
+
+    // Build query with filters
+    const query = { 
+      isBlocked: false,
+      quantity: { $gt: 0 }
+    };
+
+    // Apply search filter
+    if (req.query.search) {
+      query.$or = [
+        { productName: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    // Apply category filter
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // Apply price range filter (like in the video)
+    if (req.query.minPrice || req.query.maxPrice) {
+      query.salePrice = {
+        $gte: parseFloat(req.query.minPrice) || 0,
+        $lte: parseFloat(req.query.maxPrice) || 999999
+      };
+    }
+
+    // Get products with animations-ready structure
+    const products = await Product.find(query)
+      .populate('category brand')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean(); // Convert to plain objects for GSAP animations
+
+    // Add animation classes to each product
+    products.forEach(product => {
+      product.animationClass = "product-item"; // Base class for GSAP animations
+      product.delay = Math.random() * 0.5; // Random delay for staggered animations
+    });
+
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    // Prepare categories with IDs for the view
+    const categoriesWithIds = categories.map(cat => ({
+      _id: cat._id,
+      name: cat.name,
+      isListed: cat.isListed
+    }));
+
+    res.render("shop", {
+      user: user,
+      products: products,
+      category: categoriesWithIds,
+      brand: brands,
+      totalProducts: totalProducts,
+      currentPage: page,
+      totalPages: totalPages,
+      query: req.query, // Pass all query params back to view
+      // GSAP animation settings
+      animationSettings: {
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "power2.out"
+      }
+    });
+
+  } catch (error) {
+    console.error("Error loading shopping page:", error);
+    res.status(500).render("error", { 
+      message: "Couldn't load products",
+      user: req.session.user 
+    });
+  }
+};
+
+module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,}

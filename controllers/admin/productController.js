@@ -4,6 +4,8 @@ const Brand = require("../../models/brandSchema");
 const fs = require("fs").promises;
 const path = require("path");
 const sharp = require("sharp");
+const multer = require('multer');
+const upload = require("../../helpers/multer"); 
 
 const getProductAddPage = async (req, res) => {
   try {
@@ -19,86 +21,105 @@ const getProductAddPage = async (req, res) => {
   }
 };
 
-const addProducts = async (req, res) => {
-  try {
-    const products = req.body;
-    const productExists = await Product.findOne({ productName: products.productName });
-
-    if (productExists) {
-      return res.redirect("/admin/addProducts?error=Product already exists, please try with another name");
+const addProducts = [
+  upload.array("images", 4),
+  (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+      console.error("Multer error:", err);
+      return res.redirect(`/admin/addProducts?error=${encodeURIComponent(err.message)}`);
+    } else if (err) {
+      console.error("Other error:", err);
+      return res.redirect(`/admin/addProducts?error=${encodeURIComponent(err.message)}`);
     }
+    next();
+  },
+  async (req, res) => {
+    try {
+      const products = req.body;
+      const productExists = await Product.findOne({ productName: products.productName });
 
-    const images = [];
-    if (req.files && req.files.length > 0) {
-      // Ensure destination directory exists
-      const destDir = path.resolve("public", "uploads", "product-images");
-      await fs.mkdir(destDir, { recursive: true }).catch(() => {});
+      if (productExists) {
+        return res.redirect("/admin/addProducts?error=Product already exists, please try with another name");
+      }
 
-      for (const file of req.files) {
-        const originalPath = path.resolve(file.path);
-        const filename = file.filename;
-        const resizedPath = path.resolve(destDir, filename);
+      const images = [];
+      if (req.files && req.files.length > 0) {
+        const destDir = path.resolve("public", "Uploads", "product-images");
+        await fs.mkdir(destDir, { recursive: true }).catch(() => {});
 
-        // Verify original file exists
-        if (!await fs.access(originalPath).then(() => true).catch(() => false)) {
-          console.error(`Original file not found: ${originalPath}`);
-          continue;
-        }
+        for (const file of req.files) {
+          const originalPath = path.resolve(file.path);
+          const ext = file.mimetype.split("/")[1];
+          const filename = `product_${Date.now()}.${ext}`;
+          const resizedPath = path.resolve(destDir, filename);
 
-        // Process image using buffer method to avoid Sharp input/output conflict
-        try {
-          console.log(`Processing file: ${filename}`);
-          console.log(`Original path: ${originalPath}`);
-          console.log(`Resized path: ${resizedPath}`);
+          if (!await fs.access(originalPath).then(() => true).catch(() => false)) {
+            console.error(`Original file not found: ${originalPath}`);
+            continue;
+          }
 
-          // Read the original image into a buffer
-          const imageBuffer = await fs.readFile(originalPath);
-          
-          // Process the image and get the result as a buffer
-          const processedBuffer = await sharp(imageBuffer)
-            .resize({ width: 800, height: 800, fit: "cover" })
-            .jpeg({ quality: 90 })
-            .toBuffer();
-          
-          // Write the processed buffer to the destination
-          await fs.writeFile(resizedPath, processedBuffer);
-          
-          images.push(filename);
-          console.log(`Image processed successfully via buffer method: ${filename}`);
-        } catch (sharpError) {
-          console.error(`Sharp error for ${filename}:`, sharpError);
-          continue;
-        }
+          try {
+            console.log(`Processing file: ${filename}`);
+            console.log(`Original path: ${originalPath}`);
+            console.log(`Resized path: ${resizedPath}`);
 
-        // Remove original file if different from resized path
-        if (originalPath !== resizedPath) {
-          await fs.unlink(originalPath).catch(err => 
-            console.error(`Failed to delete ${originalPath}:`, err)
-          );
+            // Special handling for GIF files - copy without processing
+            if (file.mimetype === "image/gif") {
+              await fs.copyFile(originalPath, resizedPath);
+              images.push(filename);
+              console.log(`GIF preserved without processing: ${filename}`);
+              continue;
+            }
+
+            // Process other image types with sharp
+            const imageBuffer = await fs.readFile(originalPath);
+            let sharpInstance = sharp(imageBuffer).resize({ width: 800, height: 800, fit: "cover" });
+
+            if (file.mimetype === "image/png") {
+              sharpInstance = sharpInstance.png({ quality: 100 });
+            } else {
+              sharpInstance = sharpInstance.jpeg({ quality: 90 });
+            }
+
+            const processedBuffer = await sharpInstance.toBuffer();
+            await fs.writeFile(resizedPath, processedBuffer);
+
+            images.push(filename);
+            console.log(`Image processed successfully: ${filename}`);
+          } catch (error) {
+            console.error(`Error processing ${filename}:`, error);
+            continue;
+          }
+
+          if (originalPath !== resizedPath) {
+            await fs.unlink(originalPath).catch(err =>
+              console.error(`Failed to delete ${originalPath}:`, err)
+            );
+          }
         }
       }
+
+      const newProduct = new Product({
+        productName: products.productName,
+        description: products.description,
+        brand: products.brand,
+        category: products.category,
+        regularPrice: products.regularPrice,
+        salePrice: products.salePrice,
+        createdOn: new Date(),
+        quantity: products.quantity,
+        productImage: images,
+        status: "Available"
+      });
+
+      await newProduct.save();
+      return res.redirect("/admin/addProducts?success=Product added successfully!");
+    } catch (error) {
+      console.error("Error saving product:", error);
+      return res.redirect("/admin/addProducts?error=Failed to add product");
     }
-
-    const newProduct = new Product({
-      productName: products.productName,
-      description: products.description,
-      brand: products.brand,
-      category: products.category,
-      regularPrice: products.regularPrice,
-      salePrice: products.salePrice,
-      createdOn: new Date(),
-      quantity: products.quantity,
-      productImage: images,
-      status: "Available",
-    });
-
-    await newProduct.save();
-    return res.redirect("/admin/addProducts?success=Product added successfully!");
-  } catch (error) {
-    console.error("Error saving product:", error);
-    return res.redirect("/admin/addProducts?error=Failed to add product");
   }
-};
+];
 
 const getAllProducts = async (req, res) => {
   try {
@@ -108,7 +129,7 @@ const getAllProducts = async (req, res) => {
 
     const [category, brand] = await Promise.all([
       Category.find({ isListed: true }),
-      Brand.find({ isBlocked: false }),
+      Brand.find({ isBlocked: false })
     ]);
 
     const query = {};
@@ -130,7 +151,7 @@ const getAllProducts = async (req, res) => {
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
       cat: category,
-      brand,
+      brand
     });
   } catch (error) {
     console.error("Error loading products:", error);
@@ -167,10 +188,10 @@ const getEditProduct = async (req, res) => {
     const category = await Category.find({});
     const brand = await Brand.find({});
 
-    // Verify existing images - use consistent path structure
+    // Verify existing images
     const verifiedImages = [];
     for (const image of product.productImage) {
-      const imagePath = path.resolve("public", "uploads", "product-images", image);
+      const imagePath = path.resolve("public", "Uploads", "product-images", image);
       const exists = await fs.access(imagePath).then(() => true).catch(() => false);
       if (exists) {
         verifiedImages.push(image);
@@ -188,7 +209,7 @@ const getEditProduct = async (req, res) => {
     res.render("edit-product", {
       product,
       cat: category,
-      brand,
+      brand
     });
   } catch (error) {
     console.error("Error loading edit product page:", error);
@@ -196,103 +217,107 @@ const getEditProduct = async (req, res) => {
   }
 };
 
-const editProduct = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const data = req.body;
+const editProduct = [
+  upload.array("images", 4),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
 
-    // Check for duplicate product name
-    const existingProduct = await Product.findOne({
-      productName: data.productName,
-      _id: { $ne: id }
-    });
-
-    if (existingProduct) {
-      return res.status(400).json({
-        error: "Product with this name already exists. Please try with another name"
+      const existingProduct = await Product.findOne({
+        productName: data.productName,
+        _id: { $ne: id }
       });
-    }
 
-    const updateFields = {
-      productName: data.productName,
-      description: data.description,
-      brand: data.brand,
-      category: data.category,
-      regularPrice: data.regularPrice,
-      salePrice: data.salePrice,
-      quantity: data.quantity,
-      productImage: []
-    };
-
-    // Handle existing images
-    if (data.existingImages) {
-      updateFields.productImage = Array.isArray(data.existingImages)
-        ? data.existingImages
-        : [data.existingImages];
-    }
-
-    // Handle new image uploads
-    if (req.files && req.files.length > 0) {
-      // Ensure destination directory exists with consistent path
-      const destDir = path.resolve("public", "uploads", "product-images");
-      await fs.mkdir(destDir, { recursive: true }).catch(() => {});
-
-      const newImages = [];
-      for (const file of req.files) {
-        const originalPath = path.resolve(file.path);
-        const filename = file.filename;
-        const resizedPath = path.resolve(destDir, filename);
-
-        console.log(`Processing file: ${filename}`);
-        console.log(`Original path: ${originalPath}`);
-        console.log(`Resized path: ${resizedPath}`);
-
-        // Verify original file exists
-        if (!await fs.access(originalPath).then(() => true).catch(() => false)) {
-          console.error(`Original file not found: ${originalPath}`);
-          continue;
-        }
-
-        // Process image using buffer method to avoid Sharp input/output conflict
-        try {
-          // Read the original image into a buffer
-          const imageBuffer = await fs.readFile(originalPath);
-          
-          // Process the image and get the result as a buffer
-          const processedBuffer = await sharp(imageBuffer)
-            .resize({ width: 800, height: 800, fit: "cover" })
-            .jpeg({ quality: 90 })
-            .toBuffer();
-          
-          // Write the processed buffer to the destination
-          await fs.writeFile(resizedPath, processedBuffer);
-          
-          newImages.push(filename);
-          console.log(`Image processed successfully via buffer method: ${filename}`);
-        } catch (sharpError) {
-          console.error(`Sharp error for ${filename}:`, sharpError);
-          continue;
-        }
-
-        // Remove original file if different
-        if (originalPath !== resizedPath) {
-          await fs.unlink(originalPath).catch(err => 
-            console.error(`Failed to delete ${originalPath}:`, err)
-          );
-        }
+      if (existingProduct) {
+        return res.status(400).json({
+          error: "Product with this name already exists. Please try with another name"
+        });
       }
-      updateFields.productImage = [...updateFields.productImage, ...newImages];
+
+      const updateFields = {
+        productName: data.productName,
+        description: data.description,
+        brand: data.brand,
+        category: data.category,
+        regularPrice: data.regularPrice,
+        salePrice: data.salePrice,
+        quantity: data.quantity,
+        productImage: []
+      };
+
+      if (data.existingImages) {
+        updateFields.productImage = Array.isArray(data.existingImages)
+          ? data.existingImages
+          : [data.existingImages];
+      }
+
+      if (req.files && req.files.length > 0) {
+        const destDir = path.resolve("public", "Uploads", "product-images");
+        await fs.mkdir(destDir, { recursive: true }).catch(() => {});
+
+        const newImages = [];
+        for (const file of req.files) {
+          const originalPath = path.resolve(file.path);
+          const ext = file.mimetype.split("/")[1];
+          const filename = `product_${Date.now()}.${ext}`;
+          const resizedPath = path.resolve(destDir, filename);
+
+          console.log(`Processing file: ${filename}`);
+          console.log(`Original path: ${originalPath}`);
+          console.log(`Resized path: ${resizedPath}`);
+
+          if (!await fs.access(originalPath).then(() => true).catch(() => false)) {
+            console.error(`Original file not found: ${originalPath}`);
+            continue;
+          }
+
+          try {
+            // Special handling for GIF files - copy without processing
+            if (file.mimetype === "image/gif") {
+              await fs.copyFile(originalPath, resizedPath);
+              newImages.push(filename);
+              console.log(`GIF preserved without processing: ${filename}`);
+              continue;
+            }
+
+            // Process other image types with sharp
+            const imageBuffer = await fs.readFile(originalPath);
+            let sharpInstance = sharp(imageBuffer).resize({ width: 800, height: 800, fit: "cover" });
+
+            if (file.mimetype === "image/png") {
+              sharpInstance = sharpInstance.png({ quality: 100 });
+            } else {
+              sharpInstance = sharpInstance.jpeg({ quality: 90 });
+            }
+
+            const processedBuffer = await sharpInstance.toBuffer();
+            await fs.writeFile(resizedPath, processedBuffer);
+
+            newImages.push(filename);
+            console.log(`Image processed successfully: ${filename}`);
+          } catch (error) {
+            console.error(`Error processing ${filename}:`, error);
+            continue;
+          }
+
+          if (originalPath !== resizedPath) {
+            await fs.unlink(originalPath).catch(err =>
+              console.error(`Failed to delete ${originalPath}:`, err)
+            );
+          }
+        }
+        updateFields.productImage = [...updateFields.productImage, ...newImages];
+      }
+
+      await Product.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
+      res.redirect("/admin/products?success=Product updated successfully!");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.redirect("/pageerror");
     }
-
-    // Update product
-    await Product.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
-    res.redirect("/admin/products?success=Product updated successfully!");
-
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.redirect("/pageerror");
   }
-};
+];
 
 const deleteSingleImage = async (req, res) => {
   try {
@@ -304,8 +329,8 @@ const deleteSingleImage = async (req, res) => {
       { $pull: { productImage: imageNameToServer } }
     );
 
-    // Delete actual image file - use consistent path
-    const imagePath = path.resolve("public", "uploads", "product-images", imageNameToServer);
+    // Delete actual image file
+    const imagePath = path.resolve("public", "Uploads", "product-images", imageNameToServer);
     const exists = await fs.access(imagePath).then(() => true).catch(() => false);
     if (exists) {
       await fs.unlink(imagePath);
@@ -329,5 +354,5 @@ module.exports = {
   unblockProduct,
   getEditProduct,
   editProduct,
-  deleteSingleImage,
+  deleteSingleImage
 };

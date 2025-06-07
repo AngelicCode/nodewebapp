@@ -2,10 +2,14 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user/userController");
 const passport = require("passport");
+const userAuth = require("../middlewares/auth").userAuth
 
 router.get("/pageNotFound",userController.pageNotFound);
 
+//Home page & Shopping page
 router.get("/",userController.loadHomepage);
+router.get("/shop",userAuth,userController.loadShoppingPage);
+
 
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);
@@ -35,7 +39,7 @@ router.post("/login",userController.login);
 router.get("/logout",userController.logout);
 
 
-router.get("/shop",userController.loadShopping);
+ router.get("/shop",userController.loadShopping);
 
 
 module.exports = router;

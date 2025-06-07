@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydration Station - Water Bottle Shop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Hero Section */
+        .shop-hero {
+            background: url('/img/hero-bottle.jpg') center/cover no-repeat;
+            padding: 60px 0;
+            margin-bottom: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .hero-content p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .search-form {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 50px;
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .search-form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 18px 25px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #333;
+        }
+
+        .search-input::placeholder {
+            color: #888;
+        }
+
+        .search-button {
+            padding: 18px 30px;
+            background: #000;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 50px;
+            margin: 5px;
+        }
+
+        .search-button:hover {
+            background: #333;
+            transform: scale(1.05);
+        }
+
+        /* Main Content Layout */
+        .product-list-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 35px;
+        }
+
+        .filter-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+            position: relative;
+        }
+
+        .filter-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: #000;
+            border-radius: 2px;
+        }
+
+        .category-brand-container ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .filter-item {
+            margin: 12px 0;
+        }
+
+        .filter-item a {
+            display: block;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #555;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .filter-item a:hover {
+            background: #000;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Price Filter */
+        .price-filter {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .price-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .price-button {
+            padding: 15px 25px;
+            background: white;
+            color: #333;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            display: block;
+        }
+
+        .price-button:hover {
+            background: #000;
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Product Grid */
+        .product-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .product-image-container {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .wishlist-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #000;
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+
+        .wishlist-btn:hover {
+            background: #333;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .product-info {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .product-info h4 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .product-info p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .product-price {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .current-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .original-price {
+            font-size: 1.1rem;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .add-to-cart-btn {
+            background: #000;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 50px 0;
+            flex-wrap: wrap;
+        }
+
+        .pagination a {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid #e9ecef;
+            color: #333;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination a:hover,
+        .pagination .active {
+            background: #000;
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .product-list-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .search-form {
+                max-width: 100%;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .main-container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <section class="shop-hero">
+            <div class="hero-content">
+                <h1>HYDRATION STATION</h1>
+                <p>Premium Water Bottles for Every Lifestyle</p>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <form action="" method="POST" class="search-form">
+                <input type="text" name="query" placeholder="Search for water bottles..." class="search-input" />
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </section>
+        
+        <div class="product-list-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <!-- Categories Filter -->
+    <div class="filter-section">
+      <div class="filter-title">Categories</div>
+      <div class="category-brand-container">
+        <ul>
+          <% if (category && category.length > 0) { %>
+            <% for (let i = 0; i < category.length; i++) { %>
+              <li class="filter-item">
+                <a href="/products?category=<%= category[i]._id %>"><%= category[i].name %></a>
+              </li>
+            <% } %>
+          <% } else { %>
+            <li>No categories available</li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Brands Filter -->
+    <div class="filter-section">
+      <div class="filter-title">Brands</div>
+      <div class="category-brand-container">
+        <ul>
+          <% if (brand && brand.length > 0) { %>
+            <% for (let i = 0; i < brand.length; i++) { %>
+              <li class="filter-item">
+                <a href="/products?brand=<%= brand[i]._id %>"><%= brand[i].brandName %></a>
+              </li>
+            <% } %>
+          <% } else { %>
+            <li>No brands available</li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Price Filter -->
+    <div class="price-filter">
+      <div class="filter-title">Filter by Price</div>
+      <form id="price-filter-form">
+        <div class="price-options">
+          <a href="/products?price=under500" class="price-button">Under ₹500</a>
+          <a href="/products?price=500to1000" class="price-button">₹500 - ₹1000</a>
+          <a href="/products?price=1000to1500" class="price-button">₹1000 - ₹1500</a>
+          <a href="/products?price=above1500" class="price-button">Above ₹1500</a>
+        </div>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Product Grid -->
+  <main class="product-grid">
+    <% if (products && products.length > 0) { %>
+      <% for (let i = 0; i < products.length; i++) { %>
+        <div class="product-card">
+          <div class="product-image-container">
+            <button class="wishlist-btn" onclick="">❤️</button>
+            <a href="/product/<%= products[i]._id %>">
+              <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
+            </a>
+          </div>
+          <div class="product-info">
+            <a href="/product/<%= products[i]._id %>">
+              <h4><%=products[i].productName%></h4>
+              <p><%=products[i].description %></p>
+              <div class="product-price">
+                <span class="current-price">₹<%= products[i].price %></span>
+                <% if (products[i].originalPrice && products[i].originalPrice > products[i].price) { %>
+                  <span class="original-price">₹<%= products[i].originalPrice %></span>
+                <% } %>
+              </div>
+            </a>
+            <button class="add-to-cart-btn" onclick="">Add to Cart</button>
+          </div>
+        </div>
+      <% } %>
+    <% } else { %>
+      <p>No products found.</p>
+    <% } %>
+  </main>
+</div>
+
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <a href="#" class="active">1</a>
+            <a href="#">2</a>
+            <a href="#">3</a>
+            <a href="#">Next</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+</body>
+</html>

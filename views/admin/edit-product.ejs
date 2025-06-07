@@ -486,37 +486,31 @@
               </div>
 
               <!-- Image Upload -->
-<div class="card mb-4">
-  <div class="card-header">
-    <h4>Upload New Images</h4>
-  </div>
-  <div class="card-body">
-    <% for(let i = 1; i <= 4; i++) { %>
-    <div class="image-upload-section mb-4">
-      <label class="form-label">Image <%= i %></label>
-
-      <!-- File Input -->
-      <input
-        class="form-control"
-        type="file"
-        name="images"
-        id="input<%= i %>"
-        accept="image/png, image/jpeg, image/jpg"
-        onchange="viewImage(event, <%= i %>)"
-      />
-
-      <!-- Error Message -->
-      <div id="images-error<%= i %>" class="error-message text-danger mb-2"></div>
-
-      <!-- Cropper Container -->
-      <div class="image-cropper" id="cropperContainer<%= i %>" style="display: none;">
-        <div id="cropper<%= i %>" style="width: 100%; max-height: 300px;"></div>
-        <button type="button" id="saveButton<%= i %>" class="btn btn-primary btn-sm mt-2">Save Cropped Image</button>
-      </div>
-    </div>
-    <% } %>
-  </div>
-</div>
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h4>Upload New Images</h4>
+                </div>
+                <div class="card-body">
+                  <% for(let i = 1; i <= 4; i++) { %>
+                  <div class="image-upload-section mb-4">
+                    <label class="form-label">Image <%= i %></label>
+                    <input 
+                      class="form-control" 
+                      type="file" 
+                      name="images" 
+                      id="input<%= i %>" 
+                      accept="image/png, image/jpeg, image/jpg, image/gif"
+                      onchange="viewImage(event, <%= i %>)"
+                    />
+                    <div id="images-error<%= i %>" class="error-message text-danger mb-2"></div>
+                    <div class="image-cropper" id="cropperContainer<%= i %>" style="display: none;">
+                      <div id="cropper<%= i %>" style="width: 100%; max-height: 300px;"></div>
+                      <button type="button" id="saveButton<%= i %>" class="btn btn-primary btn-sm mt-2">Save Cropped Image</button>
+                    </div>
+                  </div>
+                  <% } %>
+                </div>
+              </div>
 
               <!-- Action Buttons -->
               <div class="action-buttons">
@@ -527,7 +521,6 @@
                   Update Product
                 </button>
               </div>
-
             </form>
           </div>
         </div>
@@ -536,8 +529,9 @@
   </section>
 
   <script>
-    // Initialize croppers object
-    window.croppers = {};
+    // Global variables to track file types
+    const fileTypes = {};
+    const croppers = {};
 
     // Handle image loading errors
     function handleImageError(img) {
@@ -686,31 +680,39 @@
 
     function viewImage(event, index) {
       const input = event.target;
-      const imgView = document.getElementById('imgView' + index);
       const cropperContainer = document.getElementById('cropperContainer' + index);
       const cropperDiv = document.getElementById('cropper' + index);
+      const saveButton = document.getElementById('saveButton' + index);
 
       if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileTypes[index] = file.type; // Store the original file type
+
+        // Check if it's a GIF - don't show cropper for GIFs
+        if (file.type === 'image/gif') {
+          cropperContainer.style.display = 'none';
+          return;
+        }
+
         const reader = new FileReader();
 
         reader.onload = function(e) {
-          if (window.croppers['cropper' + index]) {
-            window.croppers['cropper' + index].destroy();
+          // Destroy previous cropper if exists
+          if (croppers[index]) {
+            croppers[index].destroy();
           }
 
-          imgView.src = e.target.result;
-          imgView.style.display = 'block';
           cropperContainer.style.display = 'flex';
+          cropperDiv.innerHTML = '';
 
           const imageElement = document.createElement('img');
           imageElement.id = 'imageToCrop' + index;
           imageElement.src = e.target.result;
           imageElement.style.maxWidth = '100%';
-
-          cropperDiv.innerHTML = '';
           cropperDiv.appendChild(imageElement);
 
-          window.croppers['cropper' + index] = new Cropper(imageElement, {
+          // Initialize cropper
+          croppers[index] = new Cropper(imageElement, {
             aspectRatio: 1,
             viewMode: 1,
             autoCropArea: 1,
@@ -721,8 +723,9 @@
             cropBoxMovable: true
           });
 
-          document.getElementById('saveButton' + index).onclick = function() {
-            const canvas = window.croppers['cropper' + index].getCroppedCanvas({
+          // Save button handler
+          saveButton.onclick = function() {
+            const canvas = croppers[index].getCroppedCanvas({
               width: 800,
               height: 800,
               minWidth: 256,
@@ -733,6 +736,14 @@
               imageSmoothingEnabled: true,
               imageSmoothingQuality: 'high'
             });
+
+            // Determine the output format based on original file type
+            let mimeType = fileTypes[index] || 'image/jpeg';
+            let quality = 0.9;
+            
+            if (mimeType === 'image/png') {
+              quality = 1; // PNG doesn't support quality
+            }
 
             canvas.toBlob(function(blob) {
               if (!blob) {
@@ -746,17 +757,19 @@
                 return;
               }
 
-              const fileName = `cropped-image-${index}-${Date.now()}.jpg`;
+              // Create a new file with the original type
+              const fileName = `cropped-image-${index}-${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`;
               const file = new File([blob], fileName, {
-                type: 'image/jpeg',
+                type: mimeType,
                 lastModified: Date.now()
               });
 
+              // Update the file input
               const dataTransfer = new DataTransfer();
               dataTransfer.items.add(file);
               input.files = dataTransfer.files;
 
-              imgView.src = canvas.toDataURL('image/jpeg', 0.9);
+              // Hide cropper
               cropperContainer.style.display = 'none';
 
               Swal.fire({
@@ -766,11 +779,11 @@
                 showConfirmButton: false,
                 timer: 1500
               });
-            }, 'image/jpeg', 0.9);
+            }, mimeType, quality);
           };
         };
 
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
       }
     }
 
@@ -790,6 +803,7 @@
           return;
         }
 
+        // Remove empty file inputs before submission
         const inputs = document.querySelectorAll('input[name="images"]');
         inputs.forEach(input => {
           if (input.files.length === 0) {

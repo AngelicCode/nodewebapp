@@ -39,12 +39,12 @@ router.post("/editCategory/:id", adminAuth, categoryController.editCategory);
 
 // Product management
 router.get("/addProducts", adminAuth, productController.getProductAddPage);
-router.post("/addProducts", adminAuth, upload.array("images", 4), productController.addProducts);
+router.post("/addProducts", adminAuth, productController.addProducts);
 router.get("/products", adminAuth, productController.getAllProducts);
 router.post("/blockProduct", adminAuth, productController.blockProduct);
 router.post("/unblockProduct", adminAuth, productController.unblockProduct);
 router.get("/editProduct", adminAuth, productController.getEditProduct);
-router.post("/editProduct/:id", adminAuth, upload.array("images", 4), productController.editProduct);
+router.post("/editProduct/:id", adminAuth, productController.editProduct);
 router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 
 // Brand Management
