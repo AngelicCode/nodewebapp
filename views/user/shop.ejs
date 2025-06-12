@@ -354,6 +354,102 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
 
+        /* Filter Controls */
+        .filter-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .active-filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            background: #f3f4f6;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .filter-tag a {
+            color: #666;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .filter-tag a:hover {
+            color: #000;
+            transform: scale(1.2);
+        }
+
+        .clear-all-btn {
+            margin-left: 10px;
+            color: #666;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+
+        .sort-dropdown {
+            padding: 10px 15px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* No Results */
+        .no-results {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 50px 20px;
+        }
+
+        .no-results img {
+            max-width: 200px;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .no-results p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .clear-filters-btn {
+            display: inline-block;
+            padding: 10px 25px;
+            background: #000;
+            color: white;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .clear-filters-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+
         /* Pagination */
         .pagination {
             display: flex;
@@ -416,6 +512,12 @@
             .main-container {
                 padding: 20px 15px;
             }
+
+            .filter-controls {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
@@ -430,104 +532,195 @@
 
         <!-- Search Section -->
         <section class="search-section">
-            <form action="" method="POST" class="search-form">
-                <input type="text" name="query" placeholder="Search for water bottles..." class="search-input" />
+            <form action="/search" method="POST" class="search-form">
+                <input type="text" name="query" placeholder="Search for water bottles..." 
+                       value="<%= query.query || '' %>" class="search-input" />
+                
+                <% if (query.category) { %>
+                    <input type="hidden" name="category" value="<%= query.category %>">
+                <% } %>
+                <% if (query.brand) { %>
+                    <input type="hidden" name="brand" value="<%= query.brand %>">
+                <% } %>
+                <% if (query.minPrice) { %>
+                    <input type="hidden" name="minPrice" value="<%= query.minPrice %>">
+                <% } %>
+                <% if (query.maxPrice) { %>
+                    <input type="hidden" name="maxPrice" value="<%= query.maxPrice %>">
+                <% } %>
+                
                 <button type="submit" class="search-button">Search</button>
+            </form>
+        </section>
+
+        <!-- Filter Controls -->
+        <section class="filter-controls">
+            <!-- Active Filters Display -->
+            <% if (isFiltered) { %>
+                <div class="active-filters">
+                    <h4>Active Filters:</h4>
+                    <% if (query.category) { %>
+                        <span class="filter-tag">
+                            Category: <%= category.find(c => c._id.toString() === query.category).name %>
+                            <a href="/remove-filter/category">×</a>
+                        </span>
+                    <% } %>
+                    <% if (query.brand) { %>
+                        <span class="filter-tag">
+                            Brand: <%= brand.find(b => b._id.toString() === query.brand).brandName %>
+                            <a href="/remove-filter/brand">×</a>
+                        </span>
+                    <% } %>
+                    <% if (query.minPrice || query.maxPrice) { %>
+                        <span class="filter-tag">
+                            Price: ₹<%= query.minPrice || 0 %>-<%= query.maxPrice || '∞' %>
+                            <a href="/remove-filter/price">×</a>
+                        </span>
+                    <% } %>
+                    <a href="/clear-filters" class="clear-all-btn">Clear All</a>
+                </div>
+            <% } %>
+
+            <!-- Sort Dropdown -->
+            <form id="sort-form" method="POST" action="/search">
+                <input type="hidden" name="query" value="<%= query.query || '' %>">
+                <% if (query.category) { %>
+                    <input type="hidden" name="category" value="<%= query.category %>">
+                <% } %>
+                <% if (query.brand) { %>
+                    <input type="hidden" name="brand" value="<%= query.brand %>">
+                <% } %>
+                <% if (query.minPrice) { %>
+                    <input type="hidden" name="minPrice" value="<%= query.minPrice %>">
+                <% } %>
+                <% if (query.maxPrice) { %>
+                    <input type="hidden" name="maxPrice" value="<%= query.maxPrice %>">
+                <% } %>
+                
+                <select name="sort" class="sort-dropdown" onchange="this.form.submit()">
+                    <option value="newest" <%= !query.sort || query.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                    <option value="price-low-high" <%= query.sort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
+                    <option value="price-high-low" <%= query.sort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
+                    <option value="name-a-z" <%= query.sort === 'name-a-z' ? 'selected' : '' %>>Name: A-Z</option>
+                    <option value="name-z-a" <%= query.sort === 'name-z-a' ? 'selected' : '' %>>Name: Z-A</option>
+                </select>
             </form>
         </section>
         
         <div class="product-list-container">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <!-- Categories Filter -->
-    <div class="filter-section">
-      <div class="filter-title">Categories</div>
-      <div class="category-brand-container">
-        <ul>
-          <% if (category && category.length > 0) { %>
-            <% for (let i = 0; i < category.length; i++) { %>
-              <li class="filter-item">
-                <a href="/products?category=<%= category[i]._id %>"><%= category[i].name %></a>
-              </li>
-            <% } %>
-          <% } else { %>
-            <li>No categories available</li>
-          <% } %>
-        </ul>
-      </div>
-    </div>
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Categories Filter -->
+                <div class="filter-section">
+                    <div class="filter-title">Categories</div>
+                    <div class="category-brand-container">
+                        <ul>
+                            <% if (category && category.length > 0) { %>
+                                <% for (let i = 0; i < category.length; i++) { %>
+                                    <li class="filter-item">
+                                        <a href="/filter?category=<%= category[i]._id %>"><%= category[i].name %></a>
+                                    </li>
+                                <% } %>
+                            <% } else { %>
+                                <li>No categories available</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
 
-    <!-- Brands Filter -->
-    <div class="filter-section">
-      <div class="filter-title">Brands</div>
-      <div class="category-brand-container">
-        <ul>
-          <% if (brand && brand.length > 0) { %>
-            <% for (let i = 0; i < brand.length; i++) { %>
-              <li class="filter-item">
-                <a href="/products?brand=<%= brand[i]._id %>"><%= brand[i].brandName %></a>
-              </li>
-            <% } %>
-          <% } else { %>
-            <li>No brands available</li>
-          <% } %>
-        </ul>
-      </div>
-    </div>
+                <!-- Brands Filter -->
+                <div class="filter-section">
+                    <div class="filter-title">Brands</div>
+                    <div class="category-brand-container">
+                        <ul>
+                            <% if (brand && brand.length > 0) { %>
+                                <% for (let i = 0; i < brand.length; i++) { %>
+                                    <li class="filter-item">
+                                        <a href="/filter?brand=<%= brand[i]._id %>"><%= brand[i].brandName %></a>
+                                    </li>
+                                <% } %>
+                            <% } else { %>
+                                <li>No brands available</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
 
-    <!-- Price Filter -->
-    <div class="price-filter">
-      <div class="filter-title">Filter by Price</div>
-      <form id="price-filter-form">
-        <div class="price-options">
-          <a href="/products?price=under500" class="price-button">Under ₹500</a>
-          <a href="/products?price=500to1000" class="price-button">₹500 - ₹1000</a>
-          <a href="/products?price=1000to1500" class="price-button">₹1000 - ₹1500</a>
-          <a href="/products?price=above1500" class="price-button">Above ₹1500</a>
-        </div>
-      </form>
-    </div>
-  </aside>
+                <!-- Price Filter -->
+                <div class="price-filter">
+                    <div class="filter-title">Filter by Price</div>
+                    <form id="price-filter-form">
+                        <div class="price-options">
+                            <a href="/filterPrice?gt=0&lt=500" class="price-button">Under ₹500</a>
+                            <a href="/filterPrice?gt=500&lt=700" class="price-button">₹500 - ₹700</a>
+                            <a href="/filterPrice?gt=700&lt=1000" class="price-button">₹700 - ₹1000</a>
+                            <a href="/filterPrice?gt=1000" class="price-button">Above ₹1000</a>
+                        </div>
+                    </form>
+                </div>
+            </aside>
 
-  <!-- Product Grid -->
-  <main class="product-grid">
-    <% if (products && products.length > 0) { %>
-      <% for (let i = 0; i < products.length; i++) { %>
-        <div class="product-card">
-          <div class="product-image-container">
-            <button class="wishlist-btn" onclick="">❤️</button>
-            <a href="/product/<%= products[i]._id %>">
-              <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
-            </a>
-          </div>
-          <div class="product-info">
-            <a href="/product/<%= products[i]._id %>">
-              <h4><%=products[i].productName%></h4>
-              <p><%=products[i].description %></p>
-              <div class="product-price">
-                <span class="current-price">₹<%= products[i].price %></span>
-                <% if (products[i].originalPrice && products[i].originalPrice > products[i].price) { %>
-                  <span class="original-price">₹<%= products[i].originalPrice %></span>
+            <!-- Product Grid -->
+            <main class="product-grid">
+                <% if (products && products.length > 0) { %>
+                    <% for (let i = 0; i < products.length; i++) { %>
+                        <div class="product-card">
+                            <div class="product-image-container">
+                                <button class="wishlist-btn" onclick="">❤️</button>
+                                <a href="/product/<%= products[i]._id %>">
+                                    <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
+                                </a>
+                            </div>
+                            <div class="product-info">
+                                <a href="/product/<%= products[i]._id %>">
+                                    <h4><%=products[i].productName%></h4>
+                                    <p>Brand: <%= products[i].brand.brandName %></p>
+
+                                    <p>
+                                    Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
+                                    <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                                        <span class="text-muted" style="opacity: 0.5;">
+                                        <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+                                        </span>
+                                    <% } %>
+                                    </p>
+                                </a>
+                                <button class="add-to-cart-btn" onclick="">Add to Cart</button>
+                            </div>
+                        </div>
+                    <% } %>
+                <% } else { %>
+                    <div class="no-results">
+                        <img src="/img/no-products-found.jpg" alt="No products found">
+                        <h3>No items found <%= isSearch ? `for "${searchTerm}"` : '' %></h3>
+                        <% if (isFiltered) { %>
+                            <p>Try adjusting your filters or search term</p>
+                            <a href="/clear-filters" class="clear-filters-btn">Clear all filters</a>
+                        <% } else { %>
+                            <p>We couldn't find any matching products</p>
+                        <% } %>
+                    </div>
                 <% } %>
-              </div>
-            </a>
-            <button class="add-to-cart-btn" onclick="">Add to Cart</button>
-          </div>
+            </main>
         </div>
-      <% } %>
-    <% } else { %>
-      <p>No products found.</p>
-    <% } %>
-  </main>
-</div>
-
 
         <!-- Pagination -->
         <div class="pagination">
-            <a href="#" class="active">1</a>
-            <a href="#">2</a>
-            <a href="#">3</a>
-            <a href="#">Next</a>
+            <% const queryString = Object.entries(query).map(([key, val]) => {
+                if (key !== 'page') return `${key}=${encodeURIComponent(val)}`;
+            }).filter(Boolean).join('&'); %>
+
+            <% if (currentPage > 1) { %>
+                <a class="btn" href="/shop?page=<%= currentPage - 1 %><%= queryString ? '&' + queryString : '' %>">Prev</a>
+            <% } %>
+
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/shop?page=<%= i %><%= queryString ? '&' + queryString : '' %>"><%= i %></a>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+                <a class="btn" href="/shop?page=<%= currentPage + 1 %><%= queryString ? '&' + queryString : '' %>">Next</a>
+            <% } %>
         </div>
     </div>
 
