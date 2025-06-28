@@ -49,7 +49,7 @@ router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 
 // Brand Management
 router.get("/brands", adminAuth, brandController.getBrandPage);
-router.post("/addBrand", adminAuth, upload.single("image"), brandController.addBrand);
+router.post("/addBrand", adminAuth, upload.single("logo"), brandController.addBrand);
 router.post("/blockBrand", adminAuth, brandController.blockBrand);
 router.post("/unBlockBrand", adminAuth, brandController.unBlockBrand);
 router.post("/deleteBrand", adminAuth, brandController.deleteBrand);

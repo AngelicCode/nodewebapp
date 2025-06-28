@@ -3,8 +3,12 @@ const router = express.Router();
 const userController = require("../controllers/user/userController");
 const passport = require("passport");
 const userAuth = require("../middlewares/auth").userAuth
+const productController = require("../controllers/user/productController");
 
 router.get("/pageNotFound",userController.pageNotFound);
+
+//Product Management
+router.get("/productDetails",userAuth,productController.productDetails);
 
 //Home page & Shopping page
 router.get("/",userController.loadHomepage);

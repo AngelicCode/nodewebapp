@@ -1,18 +1,26 @@
-
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 const tempUploadDir = path.resolve(__dirname, '..', 'public', 'uploads', 'temp');
+const productImagesDir = path.resolve(__dirname, '..', 'public', 'uploads', 'product-images');
 
-if (!fs.existsSync(tempUploadDir)) {
-  fs.mkdirSync(tempUploadDir, { recursive: true });
-  fs.chmodSync(tempUploadDir, 0o755);
-}
+// Create directories if they don't exist
+[tempUploadDir, productImagesDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.chmodSync(dir, 0o755);
+  }
+});
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, tempUploadDir);
+    // Check if the file is a logo (you might need to adjust this condition based on your field name)
+    if (file.fieldname === 'logo' || file.fieldname.includes('logo')) {
+      cb(null, productImagesDir);
+    } else {
+      cb(null, tempUploadDir);
+    }
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -22,7 +30,10 @@ const storage = multer.diskStorage({
       'image/gif': '.gif'
     };
     const ext = mimeToExt[file.mimetype] || '.jpg';
-    cb(null, `temp-${uniqueSuffix}${ext}`);
+    
+    // Use different prefix for logos if needed
+    const prefix = (file.fieldname === 'logo' || file.fieldname.includes('logo')) ? 'logo-' : 'temp-';
+    cb(null, `${prefix}${uniqueSuffix}${ext}`);
   }
 });
 

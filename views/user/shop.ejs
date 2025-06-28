@@ -246,6 +246,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             position: relative;
+            width: 320px;
         }
 
         .product-card:hover {
@@ -667,7 +668,7 @@
                         <div class="product-card">
                             <div class="product-image-container">
                                 <button class="wishlist-btn" onclick="">❤️</button>
-                                <a href="/product/<%= products[i]._id %>">
+                                <a href="/productDetails?id=<%= products[i]._id %>">
                                     <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
                                 </a>
                             </div>
