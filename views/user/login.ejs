@@ -281,6 +281,17 @@
         animation-delay: 2s;
       }
 
+      .forgot-password-link{
+        font-size:0.875rem;
+        color:#007bff;
+        text-decoration:none;
+      }
+
+      .forgot-password-link:hover{
+        color:#0056b3;
+        text-decoration:underline;
+      }
+
       @keyframes drop {
         0% {
           transform: translateY(0) scale(1);
@@ -334,6 +345,11 @@
           <span class="toggle-password" onclick="togglePassword()">
             <i id="eye-icon" class="fas fa-eye"></i>
           </span>
+        </div>
+
+        <div class="form-group d-flex justify-content-end">
+          <a href="/forgot-password" class="forgot-password-link ms-auto">Forgot Password ?</a>
+
         </div>
 
         <%if(locals.message && message.length>0){%>

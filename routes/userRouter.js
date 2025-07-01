@@ -4,6 +4,7 @@ const userController = require("../controllers/user/userController");
 const passport = require("passport");
 const userAuth = require("../middlewares/auth").userAuth
 const productController = require("../controllers/user/productController");
+const profileController = require("../controllers/user/profileController");
 
 router.get("/pageNotFound",userController.pageNotFound);
 
@@ -23,6 +24,9 @@ router.get('/clear-filters', userAuth, (req, res) => {
     res.redirect('/shop');
 });
 
+//Profile Management
+router.get("/forgot-password",profileController.getForgotPassPage);
+router.post("/forgot-email-valid",profileController.forgotEmailValid);
 
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);
