@@ -3,6 +3,8 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 
+// const { resendOtp } = require("./userController");
+
 
 function generateOtp(){
   const digits = "1234567890";
@@ -45,6 +47,15 @@ const sendVerificationEmail = async (email,otp)=>{
   }
 }
 
+const securePassword = async(password)=>{
+try {
+  const passwordHash = await bcrypt.hash(password,10);
+  return passwordHash;
+} catch (error) {
+  console.error("Error in hashing password:",error)
+}
+}
+
 const getForgotPassPage = async (req,res)=>{
   try {
     res.render("forgot-password")
@@ -79,6 +90,63 @@ const forgotEmailValid = async (req,res)=>{
   }
 }
 
+const verifyForgotPassOtp = async (req,res)=>{
+  try {
+    const enteredOtp = req.body.otp;
+    if(enteredOtp === req.session.userOtp){
+      res.json({success:true,redirectUrl:"/reset-password"});
+
+    }else{
+      res.json({success:false,message:"OTP not matching"});
+    }
+
+  } catch (error) {
+    res.status(500).json({success:false,message:"An error occured. Please try again"});
+  }
+}
+
+  const getResetPassPage = async (req,res)=>{
+    try {
+      res.render("reset-password");
+    } catch (error) {
+      res.redirect("/pageNotFound");
+    }
+  }
+
+  const resendOtp = async(req,res)=>{
+    try {
+      const otp = generateOtp();
+      req.session.userOtp = otp;
+      const email = req.session.email;
+      console.log("Resending OTP to email:",email);
+      const emailSent = await sendVerificationEmail(email,otp);
+      if(emailSent){
+        console.log("Resend OTP:",otp);
+        res.status(200).json({success:true,message:"Resend OTP Successfull"})
+      }
+    } catch (error) {
+      console.error("Error in resend OTP:",error);
+      res.status(500).json({success:false,message:"Internal Server Error"});
+    }
+  }
+
+  const postNewPassword = async(req,res)=>{
+    try {
+      const {newPass1, newPass2} = req.body;
+      const email= req.session.email;
+      if(newPass1 === newPass2){
+        const passwordHash = await securePassword(newPass1);
+        await User.updateOne({email:email},{$set:{password:passwordHash}}
+        )
+        res.redirect("/login");
+      }else{
+        res.render("reset-password",{meassage:"Passwords do not match"});
+      }
+    } catch (error) {
+      res.redirect("/pageNotFound");
+    }
+  }
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,
 }
