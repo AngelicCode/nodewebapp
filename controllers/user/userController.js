@@ -86,7 +86,7 @@ function generateOtp(){
 async function sendVerificationEmail(email,otp) {
   try {
 
-    console.log("Sending to:", email);  
+    console.log("Sending to:", email);
     console.log("OTP to send:", otp);
     
     const transporter = nodemailer.createTransport({

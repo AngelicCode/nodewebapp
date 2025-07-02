@@ -2,18 +2,18 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user/userController");
 const passport = require("passport");
-const userAuth = require("../middlewares/auth").userAuth
+const {userAuth,isBlocked} = require("../middlewares/auth");
 const productController = require("../controllers/user/productController");
 const profileController = require("../controllers/user/profileController");
 
 router.get("/pageNotFound",userController.pageNotFound);
 
 //Product Management
-router.get("/productDetails",userAuth,productController.productDetails);
+router.get("/productDetails",isBlocked,productController.productDetails);
 
 //Home page & Shopping page
 router.get("/",userController.loadHomepage);
-router.get("/shop",userAuth,userController.loadShoppingPage);
+router.get("/shop",isBlocked,userController.loadShoppingPage);
 router.get("/filter",userAuth,userController.filterProduct);
 router.get("/filterPrice",userAuth,userController.filterByPrice);
 router.post("/search",userAuth,userController.searchProducts);

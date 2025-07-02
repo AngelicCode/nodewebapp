@@ -27,4 +27,5 @@ const productDetails = async (req, res) => {
       
       module.exports={   
         productDetails, 
-      }
+      
+    }
