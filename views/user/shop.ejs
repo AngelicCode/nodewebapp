@@ -396,11 +396,14 @@
             transform: scale(1.2);
         }
 
-        .clear-all-btn {
-            margin-left: 10px;
-            color: #666;
-            text-decoration: underline;
-            font-size: 14px;
+        .clear-filters-btn1 {
+            display: inline-block;
+            padding: 6px 25px;
+            background: rgb(229, 245, 242);
+            color: #000;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s;
         }
 
         .sort-dropdown {
@@ -533,25 +536,11 @@
 
         <!-- Search Section -->
         <section class="search-section">
-            <form action="/search" method="POST" class="search-form">
-                <input type="text" name="query" placeholder="Search for water bottles..." 
-                       value="<%= query.query || '' %>" class="search-input" />
-                
-                <% if (query.category) { %>
-                    <input type="hidden" name="category" value="<%= query.category %>">
-                <% } %>
-                <% if (query.brand) { %>
-                    <input type="hidden" name="brand" value="<%= query.brand %>">
-                <% } %>
-                <% if (query.minPrice) { %>
-                    <input type="hidden" name="minPrice" value="<%= query.minPrice %>">
-                <% } %>
-                <% if (query.maxPrice) { %>
-                    <input type="hidden" name="maxPrice" value="<%= query.maxPrice %>">
-                <% } %>
-                
-                <button type="submit" class="search-button">Search</button>
-            </form>
+            <form action="/shop" method="GET" class="search-form">
+  <input type="text" name="search" placeholder="Search for water bottles..." 
+         value="<%= query.search || '' %>" class="search-input" />
+  <button type="submit" class="search-button">Search</button>
+</form>
         </section>
 
         <!-- Filter Controls -->
@@ -563,49 +552,49 @@
                     <% if (query.category) { %>
                         <span class="filter-tag">
                             Category: <%= category.find(c => c._id.toString() === query.category).name %>
-                            <a href="/remove-filter/category">×</a>
+                            <!-- <a href="/remove-filter/category">×</a> -->
                         </span>
                     <% } %>
                     <% if (query.brand) { %>
                         <span class="filter-tag">
                             Brand: <%= brand.find(b => b._id.toString() === query.brand).brandName %>
-                            <a href="/remove-filter/brand">×</a>
+                            <!-- <a href="/remove-filter/brand">×</a> -->
                         </span>
                     <% } %>
                     <% if (query.minPrice || query.maxPrice) { %>
                         <span class="filter-tag">
                             Price: ₹<%= query.minPrice || 0 %>-<%= query.maxPrice || '∞' %>
-                            <a href="/remove-filter/price">×</a>
+                            <!-- <a href="/remove-filter/price">×</a> -->
                         </span>
                     <% } %>
-                    <a href="/clear-filters" class="clear-all-btn">Clear All</a>
+                    <a href="/clear-filters" class="clear-filters-btn1">Clear all filters</a>
                 </div>
             <% } %>
 
             <!-- Sort Dropdown -->
-            <form id="sort-form" method="POST" action="/search">
-                <input type="hidden" name="query" value="<%= query.query || '' %>">
-                <% if (query.category) { %>
-                    <input type="hidden" name="category" value="<%= query.category %>">
-                <% } %>
-                <% if (query.brand) { %>
-                    <input type="hidden" name="brand" value="<%= query.brand %>">
-                <% } %>
-                <% if (query.minPrice) { %>
-                    <input type="hidden" name="minPrice" value="<%= query.minPrice %>">
-                <% } %>
-                <% if (query.maxPrice) { %>
-                    <input type="hidden" name="maxPrice" value="<%= query.maxPrice %>">
-                <% } %>
-                
-                <select name="sort" class="sort-dropdown" onchange="this.form.submit()">
-                    <option value="newest" <%= !query.sort || query.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-                    <option value="price-low-high" <%= query.sort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
-                    <option value="price-high-low" <%= query.sort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
-                    <option value="name-a-z" <%= query.sort === 'name-a-z' ? 'selected' : '' %>>Name: A-Z</option>
-                    <option value="name-z-a" <%= query.sort === 'name-z-a' ? 'selected' : '' %>>Name: Z-A</option>
-                </select>
-            </form>
+            <form id="sort-form" method="GET" action="/shop">
+  <input type="hidden" name="search" value="<%= query.search || '' %>">
+  <% if (query.category && query.category !== 'undefined') { %>
+    <input type="hidden" name="category" value="<%= query.category %>">
+  <% } %>
+  <% if (query.brand && query.brand !== 'undefined') { %>
+    <input type="hidden" name="brand" value="<%= query.brand %>">
+  <% } %>
+  <% if (query.minPrice && query.minPrice !== 'undefined') { %>
+    <input type="hidden" name="minPrice" value="<%= query.minPrice %>">
+  <% } %>
+  <% if (query.maxPrice && query.maxPrice !== 'undefined') { %>
+    <input type="hidden" name="maxPrice" value="<%= query.maxPrice %>">
+  <% } %>
+  
+  <select name="sort" class="sort-dropdown" onchange="this.form.submit()">
+    <option value="newest" <%= !query.sort || query.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+    <option value="price-low-high" <%= query.sort === 'price-low-high' ? 'selected' : '' %>>Price: Low to High</option>
+    <option value="price-high-low" <%= query.sort === 'price-high-low' ? 'selected' : '' %>>Price: High to Low</option>
+    <option value="name-a-z" <%= query.sort === 'name-a-z' ? 'selected' : '' %>>Name: A-Z</option>
+    <option value="name-z-a" <%= query.sort === 'name-z-a' ? 'selected' : '' %>>Name: Z-A</option>
+  </select>
+</form>
         </section>
         
         <div class="product-list-container">
@@ -616,15 +605,25 @@
                     <div class="filter-title">Categories</div>
                     <div class="category-brand-container">
                         <ul>
-                            <% if (category && category.length > 0) { %>
-                                <% for (let i = 0; i < category.length; i++) { %>
-                                    <li class="filter-item">
-                                        <a href="/filter?category=<%= category[i]._id %>"><%= category[i].name %></a>
-                                    </li>
-                                <% } %>
-                            <% } else { %>
-                                <li>No categories available</li>
-                            <% } %>
+                            <!-- Fixed Category Links -->
+<% if (category && category.length > 0) { %>
+  <% for (let i = 0; i < category.length; i++) { %>
+    <li class="filter-item">
+      <a href="/shop?<%= new URLSearchParams({
+          ...(query.search && {search: query.search}),
+          ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+          ...(query.minPrice && query.minPrice !== 'undefined' && {minPrice: query.minPrice}),
+          ...(query.maxPrice && query.maxPrice !== 'undefined' && {maxPrice: query.maxPrice}),
+          ...(query.sort && {sort: query.sort}),
+          category: category[i]._id 
+        }).toString() %>">
+        <%= category[i].name %>
+      </a>
+    </li>
+  <% } %>
+<% } else { %>
+  <li>No categories available</li>
+<% } %>
                         </ul>
                     </div>
                 </div>
@@ -634,15 +633,25 @@
                     <div class="filter-title">Brands</div>
                     <div class="category-brand-container">
                         <ul>
-                            <% if (brand && brand.length > 0) { %>
-                                <% for (let i = 0; i < brand.length; i++) { %>
-                                    <li class="filter-item">
-                                        <a href="/filter?brand=<%= brand[i]._id %>"><%= brand[i].brandName %></a>
-                                    </li>
-                                <% } %>
-                            <% } else { %>
-                                <li>No brands available</li>
-                            <% } %>
+                            <!-- Fixed Brand Links -->
+<% if (brand && brand.length > 0) { %>
+  <% for (let i = 0; i < brand.length; i++) { %>
+    <li class="filter-item">
+      <a href="/shop?<%= new URLSearchParams({
+          ...(query.search && {search: query.search}),
+          ...(query.category && query.category !== 'undefined' && {category: query.category}),
+          ...(query.minPrice && query.minPrice !== 'undefined' && {minPrice: query.minPrice}),
+          ...(query.maxPrice && query.maxPrice !== 'undefined' && {maxPrice: query.maxPrice}),
+          ...(query.sort && {sort: query.sort}),
+          brand: brand[i]._id 
+        }).toString() %>">
+        <%= brand[i].brandName %>
+      </a>
+    </li>
+  <% } %>
+<% } else { %>
+  <li>No brands available</li>
+<% } %>
                         </ul>
                     </div>
                 </div>
@@ -651,12 +660,47 @@
                 <div class="price-filter">
                     <div class="filter-title">Filter by Price</div>
                     <form id="price-filter-form">
-                        <div class="price-options">
-                            <a href="/filterPrice?gt=0&lt=500" class="price-button">Under ₹500</a>
-                            <a href="/filterPrice?gt=500&lt=700" class="price-button">₹500 - ₹700</a>
-                            <a href="/filterPrice?gt=700&lt=1000" class="price-button">₹700 - ₹1000</a>
-                            <a href="/filterPrice?gt=1000" class="price-button">Above ₹1000</a>
-                        </div>
+                        <!-- Fixed Price Filter Links -->
+<div class="price-options">
+  <a href="/shop?<%= new URLSearchParams({
+      ...(query.search && {search: query.search}),
+      ...(query.category && query.category !== 'undefined' && {category: query.category}),
+      ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+      ...(query.sort && {sort: query.sort}),
+      minPrice: 0, 
+      maxPrice: 500 
+    }).toString() %>" 
+     class="price-button">Under ₹500</a>
+  
+  <a href="/shop?<%= new URLSearchParams({
+      ...(query.search && {search: query.search}),
+      ...(query.category && query.category !== 'undefined' && {category: query.category}),
+      ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+      ...(query.sort && {sort: query.sort}),
+      minPrice: 500, 
+      maxPrice: 700 
+    }).toString() %>" 
+     class="price-button">₹500 - ₹700</a>
+  
+  <a href="/shop?<%= new URLSearchParams({
+      ...(query.search && {search: query.search}),
+      ...(query.category && query.category !== 'undefined' && {category: query.category}),
+      ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+      ...(query.sort && {sort: query.sort}),
+      minPrice: 700, 
+      maxPrice: 1000 
+    }).toString() %>" 
+     class="price-button">₹700 - ₹1000</a>
+  
+  <a href="/shop?<%= new URLSearchParams({
+      ...(query.search && {search: query.search}),
+      ...(query.category && query.category !== 'undefined' && {category: query.category}),
+      ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+      ...(query.sort && {sort: query.sort}),
+      minPrice: 1000 
+    }).toString() %>" 
+     class="price-button">Above ₹1000</a>
+</div>
                     </form>
                 </div>
             </aside>

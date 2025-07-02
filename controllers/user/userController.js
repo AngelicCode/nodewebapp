@@ -299,114 +299,8 @@ const logout = async (req,res)=>{
 const loadShoppingPage = async (req, res) => {
   try {
     const user = req.session.user;
-    
-    // Get all active categories and brands for filters
-    const [categories, brands] = await Promise.all([
-      Category.find({ isListed: true }),
-      Brand.find({ isBlocked: false })
-    ]);
 
-    // Pagination and filtering setup
-    const page = parseInt(req.query.page) || 1;
-    const limit = 12; // Products per page
-    const skip = (page - 1) * limit;
-
-    // Build query with filters
-    const query = { 
-      isBlocked: false,
-      quantity: { $gt: 0 }
-    };
-
-    // Apply search filter
-    if (req.query.search) {
-      query.$or = [
-        { productName: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } }
-      ];
-    }
-
-    // Apply category filter (from query or session)
-    const categoryFilter = req.query.category || req.session.filterCategory;
-    if (categoryFilter) {
-      query.category = categoryFilter;
-    }
-
-    // Apply brand filter (from query or session)
-    const brandFilter = req.query.brand || req.session.filterBrand;
-    if (brandFilter) {
-      query.brand = brandFilter;
-    }
-
-    // Apply price range filter (from query or session)
-    const priceFilter = {
-      $gte: parseFloat(req.query.minPrice) || 
-            parseFloat(req.session.priceFilter?.min) || 0,
-      $lte: parseFloat(req.query.maxPrice) || 
-            parseFloat(req.session.priceFilter?.max) || 999999
-    };
-    query.salePrice = priceFilter;
-
-    // Get products with animations-ready structure
-    const products = await Product.find(query)
-      .populate('category brand')
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    // Add animation classes to each product
-    products.forEach((product, index) => {
-      product.animationClass = "product-item";
-      product.delay = index * 0.1; // More consistent staggered animation
-    });
-
-    const totalProducts = await Product.countDocuments(query);
-    const totalPages = Math.ceil(totalProducts / limit);
-
-    // Check if any filters are active
-    const isFiltered = !!(categoryFilter || brandFilter || 
-                         req.query.minPrice || req.query.maxPrice ||
-                         req.session.priceFilter);
-
-    res.render("shop", {
-      user: user,
-      products: products,
-      category: categories,
-      brand: brands,
-      totalProducts: totalProducts,
-      currentPage: page,
-      totalPages: totalPages,
-      query: {
-        ...req.query,
-        category: categoryFilter,
-        brand: brandFilter,
-        minPrice: req.query.minPrice || req.session.priceFilter?.min,
-        maxPrice: req.query.maxPrice || req.session.priceFilter?.max
-      },
-      isSearch: !!req.query.search,
-      isFiltered: isFiltered, // This fixes your original error
-      searchTerm: req.query.search || '',
-      // GSAP animation settings
-      animationSettings: {
-        stagger: 0.1,
-        duration: 0.8,
-        ease: "power2.out"
-      }
-    });
-
-  } catch (error) {
-    console.error("Error loading shopping page:", error);
-    res.status(500).render("error", { 
-      message: "Couldn't load products",
-      user: req.session.user 
-    });
-  }
-};
-
-const filterProduct = async (req, res) => {
-  try {
-    const user = req.session.user;
-
+    // Fetch categories and brands for filter sidebar
     const [categories, brands] = await Promise.all([
       Category.find({ isListed: true }),
       Brand.find({ isBlocked: false })
@@ -421,238 +315,139 @@ const filterProduct = async (req, res) => {
       quantity: { $gt: 0 }
     };
 
-    if (req.query.search && req.query.search.trim() !== "") {
-      const searchRegex = new RegExp(req.query.search.trim(), "i");
+    // Fix: Handle search term safely - check if req.body exists before accessing it
+    const searchTerm = req.query.search || (req.body && req.body.search) || '';
+    if (searchTerm) {
       query.$or = [
-        { productName: { $regex: searchRegex } },
-        { description: { $regex: searchRegex } }
+        { productName: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } }
       ];
     }
 
-    // Category filter
-    if (req.query.category && req.query.category !== "all") {
-      query.category = req.query.category;
+    // Fix: Handle category filter safely - filter out invalid values
+    const categoryFilter = req.query.category || (req.body && req.body.category) || req.session.filterCategory;
+    if (categoryFilter && categoryFilter !== 'all' && categoryFilter !== 'undefined' && categoryFilter !== '') {
+      query.category = categoryFilter;
+      req.session.filterCategory = categoryFilter;
+    } else if (categoryFilter === 'all') {
+      delete req.session.filterCategory;
     }
 
-    // Brand filter
-    if (req.query.brand && req.query.brand !== "all") {
-      query.brand = req.query.brand;
+    // Fix: Handle brand filter safely - filter out invalid values
+    const brandFilter = req.query.brand || (req.body && req.body.brand) || req.session.filterBrand;
+    if (brandFilter && brandFilter !== 'all' && brandFilter !== 'undefined' && brandFilter !== '') {
+      query.brand = brandFilter;
+      req.session.filterBrand = brandFilter;
+    } else if (brandFilter === 'all') {
+      delete req.session.filterBrand;
     }
 
-    // Price filter
-    const minPrice = parseFloat(req.query.minPrice) || 0;
-    const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_SAFE_INTEGER;
-    query.salePrice = { $gte: minPrice, $lte: maxPrice };
+    // Fix: Handle price filters safely
+    const minPrice = parseFloat(req.query.minPrice || (req.body && req.body.minPrice) || '');
+    const maxPrice = parseFloat(req.query.maxPrice || (req.body && req.body.maxPrice) || '');
 
-    // Count total products for pagination
+    if (!isNaN(minPrice) || !isNaN(maxPrice)) {
+      query.salePrice = {
+        $gte: !isNaN(minPrice) ? minPrice : 0,
+        $lte: !isNaN(maxPrice) ? maxPrice : Number.MAX_SAFE_INTEGER
+      };
+      req.session.priceFilter = {
+        min: !isNaN(minPrice) ? minPrice : undefined,
+        max: !isNaN(maxPrice) ? maxPrice : undefined
+      };
+    } else if (req.session.priceFilter) {
+      query.salePrice = {
+        $gte: req.session.priceFilter.min || 0,
+        $lte: req.session.priceFilter.max || Number.MAX_SAFE_INTEGER
+      };
+    }
+
+    // Fix: Handle sort option safely
+    const sortOption = req.query.sort || (req.body && req.body.sort) || 'newest';
+    let sortCriteria = { createdAt: -1 };
+
+    switch (sortOption) {
+      case 'price-low-high':
+        sortCriteria = { salePrice: 1 };
+        break;
+      case 'price-high-low':
+        sortCriteria = { salePrice: -1 };
+        break;
+      case 'name-a-z':
+        sortCriteria = { productName: 1 };
+        break;
+      case 'name-z-a':
+        sortCriteria = { productName: -1 };
+        break;
+    }
+
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    // Fetch matching products
     const products = await Product.find(query)
-      .populate("category brand")
-      .sort({ createdAt: -1 })
+      .populate('category brand')
+      .sort(sortCriteria)
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Add animation props to products
-    products.forEach(product => {
+    products.forEach((product, index) => {
       product.animationClass = "product-item";
-      product.delay = Math.random() * 0.5;
+      product.delay = index * 0.1;
     });
 
-res.render("shop", {
-  user,
-  products,
-  category: categories,
-  brand: brands,
-  totalProducts,
-  currentPage: page,
-  totalPages,
-  query: req.query,
-  isFiltered: !!(req.query.category || req.query.brand || req.query.minPrice || req.query.maxPrice),
-  isSearch: !!req.query.search, 
-  searchTerm: req.query.search || '', 
-  animationSettings: {
-    stagger: 0.1,
-    duration: 0.8,
-    ease: "power2.out"
-  }
-});
+    const isFiltered = !!(categoryFilter || brandFilter || minPrice || maxPrice || req.session.priceFilter);
 
-  } catch (error) {
-    console.error("Error filtering products:", error);
-    res.status(500).render("error", {
-      message: "Unable to filter products",
-      user: req.session.user
-    });
-  }
-};
-
-const filterByPrice = async (req, res) => {
-  try {
-    const { gt, lt } = req.query;
-    const user = req.session.user;
-    const userData = await User.findOne({ _id: user });
-
-    let priceFilter = {};
-    
-    if (gt !== undefined && lt !== undefined) {
-      priceFilter = { 
-        salePrice: { 
-          $gt: parseInt(gt), 
-          $lt: parseInt(lt) 
-        } 
-      };
-    } else if (gt !== undefined) {
-      priceFilter = { salePrice: { $gt: parseInt(gt) } };
-    } else if (lt !== undefined) {
-      priceFilter = { salePrice: { $lt: parseInt(lt) } };
-    }
-
-    const filteredProducts = await Product.find({
-      isBlocked: false,
-      ...priceFilter
-    }).populate('brand').populate('category');
-
-    const categories = await Category.find({ isBlocked: false });
-    const brands = await Brand.find({ isBlocked: false });
+    const viewQuery = {
+      search: searchTerm,
+      category: categoryFilter,
+      brand: brandFilter,
+      minPrice: minPrice || (req.session.priceFilter && req.session.priceFilter.min),
+      maxPrice: maxPrice || (req.session.priceFilter && req.session.priceFilter.max),
+      sort: sortOption
+    };
 
     res.render("shop", {
-      user: userData,
-      products: filteredProducts,
+      user,
+      products,
       category: categories,
       brand: brands,
-      totalPages: 1,
-      currentPage: 1,
-      query: req.query,
-      isFiltered: !!(gt || lt), 
-      isSearch: false, 
-      searchTerm: '' 
+      totalProducts,
+      currentPage: page,
+      totalPages,
+      query: viewQuery,
+      isSearch: !!searchTerm,
+      isFiltered,
+      searchTerm: searchTerm || '',
+      animationSettings: {
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "power2.out"
+      }
     });
 
-  } catch (err) {
-    console.error("Error filtering by price:", err);
-    res.status(500).send("Internal Server Error");
+  } catch (error) {
+    console.error("Error loading shopping page:", error);
+
+    res.status(500).render("shop", {
+      message: "Couldn't load products",
+      user: req.session.user,
+      products: [],
+      category: [],
+      brand: [],
+      totalProducts: 0,
+      currentPage: 1,
+      totalPages: 1,
+      query: req.query || {},
+      isSearch: false,
+      isFiltered: false,
+      searchTerm: '',
+      animationSettings: {
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "power2.out"
+      }
+    });
   }
 };
-
-const searchProducts = async (req, res) => {
-    try {
-        const { query: search, sort, minPrice, maxPrice, category, brand } = req.body;
-        const user = req.session.user;
-        const userData = await User.findOne({ _id: user });
-
-        // Get all listed categories and brands for sidebar
-        const categories = await Category.find({ isListed: true });
-        const brands = await Brand.find({ isListed: true });
-
-        // Base query conditions
-        const queryConditions = {
-            $and: [
-                { isBlocked: false },
-                { quantity: { $gt: 0 } },
-                { 
-                    $or: [
-                        { productName: { $regex: search, $options: 'i' } },
-                        { description: { $regex: search, $options: 'i' } }
-                    ]
-                }
-            ]
-        };
-
-        // Apply category filter if exists in session or request
-        if (req.session.filterCategory || category) {
-            const filterCategory = category || req.session.filterCategory;
-            queryConditions.$and.push({ category: filterCategory });
-        } else {
-            // Only apply category filter if not already filtered
-            const categoryIds = categories.map(cat => cat._id.toString());
-            queryConditions.$and.push({ category: { $in: categoryIds } });
-        }
-
-        // Apply brand filter if exists in session or request
-        if (req.session.filterBrand || brand) {
-            const filterBrand = brand || req.session.filterBrand;
-            queryConditions.$and.push({ brand: filterBrand });
-        }
-
-        // Apply price range filter
-        if (req.session.priceFilter || minPrice || maxPrice) {
-            const priceFilter = {
-                salePrice: {
-                    ...(minPrice ? { $gte: parseFloat(minPrice) } : 
-                        req.session.priceFilter?.min ? { $gte: req.session.priceFilter.min } : {}),
-                    ...(maxPrice ? { $lte: parseFloat(maxPrice) } : 
-                        req.session.priceFilter?.max ? { $lte: req.session.priceFilter.max } : {})
-                }
-            };
-            queryConditions.$and.push(priceFilter);
-        }
-
-        // Sort options
-        let sortOption = { createdOn: -1 }; // Default
-        if (sort === 'price-low-high') sortOption = { salePrice: 1 };
-        else if (sort === 'price-high-low') sortOption = { salePrice: -1 };
-        else if (sort === 'name-a-z') sortOption = { productName: 1 };
-        else if (sort === 'name-z-a') sortOption = { productName: -1 };
-
-        // Execute search
-        const searchResult = await Product.find(queryConditions)
-            .populate('brand')
-            .populate('category')
-            .sort(sortOption);
-
-        // Pagination
-        const itemsPerPage = 10;
-        const currentPage = parseInt(req.query.page) || 1;
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const totalPages = Math.ceil(searchResult.length / itemsPerPage);
-        const currentProducts = searchResult.slice(startIndex, endIndex);
-
-        // Store active filters in session
-        if (category) req.session.filterCategory = category;
-        if (brand) req.session.filterBrand = brand;
-        if (minPrice || maxPrice) {
-            req.session.priceFilter = {
-                min: minPrice || req.session.priceFilter?.min,
-                max: maxPrice || req.session.priceFilter?.max
-            };
-        }
-
-        res.render("shop", {
-            user: userData,
-            products: currentProducts.length > 0 ? currentProducts : null,
-            category: categories,
-            brand: brands,
-            totalPages,
-            currentPage,
-            count: searchResult.length,
-            query: { 
-              ...req.query,
-                query: search,
-                sort,
-                minPrice: minPrice || req.session.priceFilter?.min,
-                maxPrice: maxPrice || req.session.priceFilter?.max,
-                category: category || req.session.filterCategory,
-                brand: brand || req.session.filterBrand
-            },
-            isSearch: true,
-            searchTerm: search,
-            currentSort: sort || 'newest',
-            isFiltered: !!(req.session.filterCategory || req.session.filterBrand || req.session.priceFilter),
-    
-        });
-
-    } catch (error) {
-        console.error("Search error:", error);
-        res.status(500).render('error', {
-            message: "Search failed",
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-};
-
-module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,filterProduct,filterByPrice,searchProducts,}
+module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,}
