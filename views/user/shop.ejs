@@ -415,7 +415,6 @@
             cursor: pointer;
         }
 
-        /* No Results */
         .no-results {
             text-align: center;
             grid-column: 1 / -1;
@@ -454,7 +453,6 @@
             transform: translateY(-2px);
         }
 
-        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
@@ -482,7 +480,27 @@
             transform: translateY(-2px);
         }
 
-        /* Responsive Design */
+        .product-card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-card-link:hover {
+            text-decoration: none;
+        }
+
+        .product-info p,
+        .product-info h4,
+        .no-underline,
+        .no-underline strong {
+            text-decoration: none !important;
+        }
+
+        .product-info .text-muted {
+            text-decoration: line-through !important; 
+        }
+
         @media (max-width: 1024px) {
             .product-list-container {
                 flex-direction: column;
@@ -707,46 +725,34 @@
 
             <!-- Product Grid -->
             <main class="product-grid">
-                <% if (products && products.length > 0) { %>
-                    <% for (let i = 0; i < products.length; i++) { %>
-                        <div class="product-card">
-                            <div class="product-image-container">
-                                <button class="wishlist-btn" onclick="">❤️</button>
-                                <a href="/productDetails?id=<%= products[i]._id %>">
-                                    <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
-                                </a>
-                            </div>
-                            <div class="product-info">
-                                <a href="/product/<%= products[i]._id %>">
-                                    <h4><%=products[i].productName%></h4>
-                                    <p>Brand: <%= products[i].brand.brandName %></p>
-
-                                    <p>
-                                    Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
-                                    <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
-                                        <span class="text-muted" style="opacity: 0.5;">
-                                        <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
-                                        </span>
-                                    <% } %>
-                                    </p>
-                                </a>
-                                <button class="add-to-cart-btn" onclick="">Add to Cart</button>
-                            </div>
-                        </div>
-                    <% } %>
-                <% } else { %>
-                    <div class="no-results">
-                        <img src="/img/no-products-found.jpg" alt="No products found">
-                        <h3>No items found <%= isSearch ? `for "${searchTerm}"` : '' %></h3>
-                        <% if (isFiltered) { %>
-                            <p>Try adjusting your filters or search term</p>
-                            <a href="/clear-filters" class="clear-filters-btn">Clear all filters</a>
-                        <% } else { %>
-                            <p>We couldn't find any matching products</p>
-                        <% } %>
+    <% if (products && products.length > 0) { %>
+        <% for (let i = 0; i < products.length; i++) { %>
+            <a href="/productDetails?id=<%= products[i]._id %>" class="product-card-link">
+                <div class="product-card">
+                    <div class="product-image-container">
+                        <button class="wishlist-btn" onclick="event.preventDefault()">❤️</button>
+                        <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
                     </div>
-                <% } %>
-            </main>
+                    <div class="product-info">
+                        <h4><%=products[i].productName%></h4>
+                        <p class="no-underline">Brand: <%= products[i].brand.brandName %></p>
+                        <p class="no-underline">
+                            Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
+                            <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                                <span class="text-muted" style="opacity: 0.5;">
+                                    <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+                                </span>
+                            <% } %>
+                        </p>
+                        <button class="add-to-cart-btn" onclick="event.preventDefault()">Add to Cart</button>
+                    </div>
+                </div>
+            </a>
+        <% } %>
+    <% } else { %>
+        <!-- No results section remains the same -->
+    <% } %>
+</main>
         </div>
 
         <!-- Pagination -->

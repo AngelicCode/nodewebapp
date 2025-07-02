@@ -14,9 +14,6 @@ router.get("/productDetails",isBlocked,productController.productDetails);
 //Home page & Shopping page
 router.get("/",userController.loadHomepage);
 router.get("/shop",isBlocked,userController.loadShoppingPage);
-// router.get("/filter",userAuth,userController.filterProduct);
-// router.get("/filterPrice",userAuth,userController.filterByPrice);
-// router.post("/search",userAuth,userController.searchProducts);
 router.get('/clear-filters', userAuth, (req, res) => {
     req.session.filterCategory = null;
     req.session.filterBrand = null;
