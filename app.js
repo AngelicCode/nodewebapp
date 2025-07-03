@@ -15,7 +15,6 @@ const fs = require("fs");
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'product-images');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  // Set proper permissions
   try {
     fs.chmodSync(uploadDir, 0o755);
   } catch (chmodError) {
@@ -23,10 +22,8 @@ if (!fs.existsSync(uploadDir)) {
   }
 }
 
-// Database connection
 db();
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,13 +56,11 @@ app.set("views", [
 // Serve general static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Set user session data in views
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   next();
 });
 
-// Routers
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
@@ -82,7 +77,6 @@ app.use('/uploads/product-images', express.static(uploadsDir, {
   }
 }));
 
-// Error handling middleware for missing product images
 app.use('/uploads/product-images', (err, req, res, next) => {
   if (err.status === 404) {
     console.log('Missing image requested:', req.path);
@@ -92,7 +86,6 @@ app.use('/uploads/product-images', (err, req, res, next) => {
   }
 });
 
-// Error page route
 app.get("/pageerror", pageerror);
 
 // Start server

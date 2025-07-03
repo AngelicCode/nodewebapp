@@ -1,3 +1,5 @@
+<%- include("../../views/partials/user/header") %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -233,33 +235,35 @@
 
         /* Product Grid */
         .product-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px;
+    width: 100%;
+}
 
-        .product-card {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            width: 320px;
-        }
+/* Product Card Styling */
+.product-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%; /* Make all cards same height */
+    display: flex;
+    flex-direction: column;
+}
 
         .product-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
 
-        .product-image-container {
-            position: relative;
-            height: 323px;
-            overflow: hidden;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        }
+       .product-image-container {
+    height: 250px; 
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
 
         .product-card img {
             width: 100%;
@@ -298,23 +302,31 @@
         }
 
         .product-info {
-            padding: 25px;
-            text-align: center;
-        }
+    padding: 20px;
+    flex: 1; /* Takes remaining space */
+    display: flex;
+    flex-direction: column;
+}
 
-        .product-info h4 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
+/* Product Name - with text overflow handling */
+.product-info h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 3em; /* Ensures consistent space for 2 lines */
+}
 
-        .product-info p {
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
+/* Price and Brand Info */
+.product-info p {
+    color: #666;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
 
         .product-price {
             display: flex;
@@ -337,17 +349,16 @@
         }
 
         .add-to-cart-btn {
-            background: #000;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+    margin-top: auto; /* Pushes button to bottom */
+    background: #000;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
 
         .add-to-cart-btn:hover {
             background: #333;
@@ -407,12 +418,13 @@
         }
 
         .sort-dropdown {
-            padding: 10px 15px;
+            padding: -1px 15px;
             border-radius: 25px;
             border: 1px solid #ddd;
             background: white;
             font-size: 14px;
             cursor: pointer;
+            background-color: lightblue;
         }
 
         .no-results {
@@ -501,7 +513,7 @@
             text-decoration: line-through !important; 
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
             .product-list-container {
                 flex-direction: column;
             }
@@ -512,9 +524,8 @@
             }
             
             .product-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-            }
+        grid-template-columns: repeat(3, 1fr);
+    }
         }
 
         @media (max-width: 768px) {
@@ -527,9 +538,8 @@
             }
             
             .product-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-            }
+        grid-template-columns: repeat(2, 1fr);
+    }
             
             .main-container {
                 padding: 20px 15px;
@@ -541,6 +551,13 @@
                 align-items: flex-start;
             }
         }
+
+        @media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -566,7 +583,7 @@
             <!-- Active Filters Display -->
             <% if (isFiltered) { %>
                 <div class="active-filters">
-                    <h4>Active Filters:</h4>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 0.0rem;">Active Filters:</h4>
                     <% if (query.category) { %>
                         <span class="filter-tag">
                             Category: <%= category.find(c => c._id.toString() === query.category).name %>
@@ -778,3 +795,4 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 </body>
 </html>
+<%- include("../../views/partials/user/footer") %>
