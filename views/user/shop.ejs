@@ -513,6 +513,19 @@
             text-decoration: line-through !important; 
         }
 
+        .no-products-message {
+            color: black;
+            text-align: center;
+            background: lightblue;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 50px auto;
+            max-width: 300px;
+            display: block;
+        }
+
         @media (max-width: 1200px) {
             .product-list-container {
                 flex-direction: column;
@@ -767,8 +780,11 @@
             </a>
         <% } %>
     <% } else { %>
-        <!-- No results section remains the same -->
+            <p class="no-products-message">🔍 We couldn't find any matching products</p>
+
     <% } %>
+    
+    
 </main>
         </div>
 
