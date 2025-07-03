@@ -18,38 +18,39 @@ const pageNotFound = async (req,res)=>{
 };
 
 
-const loadHomepage = async (req,res)=>{
+const loadHomepage = async (req, res) => {
+  try {
+    const userId = req.session.user;
 
-  try{
-    const user = req.session.user;
-    const categories = await Category.find({isListed:true});
-    let productData = await Product.find(
-      {isBlocked:false,
-        category: { $in: categories.map(category => category._id)},quantity:{$gt:0}
+    // Get only listed categories
+    const categories = await Category.find({ isListed: true });
 
-      }
-    )
+    // Fetch products that belong to listed categories and are available
+    let productData = await Product.find({
+      isBlocked: false,
+      category: { $in: categories.map((cat) => cat._id) },
+      quantity: { $gt: 0 }
+    })
+      .sort({ createdAt: -1 }) // Sort by newest
+      .limit(4)                // Take latest 4
+      .lean();
 
-    productData.sort((a,b)=>new Date(b.createdOn)-new Date(a.createdOn));
-    productData = productData.slice(0,4);
+    if (userId) {
+      const userData = await User.findById(userId).lean();
+      return res.render("home", {
+        user: userData,
+        products: productData
+      });
+    } else {
+      return res.render("home", {
+        user: null,
+        products: productData
+      });
+    }
 
-    if(user){
-
-      //res.render("home",{user});
-
-      const userData = await User.findOne({_id:user._id});
-      return res.render("home",{user:userData, products:productData});
-      
-      //req.session.user = userData;
-
-    }else{
-    return res.render("home",{products:productData});
-  }
-
-  }catch(error){
-    console.log("Home page not found");
+  } catch (error) {
+    console.error("Error loading home page:", error);
     res.status(500).send("Server Error");
-
   }
 };
 
