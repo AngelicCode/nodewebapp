@@ -7,21 +7,31 @@ const productDetails = async (req, res) => {
        const userId = req.session.user;  
         const userData = await User.findById(userId);    
          const productId = req.query.id;     
-         const product = await Product.findById(productId)       .populate("category").populate("brand");  
+         const product = await Product.findById(productId).populate("category").populate("brand");  
 
          const findCategory = product.category;     
          const categoryOffer = findCategory?.categoryOffer || 0;     const productOffer = product.productOffer || 0;     
          const totalOffer = categoryOffer + productOffer;      
-         const brand = product.brand ? {...product.brand.toObject(),    name: product.brand.brandName} : null;      
+         const brand = product.brand ? {...product.brand.toObject(),name: product.brand.brandName} : null;  
+         const relatedProducts = await Product.find({category:product.category._id,
+          _id:{$ne:productId},
+           isBlocked:false,
+           status:"Available"}).limit(4).populate("brand");
+         
          res.render("product-details", {
           user: userData,
           product: product,       
           quantity: product.quantity,       
           totalOffer: totalOffer,       
           category: findCategory,       
-          brand: brand});    
+          brand: brand,
+          relatedProducts:relatedProducts
+        });
+            
+
         } catch (error) {     
-          console.error("Error fetching product details:", error);     res.redirect("/pageNotFound");   
+          console.error("Error fetching product details:", error);     
+          res.redirect("/pageNotFound");   
         } 
       };  
       
