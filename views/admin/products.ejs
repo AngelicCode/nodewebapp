@@ -322,7 +322,7 @@
               </tr>
             </thead>
             <tbody>
-              <%for(let i=data.length-1;i>=0;i--){%>
+              <%for(let i=0;i<data.length;i++){%>
               <tr>
                 <td><%=data[i].productName%></td>
                 <td><%= data[i].brand.brandName %></td>
@@ -507,6 +507,13 @@
           },
           body: JSON.stringify({ id: productId })
         });
+
+         // First check if the response is OK
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+          }
+
         const result = await response.json();
   
         if (result.success) {
@@ -514,13 +521,28 @@
           button.textContent = result.isBlocked ? "Unblock" : "Block";
           button.className = result.isBlocked ? "btn btn-success" : "btn btn-danger";
           button.setAttribute("onclick", `toggleProductBlock('${productId}', '${result.isBlocked ? "unblockProduct" : "blockProduct"}')`);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: `Product ${result.isBlocked ? 'blocked' : 'unblocked'} successfully`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+
         } else {
-          alert("Failed to update product status.");
+          throw new Error(result.error || "Failed to update product status");
         }
         action = ""
       } catch (error) {
         console.error("Error:", error);
-        alert("An error occurred while updating the product.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: error.message || "An error occurred while updating the product.",
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
     }
   </script>

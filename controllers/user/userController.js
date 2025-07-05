@@ -313,7 +313,7 @@ const loadShoppingPage = async (req, res) => {
 
     const query = {
       isBlocked: false,
-      quantity: { $gt: 0 }
+      //quantity: { $gt: 0 }
     };
 
     // Fix: Handle search term safely - check if req.body exists before accessing it

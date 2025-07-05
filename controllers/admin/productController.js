@@ -134,11 +134,12 @@ const getAllProducts = async (req, res) => {
 
     const query = {};
     if (search) {
-      query.productName = { $regex: new RegExp(search, "i") };
+      query.productName = {$regex: new RegExp(search, "i") };
     }
 
     const productData = await Product.find(query)
       .populate("category brand")
+      .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
@@ -166,7 +167,7 @@ const blockProduct = async (req, res) => {
     res.status(200).json({ success: true, isBlocked: true });
   } catch (error) {
     console.error("Block product error:", error);
-    res.json({ success: false });
+    res.status(500).json({ success: false, error: "Failed to block product" });
   }
 };
 
@@ -177,7 +178,7 @@ const unblockProduct = async (req, res) => {
     res.status(200).json({ success: true, isBlocked: false });
   } catch (error) {
     console.error("Unblock product error:", error);
-    res.json({ success: false });
+    res.status(500).json({ success: false, error: "Failed to unblock product" });
   }
 };
 

@@ -47,12 +47,12 @@
                                         <span class="brand-label">Brand:</span>
                                         <div class="brand-details">
                                             <% if(product.brand.brandImage && product.brand.brandImage.length > 0) { %>
-                                                <img src="/Uploads/product-images/<%= product.brand.brandImage[0] %>" 
+                                                <img src="/uploads/product-images/<%= product.brand.brandImage[0] %>" 
                                                      alt="<%= product.brand.brandName %> logo" 
                                                      class="brand-logo">
                                             <% } %>
 
-                                            <a href="/products?brand=<%= product.brand._id %>" class="brand-name">
+                                            <a class="brand-name">
                                                 <%= product.brand.brandName %>
                                             </a>
 
@@ -84,6 +84,13 @@
                                     <% } %>
                                 </div>
                             </div>
+
+                            <div class="stock-label">
+                              <% if (quantity === 0) { %>
+                                <span class="out-of-stock">Out of Stock</span>
+                              <% } %>
+                             </div>
+
                             
                             <div class="product-description">
                                 <p><%=product.description%></p>
@@ -109,15 +116,32 @@
                                 </div>
                                 
                                 <div class="action-buttons">
+                                    
+                                    <%if(product.quantity>0 && product.isBlocked == false){%>
                                     <button class="add-to-cart-btn" onclick="addToCart()">
                                         <i class="fas fa-shopping-cart"></i> Add to Cart
                                     </button>
+                                    <%}else{%>
+                                        <button style="background-color:yellow; color: black;" class="add-to-cart-btn" disabled>Sold Out</button>
+                                        <%}%>
+                                        
                                     <button class="wishlist-btn" onclick="addToWishlist()">
                                         <i class="fas fa-heart"></i>
                                     </button>
                                 </div>
                             </div>
                             
+                            <div class="product-highlights">
+                                <h3 class="section-title">Highlights</h3>
+                                <ul class="highlight-list">
+                                    <li><i class="fas fa-check"></i> Leak-Proof Design</li>
+                                    <li><i class="fas fa-check"></i> Durable Build</li>
+                                    <li><i class="fas fa-check"></i> Eco-Friendly & Reusable</li>
+                                    <li><i class="fas fa-check"></i> Stylish & Modern Design</li>
+                                    <li><i class="fas fa-check"></i> Easy-to-Clean</li>
+                                </ul>
+                            </div>
+
                             <div class="product-meta">
                                 <div class="meta-item">
                                     <span class="meta-label">Stock Code:</span>
@@ -129,7 +153,11 @@
                                 </div>
                                 <div class="meta-item">
                                     <span class="meta-label">Availability:</span>
+                                    <%if(quantity == 0 ){%>
+                                        <span class="meta-value in-stock">Unavailable</span>
+                                        <%}else{%>
                                     <span class="meta-value in-stock"><%=quantity%> Items Available</span>
+                                    <%}%>
                                 </div>
                             </div>
 
@@ -674,6 +702,66 @@
         background: #e2e8f0;
         color: #64748b;
         font-size: 14px;
+    }
+
+    .product-highlights {
+        margin: 25px 0;
+        padding: 0;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+    }
+
+    .highlight-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px; 
+    }
+
+    .highlight-list li {
+        margin-bottom: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        font-size: 15px;
+        color: #34495e;
+        width: calc(50% - 12px); 
+    }
+
+    .highlight-list i {
+        color: #3498db;
+        margin-right: 8px;
+        font-size: 14px;
+    }
+
+    .stock-label {
+    margin-top: 10px;
+    }
+
+    .out-of-stock {
+    display: inline-block;
+    background-color: #ff4d4f;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+
+    @media (max-width: 768px) {
+        .highlight-list li {
+            width: 100%; 
+        }
     }
 
     @media (max-width: 767px) {

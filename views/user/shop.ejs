@@ -526,6 +526,42 @@
             display: block;
         }
 
+        .out-of-stock-icon {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .out-of-stock-icon::before {
+            content: "⚠️";
+            font-size: 20px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
         @media (max-width: 1200px) {
             .product-list-container {
                 flex-direction: column;
@@ -599,13 +635,13 @@
                     <h4 style="font-size: 1.1rem; margin-bottom: 0.0rem;">Active Filters:</h4>
                     <% if (query.category) { %>
                         <span class="filter-tag">
-                            Category: <%= category.find(c => c._id.toString() === query.category).name %>
+                            Category: <%= category.find(c => c._id.toString() === query.category.name) %>
                             <!-- <a href="/remove-filter/category">×</a> -->
                         </span>
                     <% } %>
                     <% if (query.brand) { %>
                         <span class="filter-tag">
-                            Brand: <%= brand.find(b => b._id.toString() === query.brand).brandName %>
+                            Brand: <%= brand.find(b => b._id.toString() === query.brand.brandName) %>
                             <!-- <a href="/remove-filter/brand">×</a> -->
                         </span>
                     <% } %>
@@ -774,7 +810,15 @@
                                 </span>
                             <% } %>
                         </p>
-                        <button class="add-to-cart-btn" onclick="event.preventDefault()">Add to Cart</button>
+
+                        <%if(products[i].quantity == 0){%>
+                             <div class="out-of-stock-icon"> Out of Stock </div> 
+
+                             <% }else{ %>
+
+                            <button class="add-to-cart-btn" onclick="event.preventDefault()">Add to Cart</button>
+                        <%}%>
+
                     </div>
                 </div>
             </a>

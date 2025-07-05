@@ -9,14 +9,26 @@ const productDetails = async (req, res) => {
          const productId = req.query.id;     
          const product = await Product.findById(productId).populate("category").populate("brand");  
 
+          if (
+            !product ||
+            product.isBlocked ||
+            // product.quantity === 0 ||
+            product.status !== "Available"
+          ) {
+            return res.redirect('/shop');
+          }
+
          const findCategory = product.category;     
          const categoryOffer = findCategory?.categoryOffer || 0;     const productOffer = product.productOffer || 0;     
          const totalOffer = categoryOffer + productOffer;      
          const brand = product.brand ? {...product.brand.toObject(),name: product.brand.brandName} : null;  
+
          const relatedProducts = await Product.find({category:product.category._id,
-          _id:{$ne:productId},
-           isBlocked:false,
-           status:"Available"}).limit(4).populate("brand");
+            _id:{$ne:productId},
+             isBlocked:false,
+             status:"Available",
+             quantity: { $gt: 0 }
+          }).limit(4).populate("brand");
          
          res.render("product-details", {
           user: userData,
@@ -31,7 +43,7 @@ const productDetails = async (req, res) => {
 
         } catch (error) {     
           console.error("Error fetching product details:", error);     
-          res.redirect("/pageNotFound");   
+          res.status(500).redirect('/shop');   
         } 
       };  
       
