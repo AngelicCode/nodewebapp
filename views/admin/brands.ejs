@@ -277,39 +277,7 @@
        width: 100%;
        height: auto;
      }
- 
-     .pagination-container {
-       margin-top: 2rem;
-       text-align: center;
-     }
- 
-     .pagination {
-       display: inline-flex;
-       border-radius: var(--border-radius);
-       overflow: hidden;
-       box-shadow: var(--card-shadow);
-     }
- 
-     .pagination a {
-       display: inline-block;
-       padding: 10px 16px;
-       border: none;
-       border-right: 1px solid #eee;
-       text-decoration: none;
-       color: var(--text-color);
-       background-color: white;
-       font-weight: 500;
-       transition: all 0.3s ease;
-     }
- 
-     .pagination a:last-child {
-       border-right: none;
-     }
- 
-     .pagination a:hover {
-       background-color: var(--secondary-color);
-       color: var(--primary-color);
-     }
+
  
      @media (max-width: 768px) {
        .content-main {
@@ -450,15 +418,8 @@
        </div>
      </div>
  
-     <!--<div class="pagination-container">
-       <div class="pagination">
-         <a href="#">&laquo;</a>
-         <a href="#">1</a>
-         <a href="#">2</a>
-         <a href="#">3</a>
-         <a href="#">&raquo;</a>
-       </div>
-     </div>--->
+        <%-include("../partials/admin/pagination")%>
+
    </section>
  
    

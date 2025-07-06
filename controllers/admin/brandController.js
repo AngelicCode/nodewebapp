@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 
 const getBrandPage = async (req,res)=>{
   try{
+    const search = req.query.search ? req.query.search.trim() : "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page-1)*limit;
@@ -15,6 +16,7 @@ const getBrandPage = async (req,res)=>{
       currentPage:page,
       totalPages:totalPages,
       totalBrands:totalBrands,
+      search
     })
 
   }catch(error){

@@ -151,6 +151,7 @@ const getAllProducts = async (req, res) => {
       data: filteredProducts,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
+      search,
       cat: category,
       brand
     });

@@ -1,0 +1,57 @@
+<style>
+  .pagination-glass {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination-glass a {
+    padding: 14px 20px;
+    text-decoration: none;
+    color: #333;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 50px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .pagination-glass a:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .pagination-glass a.active {
+    background: rgba(53, 55, 56, 0.332);
+    color: black;
+    border-color: rgba(4, 4, 4, 0.8);
+    pointer-events: none;
+  }
+</style>
+
+<!-- pagination-search.ejs -->
+<div class="pagination-glass">
+    <% const searchQuery = search ? `&search=${encodeURIComponent(search)}` : ''; %>
+
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %><%= searchQuery %>">Prev</a>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <a class="<%= i === currentPage ? 'active' : '' %>" href="?page=<%= i %><%= searchQuery %>">
+        <%= i %>
+      </a>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %><%= searchQuery %>">Next</a>
+    <% } %>
+  
+</div>

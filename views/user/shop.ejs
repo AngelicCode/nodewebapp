@@ -465,33 +465,6 @@
             transform: translateY(-2px);
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 50px 0;
-            flex-wrap: wrap;
-        }
-
-        .pagination a {
-            padding: 12px 20px;
-            background: white;
-            border: 2px solid #e9ecef;
-            color: #333;
-            text-decoration: none;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .pagination a:hover,
-        .pagination .active {
-            background: #000;
-            color: white;
-            border-color: transparent;
-            transform: translateY(-2px);
-        }
-
         .product-card-link {
             display: block;
             text-decoration: none;
@@ -833,23 +806,8 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination">
-            <% const queryString = Object.entries(query).map(([key, val]) => {
-                if (key !== 'page') return `${key}=${encodeURIComponent(val)}`;
-            }).filter(Boolean).join('&'); %>
-
-            <% if (currentPage > 1) { %>
-                <a class="btn" href="/shop?page=<%= currentPage - 1 %><%= queryString ? '&' + queryString : '' %>">Prev</a>
-            <% } %>
-
-            <% for (let i = 1; i <= totalPages; i++) { %>
-                <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/shop?page=<%= i %><%= queryString ? '&' + queryString : '' %>"><%= i %></a>
-            <% } %>
-
-            <% if (currentPage < totalPages) { %>
-                <a class="btn" href="/shop?page=<%= currentPage + 1 %><%= queryString ? '&' + queryString : '' %>">Next</a>
-            <% } %>
-        </div>
+        <%-include("../partials/user/pagination")%>
+    
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>

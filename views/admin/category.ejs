@@ -219,33 +219,6 @@
       width: 100%;
     }
 
-    .pagination-container {
-      text-align: center;
-      margin-top: 30px;
-      margin-bottom: 30px;
-    }
-
-    .pagination a,
-    .pagination .current-page {
-      display: inline-block;
-      padding: 10px 16px;
-      margin: 0 5px;
-      border: none;
-      border-radius: var(--border-radius);
-      text-decoration: none;
-      color: var(--text-color);
-      background-color: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
-    }
-
-    .pagination a:hover, 
-    .pagination .current-page {
-      background-color: var(--primary-color);
-      color: white;
-      box-shadow: 0 5px 15px rgba(11, 110, 143, 0.2);
-    }
-
     .search-container {
       background-color: white;
       border-radius: 30px;
@@ -479,13 +452,8 @@
     </div>
 
     <!-- Pagination -->
-    <div class="pagination-container">
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <a href="?page=<%= i %><%= search ? `&search=${search}` : '' %>" class="<%= currentPage === i ? 'current-page' : '' %>">
-          <%= i %>
-        </a>
-      <% } %>
-    </div>
+    <%-include("../partials/admin/pagination")%>
+
   </section>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
