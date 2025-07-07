@@ -63,7 +63,6 @@ const addProducts = [
             console.log(`Original path: ${originalPath}`);
             console.log(`Resized path: ${resizedPath}`);
 
-            // Special handling for GIF files - copy without processing
             if (file.mimetype === "image/gif") {
               await fs.copyFile(originalPath, resizedPath);
               images.push(filename);
@@ -71,7 +70,6 @@ const addProducts = [
               continue;
             }
 
-            // Process other image types with sharp
             const imageBuffer = await fs.readFile(originalPath);
             let sharpInstance = sharp(imageBuffer).resize({ width: 800, height: 800, fit: "cover" });
 
@@ -97,7 +95,7 @@ const addProducts = [
             );
           }
         }
-      }
+       }
 
       const newProduct = new Product({
         productName: products.productName,
@@ -190,7 +188,6 @@ const getEditProduct = async (req, res) => {
     const category = await Category.find({});
     const brand = await Brand.find({});
 
-    // Verify existing images
     const verifiedImages = [];
     for (const image of product.productImage) {
       const imagePath = path.resolve("public", "Uploads", "product-images", image);
@@ -202,7 +199,6 @@ const getEditProduct = async (req, res) => {
       }
     }
 
-    // Update product if images were removed
     if (verifiedImages.length !== product.productImage.length) {
       product.productImage = verifiedImages;
       await product.save();
@@ -275,7 +271,6 @@ const editProduct = [
           }
 
           try {
-            // Special handling for GIF files - copy without processing
             if (file.mimetype === "image/gif") {
               await fs.copyFile(originalPath, resizedPath);
               newImages.push(filename);
@@ -283,7 +278,6 @@ const editProduct = [
               continue;
             }
 
-            // Process other image types with sharp
             const imageBuffer = await fs.readFile(originalPath);
             let sharpInstance = sharp(imageBuffer).resize({ width: 800, height: 800, fit: "cover" });
 
@@ -325,13 +319,11 @@ const deleteSingleImage = async (req, res) => {
   try {
     const { imageNameToServer, productIdToServer } = req.body;
 
-    // Remove image reference from product
     await Product.findByIdAndUpdate(
       productIdToServer,
       { $pull: { productImage: imageNameToServer } }
     );
 
-    // Delete actual image file
     const imagePath = path.resolve("public", "Uploads", "product-images", imageNameToServer);
     const exists = await fs.access(imagePath).then(() => true).catch(() => false);
     if (exists) {

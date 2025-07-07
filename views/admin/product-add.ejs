@@ -481,13 +481,11 @@
   return true;
 }
 
-    // Global variables
     let currentCropper = null;
     let currentFileIndex = null;
     const croppedImages = [];
-    const fileTypes = []; // Array to store original file MIME types
+    const fileTypes = []; 
 
-    // Check CropperJS availability
     function checkCropperAvailability() {
       if (typeof Cropper !== 'function') {
         console.error('CropperJS not loaded');
@@ -501,7 +499,6 @@
       return true;
     }
 
-    // Initialize Cropper
     function initializeCropper(imageElement) {
       if (!checkCropperAvailability()) {
         return null;
@@ -707,7 +704,6 @@ function addFiles(newFiles) {
         });
 
         if (croppedCanvas) {
-          // Use the original file type or fallback to JPEG
           const mimeType = fileTypes[currentFileIndex] || 'image/jpeg';
           const quality = mimeType === 'image/png' || mimeType === 'image/gif' ? 1 : 0.9;
 
@@ -773,7 +769,7 @@ function addFiles(newFiles) {
 
       function removeImage(index) {
         croppedImages.splice(index, 1);
-        fileTypes.splice(index, 1); // Remove the corresponding file type
+        fileTypes.splice(index, 1); 
         renderThumbnails();
         updateFileInput();
       }
@@ -782,13 +778,13 @@ function addFiles(newFiles) {
         const dt = new DataTransfer();
         croppedImages.forEach((dataURL, index) => {
           const arr = dataURL.split(',');
-          const mime = fileTypes[index] || 'image/jpeg'; // Use stored MIME type
+          const mime = fileTypes[index] || 'image/jpeg'; 
           const bstr = atob(arr[1]);
           const u8arr = new Uint8Array(bstr.length);
           for (let i = 0; i < bstr.length; i++) {
             u8arr[i] = bstr.charCodeAt(i);
           }
-          const fileName = `image_${index}.${mime.split('/')[1]}`; // Use original extension
+          const fileName = `image_${index}.${mime.split('/')[1]}`; 
           dt.items.add(new File([u8arr], fileName, { type: mime }));
         });
         imageInput.files = dt.files;
@@ -877,7 +873,6 @@ function addFiles(newFiles) {
           timer: 2000,
           showConfirmButton: false
         });
-        // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
@@ -889,7 +884,6 @@ function addFiles(newFiles) {
           timer: 2000,
           showConfirmButton: false
         });
-        // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });

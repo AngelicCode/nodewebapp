@@ -41,6 +41,7 @@ const login =async (req,res)=>{
   }
 
 }
+
 const loadDashboard = async (req, res) => {
   try {
     if (req.session.admin) {

@@ -159,6 +159,7 @@
                                     <span class="meta-value in-stock"><%=quantity%> Items Available</span>
                                     <%}%>
                                 </div>
+
                             </div>
 
                         </div>
@@ -844,7 +845,6 @@ class InPlaceImageZoom {
         this.zoomContainer.addEventListener('mouseenter', () => this.showZoom());
         this.zoomContainer.addEventListener('mouseleave', () => this.hideZoom());
         
-        // Touch events for mobile
         this.zoomContainer.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.zoomContainer.addEventListener('touchmove', (e) => this.handleTouchMove(e));
         this.zoomContainer.addEventListener('touchend', () => this.hideZoom());

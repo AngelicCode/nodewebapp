@@ -22,17 +22,15 @@ const loadHomepage = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    // Get only listed categories
     const categories = await Category.find({ isListed: true });
 
-    // Fetch products that belong to listed categories and are available
     let productData = await Product.find({
       isBlocked: false,
       category: { $in: categories.map((cat) => cat._id) },
       quantity: { $gt: 0 }
     })
-      .sort({ createdAt: -1 }) // Sort by newest
-      .limit(4)                // Take latest 4
+      .sort({ createdAt: -1 }) 
+      .limit(4)                
       .lean();
 
     if (userId) {
@@ -301,7 +299,6 @@ const loadShoppingPage = async (req, res) => {
   try {
     const user = req.session.user;
 
-    // Fetch categories and brands for filter sidebar
     const [categories, brands] = await Promise.all([
       Category.find({ isListed: true }),
       Brand.find({ isBlocked: false })
@@ -316,7 +313,6 @@ const loadShoppingPage = async (req, res) => {
       //quantity: { $gt: 0 }
     };
 
-    // Fix: Handle search term safely - check if req.body exists before accessing it
     const searchTerm = req.query.search || (req.body && req.body.search) || '';
     if (searchTerm) {
       query.$or = [
@@ -325,7 +321,6 @@ const loadShoppingPage = async (req, res) => {
       ];
     }
 
-    // Fix: Handle category filter safely - filter out invalid values
     const categoryFilter = req.query.category || (req.body && req.body.category) || req.session.filterCategory;
     if (categoryFilter && categoryFilter !== 'all' && categoryFilter !== 'undefined' && categoryFilter !== '') {
       query.category = categoryFilter;
@@ -334,7 +329,6 @@ const loadShoppingPage = async (req, res) => {
       delete req.session.filterCategory;
     }
 
-    // Fix: Handle brand filter safely - filter out invalid values
     const brandFilter = req.query.brand || (req.body && req.body.brand) || req.session.filterBrand;
     if (brandFilter && brandFilter !== 'all' && brandFilter !== 'undefined' && brandFilter !== '') {
       query.brand = brandFilter;
@@ -343,7 +337,6 @@ const loadShoppingPage = async (req, res) => {
       delete req.session.filterBrand;
     }
 
-    // Fix: Handle price filters safely
     const minPrice = parseFloat(req.query.minPrice || (req.body && req.body.minPrice) || '');
     const maxPrice = parseFloat(req.query.maxPrice || (req.body && req.body.maxPrice) || '');
 
@@ -363,7 +356,6 @@ const loadShoppingPage = async (req, res) => {
       };
     }
 
-    // Fix: Handle sort option safely
     const sortOption = req.query.sort || (req.body && req.body.sort) || 'newest';
     let sortCriteria = { createdAt: -1 };
 

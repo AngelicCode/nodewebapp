@@ -11,11 +11,10 @@ const brandController = require("../controllers/admin/brandController");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { storage, fileFilter } = require("../helpers/multer");
 
-// Create Multer instance
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
 router.get("/pageerror", adminController.pageerror);

@@ -432,7 +432,7 @@
     addBrandForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(addBrandForm);
+    const formData = new FormData(addBrandForm);
 
       try {
         const response = await fetch('/admin/addBrand', {
@@ -440,10 +440,9 @@
           body: formData
         });
 
-        const result = await response.json();
+    const result = await response.json();
 
         if (result.success) {
-          // Show SweetAlert success message
           Swal.fire({
             icon: 'success',
             title: 'Brand Added',
@@ -480,7 +479,6 @@
           tableBody.prepend(newRow);
           addBrandForm.reset();
         } else {
-          // Show SweetAlert error message
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -582,7 +580,6 @@
        });
      }
    
-     // Dynamically update the block/unblock buttons
      function updateBrandRow(brandId, isBlocked) {
   const row = document.getElementById(`brand-row-${brandId}`);
   if (!row) return;

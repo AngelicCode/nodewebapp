@@ -3,6 +3,7 @@
 <head>
   <%- include("../../views/partials/admin/header") %>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"/>
+
   <style>
     :root {
       --primary-color: #0B6E8F;
@@ -186,6 +187,7 @@
           <h4 class="category-form-title">Edit Category</h4>
 
           <form id="editCategoryForm" data-id="<%= category._id %>" data-original-name="<%= category.name %>" data-original-description="<%= category.description %>">
+
             <!-- Category Name -->
             <div class="form-group">
               <label for="categoryName" class="form-label">Category Name</label>
@@ -230,7 +232,6 @@
       const originalName = this.dataset.originalName.trim();
       const originalDescription = this.dataset.originalDescription.trim();
 
-      // If no changes, skip confirm prompt
       const isChanged = categoryName !== originalName || description !== originalDescription;
 
       const proceedUpdate = async () => {
@@ -293,7 +294,7 @@
           proceedUpdate();
         }
       } else {
-        proceedUpdate(); // skip confirmation if no changes
+        proceedUpdate(); 
       }
     });
   </script>

@@ -2,19 +2,21 @@
 
   const customerInfo = async (req, res) => {
   try {
-    let search = req.query.search || "";
+    let search = req.query.search?.trim() || "";
     let page = parseInt(req.query.page) || 1;
     const limit = 3;
 
     const query = {
       isAdmin: false,
+      ...(search && {
       $or: [
         { name: { $regex: ".*" + search + ".*", $options: "i" } },
         { email: { $regex: ".*" + search + ".*", $options: "i" } },
       ],
-    };
+    })
+  };
 
-    const userData = await User.find(query)
+  const userData = await User.find(query)
       .sort({ createdOn: -1 }) 
       .limit(limit)
       .skip((page - 1) * limit)
@@ -34,26 +36,26 @@
   }
 };
 
-  const customerBlocked = async (req,res)=>{
-    try{
-      let id = req.query.id;
-      await User.updateOne({_id:id}, {$set:{isBlocked:true}});
-      res.redirect("/admin/users");
+const customerBlocked = async (req,res)=>{
+  try{
+    let id = req.query.id;
+    await User.updateOne({_id:id}, {$set:{isBlocked:true}});
+    res.redirect("/admin/users");
 
-    }catch(error){
-      res.redirect("/pageerror");
-    }
-  };
+  }catch(error){
+    res.redirect("/pageerror");
+  }
+};
 
-  const customerunBlocked = async (req,res)=>{
-    try {
-      let id = req.query.id;
-      await User.updateOne({_id:id},{$set:{isBlocked:false}});
-      res.redirect("/admin/users");
-    } catch (error) {
-      res.redirect("/pageerror");
-    }
-  };
+const customerunBlocked = async (req,res)=>{
+  try {
+    let id = req.query.id;
+    await User.updateOne({_id:id},{$set:{isBlocked:false}});
+    res.redirect("/admin/users");
+  } catch (error) {
+    res.redirect("/pageerror");
+  }
+};
 
   module.exports = {
     customerInfo,customerBlocked,customerunBlocked,

@@ -187,6 +187,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="page-container">
     <div class="image-container">
@@ -254,7 +255,6 @@
 
       let isValid = true;
 
-      // Email regex pattern
       const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
       if (!emailPattern.test(email)) {
         emailError.textContent = "Please enter a valid email address.";

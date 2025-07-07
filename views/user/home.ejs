@@ -175,13 +175,9 @@
         </div>
 
         <div class="row">
-            <% 
-                // First sort products by creation date (newest first)
-                const sortedProducts = products.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            <%const sortedProducts = products.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
-                // Then take only the first 4 (newest) products
-                const latestProducts = sortedProducts.slice(0, 4);
-            %>
+                const latestProducts = sortedProducts.slice(0, 4);%>
             
             <% latestProducts.forEach(product => { %>
                 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">

@@ -10,8 +10,10 @@ const adminRouter = require("./routes/adminRouter");
 const { pageerror } = require("./controllers/admin/adminController");
 const nocache = require("nocache");
 const fs = require("fs");
+const {setLocals} = require('./middlewares/localsMiddleware');
 
-// Ensure upload directory exists with consistent naming
+app.use(setLocals);
+
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'product-images');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -46,14 +48,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Set view engine and directories
 app.set("view engine", "ejs");
 app.set("views", [
   path.join(__dirname, 'views/user'),
   path.join(__dirname, 'views/admin')
 ]);
 
-// Serve general static files
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
@@ -64,10 +64,8 @@ app.use((req, res, next) => {
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-// Serve uploads directory with consistent naming
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
-// Serve static product images with proper headers - use consistent path
 const uploadsDir = path.join(__dirname, 'public', 'uploads', 'product-images');
 
 app.use('/uploads/product-images', express.static(uploadsDir, {
@@ -88,7 +86,6 @@ app.use('/uploads/product-images', (err, req, res, next) => {
 
 app.get("/pageerror", pageerror);
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server Running...");

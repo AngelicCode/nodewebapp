@@ -529,11 +529,9 @@
   </section>
 
   <script>
-    // Global variables to track file types
     const fileTypes = {};
     const croppers = {};
 
-    // Handle image loading errors
     function handleImageError(img) {
       console.log('Handling image error for:', img.src);
       img.onerror = null;
@@ -542,7 +540,6 @@
       return true;
     }
 
-    // Verify image existence
     function verifyImageExistence() {
       const images = document.querySelectorAll('.thumbnail img');
       images.forEach(img => {
@@ -561,7 +558,6 @@
       });
     }
 
-    // Form validation
     function validateForm() {
       clearErrorMessages();
       const name = document.getElementsByName('productName')[0].value;
@@ -686,9 +682,8 @@
 
       if (input.files && input.files[0]) {
         const file = input.files[0];
-        fileTypes[index] = file.type; // Store the original file type
+        fileTypes[index] = file.type; 
 
-        // Check if it's a GIF - don't show cropper for GIFs
         if (file.type === 'image/gif') {
           cropperContainer.style.display = 'none';
           return;
@@ -697,7 +692,6 @@
         const reader = new FileReader();
 
         reader.onload = function(e) {
-          // Destroy previous cropper if exists
           if (croppers[index]) {
             croppers[index].destroy();
           }
@@ -711,7 +705,6 @@
           imageElement.style.maxWidth = '100%';
           cropperDiv.appendChild(imageElement);
 
-          // Initialize cropper
           croppers[index] = new Cropper(imageElement, {
             aspectRatio: 1,
             viewMode: 1,
@@ -723,7 +716,6 @@
             cropBoxMovable: true
           });
 
-          // Save button handler
           saveButton.onclick = function() {
             const canvas = croppers[index].getCroppedCanvas({
               width: 800,
@@ -737,12 +729,11 @@
               imageSmoothingQuality: 'high'
             });
 
-            // Determine the output format based on original file type
             let mimeType = fileTypes[index] || 'image/jpeg';
             let quality = 0.9;
             
             if (mimeType === 'image/png') {
-              quality = 1; // PNG doesn't support quality
+              quality = 1; 
             }
 
             canvas.toBlob(function(blob) {
@@ -757,19 +748,16 @@
                 return;
               }
 
-              // Create a new file with the original type
               const fileName = `cropped-image-${index}-${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`;
               const file = new File([blob], fileName, {
                 type: mimeType,
                 lastModified: Date.now()
               });
 
-              // Update the file input
               const dataTransfer = new DataTransfer();
               dataTransfer.items.add(file);
               input.files = dataTransfer.files;
 
-              // Hide cropper
               cropperContainer.style.display = 'none';
 
               Swal.fire({
@@ -787,7 +775,6 @@
       }
     }
 
-    // Initialize on DOM load
     document.addEventListener('DOMContentLoaded', () => {
       verifyImageExistence();
 
@@ -803,7 +790,6 @@
           return;
         }
 
-        // Remove empty file inputs before submission
         const inputs = document.querySelectorAll('input[name="images"]');
         inputs.forEach(input => {
           if (input.files.length === 0) {

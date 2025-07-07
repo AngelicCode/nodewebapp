@@ -86,38 +86,6 @@
       padding: 2rem;
     }
 
-    .search-container {
-      background-color: white;
-      border-radius: 30px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      padding: 5px;
-      max-width: 500px;
-      margin: 0 auto 2rem;
-      display: flex;
-    }
-
-    .search-container input {
-      border: none;
-      flex-grow: 1;
-      padding: 12px 20px;
-      border-radius: 30px;
-      font-size: 0.9rem;
-    }
-
-    .search-container button {
-      border-radius: 30px;
-      padding: 10px 25px;
-      margin: 5px;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      font-weight: 600;
-    }
-
-    .search-container button:hover {
-      background-color: var(--primary-dark);
-    }
-
     .table {
       width: 100%;
       border-collapse: separate;
@@ -227,6 +195,77 @@
       color: #495057;
     }
 
+    .search-container {
+        background-color: white;
+        border-radius: 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        /* padding: 5px; */
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 2rem;
+    }
+
+    .search-container form {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .search-container input {
+        border: none;
+        flex-grow: 1;
+        padding: 12px 20px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        outline: none;
+        background-color: transparent;
+    }
+
+    .search-container button {
+        border-radius: 30px;
+        padding: 10px 25px;
+        margin: 5px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .search-container button:hover {
+        background-color: var(--primary-dark);
+    }
+
+    .btn-clear {
+        border-radius: 30px;
+        padding: 10px 25px;
+        margin: 5px;
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .btn-clear:hover {
+        background-color: #5a6268;
+    }
+
+    @media (max-width: 768px) {
+        .search-container form {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .search-container input,
+        .search-container button,
+        .btn-clear {
+            width: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
+    }
+
     @media (max-width: 768px) {
       .content-main {
         padding: 1rem;
@@ -238,17 +277,6 @@
 
       .table-responsive {
         overflow-x: auto;
-      }
-
-      .search-container {
-        flex-direction: column;
-        padding: 10px;
-      }
-
-      .search-container input,
-      .search-container button {
-        width: 100%;
-        margin: 5px 0;
       }
       
       .action-buttons {
@@ -270,11 +298,15 @@
 
     <!-- Search Bar -->
     <div class="search-container">
-      <form action="/admin/products" method="get" style="display: flex; width: 100%;">
-        <input type="text" placeholder="Search products or brands" name="search" />
-        <button type="submit">Search</button>
-      </form> 
-    </div>
+  <form class="search-container" method="GET" action="/admin/products" style="display: flex; width: 100%;">
+    <input type="text" name="search" placeholder="Search categories..." value="<%= search || '' %>">
+    <button type="submit">Search</button>
+    
+    <% if (search) { %>
+      <a href="<%= req.originalUrl.split('?')[0] %>" class="btn-clear">Clear</a>
+    <% } %>
+  </form>
+</div>
 
     <!-- Table -->
     <div class="card">
@@ -322,8 +354,7 @@
                     </button>
                   </div>
                   
-                  
-                </td>
+                  </td>
                 <td>
                   <a href="/admin/editProduct?id=<%=data[i]._id%>" class="btn btn-primary btn-sm">Edit</a>
                 </td>
@@ -347,7 +378,6 @@
 
   <script>
     function toggleProductStatus(productId, isBlocked, button) {
-      // Placeholder for the actual implementation
       const action = isBlocked ? 'block' : 'unblock';
       
       Swal.fire({
@@ -371,7 +401,6 @@
     }
     
     function addOffer(productId) {
-      // Placeholder for adding offer functionality
       Swal.fire({
         title: 'Add Offer',
         input: 'number',
@@ -397,7 +426,6 @@
     }
     
     function removeOffer(productId) {
-      // Placeholder for removing offer functionality
       Swal.fire({
         title: 'Remove Offer',
         text: 'Are you sure you want to remove the offer?',
@@ -418,7 +446,6 @@
     }
   </script>
   <script>
-    // Check for success/error messages in URL parameters
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       const success = urlParams.get('success');
@@ -432,7 +459,6 @@
           timer: 2000,
           showConfirmButton: false
         });
-        // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
   
@@ -444,7 +470,6 @@
           timer: 2000,
           showConfirmButton: false
         });
-        // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });
@@ -466,7 +491,6 @@
           body: JSON.stringify({ id: productId })
         });
 
-         // First check if the response is OK
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Server responded with ${response.status}: ${errorText}`);

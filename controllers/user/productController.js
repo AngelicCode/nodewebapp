@@ -45,7 +45,7 @@ const productDetails = async (req, res) => {
           console.error("Error fetching product details:", error);     
           res.status(500).redirect('/shop');   
         } 
-      };  
+};  
       
       module.exports={   
         productDetails, 
