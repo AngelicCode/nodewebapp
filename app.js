@@ -14,6 +14,7 @@ const {setLocals} = require('./middlewares/localsMiddleware');
 
 app.use(setLocals);
 
+
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'product-images');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

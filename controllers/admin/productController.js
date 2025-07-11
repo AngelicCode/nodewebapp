@@ -6,6 +6,7 @@ const path = require("path");
 const sharp = require("sharp");
 const multer = require('multer');
 const upload = require("../../helpers/multer"); 
+const User = require("../../models/userSchema");
 
 const getProductAddPage = async (req, res) => {
   try {
@@ -121,6 +122,7 @@ const addProducts = [
 
 const getAllProducts = async (req, res) => {
   try {
+    
     const search = req.query.search?.trim() || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
@@ -221,7 +223,6 @@ const editProduct = [
     try {
       const id = req.params.id;
       const data = req.body;
-
       const existingProduct = await Product.findOne({
         productName: data.productName,
         _id: { $ne: id }
@@ -339,6 +340,7 @@ const deleteSingleImage = async (req, res) => {
     res.status(500).json({ error: "Failed to delete image" });
   }
 };
+
 
 module.exports = {
   getProductAddPage,
