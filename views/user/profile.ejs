@@ -1,0 +1,645 @@
+<%- include("../../views/partials/user/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick sip - Profile</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #5a8dc7;
+            --accent-blue: #7ba5d8;
+            --light-blue: #e8f4f8;
+            --water-blue: #4db8d4;
+            --gradient-primary: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-water: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            --button-green: #71cd14;
+            --button-green-hover: #5ba411;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-radius: 20px;
+            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /*.main {
+            padding: 40px 0;
+        }*/
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            background: none;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            position: relative;
+            margin: 0 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+            color: var(--text-light);
+        }
+
+        .breadcrumb a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+            left: 0;
+            bottom: -3px;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .breadcrumb a:hover::after {
+            transform: scaleX(1);
+        }
+
+        .dashboard-menu {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            padding: 30px 20px;
+            box-shadow: var(--shadow-heavy);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dashboard-menu .nav-link {
+            font-weight: 600;
+            color: var(--text-dark);
+            padding: 18px 25px;
+            margin: 8px 0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .dashboard-menu .nav-link:hover {
+            background: var(--gradient-primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .dashboard-menu .nav-link.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .dashboard-menu .nav-link i {
+            margin-right: 15px;
+            font-size: 18px;
+            width: 25px;
+            text-align: center;
+        }
+
+        .card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-heavy);
+            margin-bottom: 30px;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .card-green {
+            background: var(--gradient-water);
+            color: white;
+        }
+
+        .card-header {
+            background: #71cd14;
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            padding: 25px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .card-green .card-body {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-dark);
+        }
+
+        .btn-success {
+            background: var(--button-green);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(113, 205, 20, 0.4);
+            background: var(--button-green-hover);
+        }
+
+        .btn-primary {
+            background: var(--button-green);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(113, 205, 20, 0.4);
+            background: var(--button-green-hover);
+        }
+
+        .btn-small {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .table {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .table thead th {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .table tbody td {
+            padding: 18px 20px;
+            vertical-align: middle;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .water-bottle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 10 L70 10 L65 20 L65 80 Q65 90 55 90 L45 90 Q35 90 35 80 L35 20 Z" fill="%23ffffff"/></svg>');
+            background-repeat: repeat;
+            background-size: 100px;
+        }
+
+        .address-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .dashboard-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .wallet-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .referral-link {
+            background: var(--light-blue);
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px dashed var(--primary-blue);
+            margin: 15px 0;
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-menu {
+                padding: 20px 15px;
+            }
+
+            .card {
+                margin-bottom: 20px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .btn-success, .btn-primary {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="water-bottle-bg"></div>
+    
+    <main class="main">
+        <div class="page-header breadcrumb-wrap mb-3">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="#" rel="nofollow"><i class="fas fa-home"></i> Home</a>
+                    <span><i class="fas fa-chevron-right"></i></span> Profile <span><i class="fas fa-chevron-right"></i></span> Account
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="dashboard-header">
+                <h1><i class="fas fa-tint"></i> Quick sip User profile</h1>
+                <p>Manage your hydration journey</p>
+            </div>
+        </div>
+
+        <section class="pt-10 pb-10">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-10 m-auto">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="dashboard-menu">
+                                    <ul class="nav flex-column" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="false">
+                                                <i class="fas fa-tachometer-alt"></i>Dashboard
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="true">
+                                                <i class="fas fa-map-marker-alt"></i>My Address
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab" aria-controls="orders" aria-selected="false">
+                                                <i class="fas fa-shopping-bag"></i>Orders
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#track-orders" role="tab" aria-controls="track-orders" aria-selected="false">
+                                                <i class="fas fa-wallet"></i>Wallet Status
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="wallet-history-tab" data-bs-toggle="tab" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="false">
+                                                <i class="fas fa-history"></i>Wallet History
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="referal-tab" data-bs-toggle="tab" href="#referal" role="tab" aria-controls="referal" aria-selected="false">
+                                                <i class="fas fa-share-alt"></i>Referrals
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/logout">
+                                                <i class="fas fa-sign-out-alt"></i>Logout
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="tab-content dashboard-content">
+                                    <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                                        <div class="card card-green">
+                                            <div class="card-header">
+                                                <h5 class="mb-0 text-center"><i class="fas fa-user-circle"></i> User Profile</h5>
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <div class="mb-4">
+                                                    <i class="fas fa-user-circle" style="font-size: 4rem; color: var(--primary-blue);"></i>
+                                                </div>
+                                                <h5 class="card-title mb-3">Welcome back!</h5>
+                                                <p class="card-text mb-3">
+                                                    <strong><i class="fas fa-phone"></i> Phone:</strong> 
+                                                    <span class="ms-2"><%=user.phone%></span>
+                                                </p>
+                                                <p class="card-text mb-4">
+                                                    <strong><i class="fas fa-envelope"></i> Email:</strong> 
+                                                    <span class="ms-2"><%=user.email%></span>
+                                                </p>
+                                                <div class="d-flex justify-content-center flex-wrap">
+                                                    <a href="#" class="btn btn-success">
+                                                        <i class="fas fa-edit"></i> Change Email
+                                                    </a>
+                                                    <a href="#" class="btn btn-success">
+                                                        <i class="fas fa-key"></i> Change Password
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                                        <div class="address-grid">
+                                            <div class="col-lg-6">
+                                                <div class="card mb-4 mb-lg-0">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0"><i class="fas fa-home"></i> Primary Address</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <address>
+                                                            <strong>John Doe</strong><br>
+                                                            123 Water Street<br>
+                                                            Suite 456<br>
+                                                            Aqua City, AC 12345<br>
+                                                            <i class="fas fa-phone"></i> (555) 123-4567
+                                                        </address>
+                                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                                            <a href="#" class="btn-small">
+                                                                <i class="fas fa-edit"></i> Edit
+                                                            </a>
+                                                            <a href="#" class="btn-small" onclick="">
+                                                                <i class="fas fa-trash"></i> Delete
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-6">
+                                                <div class="card mb-3 mb-lg-0">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0"><i class="fas fa-building"></i> Secondary Address</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <address>
+                                                            <i class="fas fa-plus-circle"></i> No address added yet
+                                                        </address>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-center">
+                                            <a href="#">
+                                                <button class="btn btn-primary">
+                                                    <i class="fas fa-plus"></i> Add New Address
+                                                </button>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Your Orders</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th><i class="fas fa-hashtag"></i> Order ID</th>
+                                                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                                                <th><i class="fas fa-dollar-sign"></i> Total</th>
+                                                                <th><i class="fas fa-cog"></i> Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>#AP001</td>
+                                                                <td><span class="badge bg-success">Delivered</span></td>
+                                                                <td>$29.99</td>
+                                                                <td>
+                                                                    <a href="#" class="btn-small">
+                                                                        <i class="fas fa-eye"></i> View
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>#AP002</td>
+                                                                <td><span class="badge bg-warning">Processing</span></td>
+                                                                <td>$49.99</td>
+                                                                <td>
+                                                                    <a href="#" class="btn-small">
+                                                                        <i class="fas fa-eye"></i> View
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="mb-0"><i class="fas fa-wallet"></i> Wallet Status</h5>
+                                            </div>
+                                            <div class="card-body contact-from-area">
+                                                <div class="row">
+                                                    <div class="col-lg-8 mx-auto text-center">
+                                                        <div class="mb-5">
+                                                            <i class="fas fa-wallet" style="font-size: 4rem; color: var(--primary-blue);"></i>
+                                                        </div>
+                                                        <form>
+                                                            <div class="form-group">
+                                                                <label for="walletAmount" class="h4">Current Balance</label>
+                                                                <div class="wallet-amount">$125.50</div>
+                                                            </div>
+                                                            <button type="button" class="btn btn-success" onclick="">
+                                                                <i class="fas fa-plus"></i> Add Money
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="mb-0"><i class="fas fa-history"></i> Wallet History</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th><i class="fas fa-calendar"></i> Date</th>
+                                                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                                                <th><i class="fas fa-dollar-sign"></i> Amount</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>2024-01-15</td>
+                                                                <td><span class="badge bg-success">Credit</span></td>
+                                                                <td>+$50.00</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>2024-01-14</td>
+                                                                <td><span class="badge bg-danger">Debit</span></td>
+                                                                <td>-$29.99</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>2024-01-10</td>
+                                                                <td><span class="badge bg-success">Credit</span></td>
+                                                                <td>+$100.00</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="referal-tab">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="mb-0"><i class="fas fa-share-alt"></i> Referral Program</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="text-center mb-4">
+                                                    <i class="fas fa-users" style="font-size: 4rem; color: var(--primary-blue);"></i>
+                                                </div>
+                                                <h6 class="mb-3 text-center">
+                                                    <i class="fas fa-gift"></i> Refer your friends and earn money!
+                                                </h6>
+                                                <div class="referral-link text-center">
+                                                    <strong>https://aquapure.com/ref/user123</strong>
+                                                </div>
+                                                <div class="text-center mt-4">
+                                                    <p class="h5">
+                                                        <i class="fas fa-coins"></i> Total Earned: <span class="text-success">$45.00</span>
+                                                    </p>
+                                                </div>
+                                                <div class="text-center mt-3">
+                                                    <button class="btn btn-success" onclick="navigator.clipboard.writeText('https://aquapure.com/ref/user123')">
+                                                        <i class="fas fa-copy"></i> Copy Link
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Initialize Bootstrap tabs
+            var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+            triggerTabList.forEach(function (triggerEl) {
+                var tabTrigger = new bootstrap.Tab(triggerEl);
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    tabTrigger.show();
+                });
+            });
+        </script>
+    </body>
+</html>
+<%- include("../../views/partials/user/footer") %>

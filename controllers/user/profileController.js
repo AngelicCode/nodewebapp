@@ -147,6 +147,21 @@ const verifyForgotPassOtp = async (req,res)=>{
     }
   }
 
+  const userProfile = async(req,res)=>{
+    try {
+      const userId = req.session.user;
+      const userData = await User.findById(userId);
+      res.render("profile",{
+        user:userData,
+      })
+
+    } catch (error) {
+      console.error("Error for retrieve profile data",error);
+      res.redirect("/pageNotFound");
+    }
+
+  }
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,
 }
