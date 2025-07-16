@@ -133,13 +133,28 @@
                             
                             <div class="product-highlights">
                                 <h3 class="section-title">Highlights</h3>
-                                <ul class="highlight-list">
-                                    <li><i class="fas fa-check"></i> Leak-Proof Design</li>
-                                    <li><i class="fas fa-check"></i> Durable Build</li>
-                                    <li><i class="fas fa-check"></i> Eco-Friendly & Reusable</li>
-                                    <li><i class="fas fa-check"></i> Stylish & Modern Design</li>
-                                    <li><i class="fas fa-check"></i> Easy-to-Clean</li>
-                                </ul>
+                                <div class="features">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🍶</div>
+                                        <span>Leak-Proof Design</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">⚡</div>
+                                        <span>Durable Build</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">💧</div>
+                                        <span>Eco-Friendly & Reusable</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">✨</div>
+                                        <span>Stylish & Modern Design</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">💧</div>
+                                        <span>Easy-to-Clean</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="product-meta">
@@ -706,41 +721,31 @@
         font-size: 14px;
     }
 
-    .product-highlights {
-        margin: 25px 0;
-        padding: 0;
+    .features {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e8ecf0;
     }
 
-    .section-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 15px;
-    }
-
-    .highlight-list {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px 24px; 
-    }
-
-    .highlight-list li {
-        margin-bottom: 0;
-        padding: 0;
+    .feature-item {
         display: flex;
         align-items: center;
-        font-size: 15px;
-        color: #34495e;
-        width: calc(50% - 12px); 
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        color: #6c757d;
     }
 
-    .highlight-list i {
-        color: #3498db;
-        margin-right: 8px;
-        font-size: 14px;
+    .feature-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        background: linear-gradient(45deg, black, #5aa3f0);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
     }
 
     .stock-label {

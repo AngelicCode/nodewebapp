@@ -162,6 +162,45 @@ const verifyForgotPassOtp = async (req,res)=>{
 
   }
 
+  const changeEmail = async(req,res)=>{
+    try {
+      res.render("change-email");
+    } catch (error) {
+      res.redirect("/pageNotFound");
+    }
+
+  }
+
+  const changeEmailValid = async(req,res)=>{
+    try {
+      const {email} = req.body;
+      const userExists = await User.findOne({email});
+      if(userExists){
+        const otp = generateOtp();
+      
+      const emailSent = await sendVerificationEmail(email,otp);
+      if(emailSent){
+        req.session.userOtp = otp;
+        req.session.userData = req.body;
+        req.session.email = email;
+        res.render("change-email-otp");
+        console.log("email send:",email);
+        console.log("otp:",otp);
+      }else{
+              res.json("email-error");
+            }
+    }else{
+      res.render("change-email",{
+        message:"User with this email not exists"
+      })
+    }
+
+    } catch (error) {
+      res.redirect("/pageNotFound");
+    }
+
+  }
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,
 }
