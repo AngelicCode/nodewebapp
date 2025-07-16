@@ -276,6 +276,19 @@ const verifyForgotPassOtp = async (req,res)=>{
     }
   }
 
+  const verifyChangePasswordOtp = async(req,res)=>{
+    try {
+      const enteredOtp = req.body.otp;
+      if(enteredOtp === req.session.userOtp){
+        res.json({success:true,redirectUrl:"/reset-password"});
+      }else{
+        res.json({success:false,message:"OTP not matching"})
+      }
+    } catch (error) {
+      res.status(500).json({success:false,message:"An error occured.Please try again later"})
+    }
+  }
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,
 }
