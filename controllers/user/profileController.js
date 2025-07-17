@@ -192,6 +192,7 @@ const verifyForgotPassOtp = async (req,res)=>{
     }else{
       res.render("change-email",{
         message:"User with this email not exists"
+
       })
     }
 
