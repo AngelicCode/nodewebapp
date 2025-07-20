@@ -269,6 +269,9 @@
             <form method="post" action="/change-email" onsubmit="return validateLoginForm()">
                 <div class="form-group">
                     <input class="form-control" name="email" placeholder="Enter your email address" type="text" id="email">
+
+                    <div class="error-message" id="email-error"><%= typeof emailError !== "undefined" ? emailError : "" %></div>
+
                     <div class="error-message" id="email-error"></div>
                 </div>
                 

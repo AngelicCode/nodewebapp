@@ -63,5 +63,9 @@ router.post("/login",userController.login);
 router.get("/logout",userController.logout);
 router.get("/shop",userController.loadShopping);
 
+//Address Management
+
+router.get("/addAddress",userAuth,profileController.addAddress);
+router.post("/addAddress",userAuth,profileController.postAddAddress);
 
 module.exports = router;

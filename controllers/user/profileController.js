@@ -1,4 +1,5 @@
 const User = require("../../models/userSchema");
+const Address = require("../../models/addressSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
@@ -151,8 +152,11 @@ const verifyForgotPassOtp = async (req,res)=>{
     try {
       const userId = req.session.user;
       const userData = await User.findById(userId);
+      const addressData = await Address.findOne({userId:userId});
       res.render("profile",{
         user:userData,
+        userAddress:addressData,
+
       })
 
     } catch (error) {
@@ -191,7 +195,7 @@ const verifyForgotPassOtp = async (req,res)=>{
             }
     }else{
       res.render("change-email",{
-        message:"User with this email not exists"
+        emailError:"User with this email not exists"
 
       })
     }
@@ -268,7 +272,7 @@ const verifyForgotPassOtp = async (req,res)=>{
 
       }else{
         res.render("change-password",{
-          message:"User with this email does not exist",
+          emailError:"User with this email does not exist",
         })
       }
     } catch (error) {
@@ -290,6 +294,46 @@ const verifyForgotPassOtp = async (req,res)=>{
     }
   }
 
+  const addAddress = async (req,res)=>{
+    try {
+      const user = req.session.user;
+      res.render("add-address",{
+        user:user,
+      });
+    } catch (error) {
+      res.redirect("/pageNotFound")
+    }
+
+  }
+
+  const postAddAddress = async (req,res)=>{
+    try {
+      const userId = req.session.user;
+      const userData = await User.findOne({_id:userId})
+      const {addressType,name,city,landMark,state,pincode,phone,altPhone} = req.body;
+      const userAddress = await Address.findOne({userId:userData._id});
+      if(!userAddress){
+        const newAddress = new Address({
+          userId:userData._id,
+          address:[{addressType,name,city,landMark,state,pincode,phone,altPhone}]
+        })
+        await newAddress.save();
+
+      }else{
+        userAddress.address.push({addressType,name,city,landMark,state,pincode,phone,altPhone,});
+        await userAddress.save();
+      }
+
+      res.redirect("/userProfile");
+     
+    } catch (error) {
+      console.error("Error adding address:",error)
+      res.redirect("/pageNotFound");
+      
+    }
+
+  }
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,
 }

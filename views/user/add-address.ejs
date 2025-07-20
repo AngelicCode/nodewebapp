@@ -1,0 +1,468 @@
+<%- include("../../views/partials/user/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Sip - Delivery Address</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #87ceeb 0%, #b8e6f0 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a"><stop offset="0" stop-color="%23ffffff" stop-opacity=".1"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="400" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="120" fill="url(%23a)"/></svg>') no-repeat;
+            background-size: cover;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #ffffff !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .water-drop {
+            color: #4facfe;
+            margin-right: 10px;
+            filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.5));
+        }
+
+        .container-fluid {
+            position: relative;
+            z-index: 5;
+            padding: 2rem 0;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 3rem;
+            margin: 2rem auto;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe, #4facfe);
+            border-radius: 26px;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .form-title h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #87ceeb 0%, #4dd0e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-title p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #34495e;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group label i {
+            margin-right: 8px;
+            color: #4facfe;
+            width: 16px;
+        }
+
+        .form-control {
+            border: 2px solid rgba(79, 172, 254, 0.2);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-control:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+        }
+
+        .form-control:hover {
+            border-color: #4facfe;
+            transform: translateY(-1px);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            margin: 2rem auto 0;
+            display: block;
+            width: fit-content;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-submit:hover::before {
+            left: 100%;
+        }
+
+        .btn-submit:active {
+            transform: translateY(-1px);
+        }
+
+        .text-danger {
+            color: #e74c3c !important;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .floating-drop {
+            position: absolute;
+            color: rgba(79, 172, 254, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-drop:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-drop:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
+        .floating-drop:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 2s; }
+        .floating-drop:nth-child(4) { bottom: 10%; right: 10%; animation-delay: 3s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(-10px) rotate(240deg); }
+        }
+
+        .row {
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+            
+            .form-title h2 {
+                font-size: 1.8rem;
+            }
+            
+            .btn-submit {
+                width: 100%;
+                margin-top: 1.5rem;
+            }
+        }
+
+        .swal2-popup {
+            border-radius: 20px !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-tint water-drop"></i>
+                Quick Sip
+            </a>
+        </div>
+    </nav>
+
+    <!-- Floating Elements -->
+    <div class="floating-elements">
+        <i class="fas fa-tint floating-drop" style="font-size: 3rem;"></i>
+        <i class="fas fa-tint floating-drop" style="font-size: 2rem;"></i>
+        <i class="fas fa-tint floating-drop" style="font-size: 2.5rem;"></i>
+        <i class="fas fa-tint floating-drop" style="font-size: 1.8rem;"></i>
+    </div>
+
+    <div class="container-fluid">
+        <div class="form-container">
+            <div class="form-title">
+                <h2><i class="fas fa-map-marker-alt" style="margin-right: 15px; color: #4facfe;"></i>Delivery Address</h2>
+                
+            </div>
+            
+            <form id="addressForm" method="POST" action="/addAddress">
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label for="addressType"><i class="fas fa-tag"></i>Address Type:</label>
+                        <input type="text" class="form-control" id="addressType" name="addressType" required placeholder="e.g., Home, Office">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="name"><i class="fas fa-user"></i>Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Full Name">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="city"><i class="fas fa-city"></i>City:</label>
+                        <input type="text" class="form-control" id="city" name="city" required placeholder="City Name">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label for="landMark"><i class="fas fa-landmark"></i>Landmark:</label>
+                        <input type="text" class="form-control" id="landMark" name="landMark" required placeholder="Nearby Landmark">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="state"><i class="fas fa-flag"></i>State:</label>
+                        <input type="text" class="form-control" id="state" name="state" required placeholder="State Name">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="pincode"><i class="fas fa-map-pin"></i>Pincode:</label>
+                        <input type="number" class="form-control" id="pincode" name="pincode" required placeholder="6-digit PIN">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label for="phone"><i class="fas fa-phone"></i>Phone:</label>
+                        <input type="number" class="form-control" id="phone" name="phone" required placeholder="10-digit number">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="altPhone"><i class="fas fa-phone-alt"></i>Alternate Phone:</label>
+                        <input type="number" class="form-control" id="altPhone" name="altPhone" required placeholder="10-digit number">
+                    </div>
+                </div>
+                
+                <button type="submit" id="submitButton" class="btn-submit">
+                    <i class="fas fa-paper-plane" style="margin-right: 10px;"></i>
+                    Submit Address
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('addressForm').addEventListener('submit', function(event) {
+            if (!validateForm()) {
+                event.preventDefault();
+            }
+        });
+
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
+            requiredFields.forEach(function(field) {
+                const input = document.getElementById(field);
+                const inputValue = input.value.trim();
+                const errorElement = document.getElementById(field + '-error');
+
+                if (inputValue === "") {
+                    if (!errorElement) {
+                        const errorMessage = "This field is required.";
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = "text-danger";
+                        errorDiv.textContent = errorMessage;
+                        errorDiv.id = field + '-error';
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                    isValid = false;
+                } else {
+                    if (errorElement) {
+                        errorElement.remove();
+                    }
+                }
+            });
+
+            const addressType = document.getElementById('addressType').value;
+            const name = document.getElementById('name').value;
+            const city = document.getElementById('city').value;
+            const landMark = document.getElementById('landMark').value;
+            const state = document.getElementById('state').value;
+            const pincode = document.getElementById('pincode').value;
+            const phone = document.getElementById('phone').value;
+            const altPhone = document.getElementById('altPhone').value;
+            const namePattern = /^[A-Za-z\s]+$/;
+            const pincodePattern = /^\d{6}$/;
+            const phonePattern = /^\d{10}$/;
+            
+            if (!namePattern.test(name)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Name should contain alphabets only.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!namePattern.test(city)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'City should contain alphabets only.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!namePattern.test(landMark)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Landmark should contain alphabets only.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!namePattern.test(state)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'State should contain alphabets only.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!pincodePattern.test(pincode)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Pincode should be a 6-digit number.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!phonePattern.test(phone)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Phone number should be a 10-digit number.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (!phonePattern.test(altPhone)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Alternate phone number should be a 10-digit number.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            if (phone === altPhone) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Phone number and alternate phone number should be different.',
+                    icon: 'error',
+                    confirmButtonColor: '#4facfe'
+                });
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        // Add smooth focus transitions
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentNode.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentNode.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
+<%- include("../../views/partials/user/footer") %>
