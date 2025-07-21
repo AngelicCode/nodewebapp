@@ -64,8 +64,10 @@ router.get("/logout",userController.logout);
 router.get("/shop",userController.loadShopping);
 
 //Address Management
-
 router.get("/addAddress",userAuth,profileController.addAddress);
 router.post("/addAddress",userAuth,profileController.postAddAddress);
+router.get("/editAddress",userAuth,profileController.editAddress);
+router.post("/editAddress",userAuth,profileController.postEditAddress);
+router.get("/deleteAddress",userAuth,profileController.deleteAddress);
 
 module.exports = router;
