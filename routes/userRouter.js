@@ -5,6 +5,7 @@ const passport = require("passport");
 const {userAuth,isBlocked} = require("../middlewares/auth");
 const productController = require("../controllers/user/productController");
 const profileController = require("../controllers/user/profileController");
+const wishlistController = require("../controllers/user/wishlistController");
 
 router.get("/pageNotFound",userController.pageNotFound);
 
@@ -69,5 +70,9 @@ router.post("/addAddress",userAuth,profileController.postAddAddress);
 router.get("/editAddress",userAuth,profileController.editAddress);
 router.post("/editAddress",userAuth,profileController.postEditAddress);
 router.get("/deleteAddress",userAuth,profileController.deleteAddress);
+
+//Wishlist Management
+router.get("/wishlist",userAuth,wishlistController.loadWishlist);
+router.post("/addToWishlist",userAuth,wishlistController.addToWishlist);
 
 module.exports = router;

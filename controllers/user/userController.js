@@ -299,6 +299,15 @@ const loadShoppingPage = async (req, res) => {
   try {
     const user = req.session.user;
 
+    let wishlistProductIds = [];
+    if (user) {
+      const userDoc = await User.findById(user._id).select('wishlist').lean();
+      if (userDoc && userDoc.wishlist && Array.isArray(userDoc.wishlist)) {
+        wishlistProductIds = userDoc.wishlist.map(id => id.toString());
+      }
+    }
+
+
     const [categories, brands] = await Promise.all([
       Category.find({ isListed: true }),
       Brand.find({ isBlocked: false })
@@ -416,7 +425,8 @@ const loadShoppingPage = async (req, res) => {
         stagger: 0.1,
         duration: 0.8,
         ease: "power2.out"
-      }
+      },
+      wishlistProductIds,   
     });
 
   } catch (error) {
@@ -439,7 +449,9 @@ const loadShoppingPage = async (req, res) => {
         stagger: 0.1,
         duration: 0.8,
         ease: "power2.out"
-      }
+      },
+      wishlistProductIds: [],
+      
     });
   }
 };

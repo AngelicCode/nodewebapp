@@ -76,9 +76,9 @@
                             </div>
                             
                             <div class="price-container">
-                                <div class="current-price">$<%=product.salePrice%></div>
+                                <div class="current-price">₹<%=product.salePrice%></div>
                                 <div class="price-details">
-                                    <span class="original-price">$<%=product.regularPrice%></span>
+                                    <span class="original-price">₹<%=product.regularPrice%></span>
                                     <% if(totalOffer) { %>
                                         <span class="discount-badge"><%=totalOffer%>% OFF</span>
                                     <% } %>
@@ -203,9 +203,9 @@
                                         <div class="product-info">
                                             <h4 class="product-name"><%= related.productName %></h4>
                                             <div class="product-price">
-                                                <span class="current-price">$<%= related.salePrice %></span>
+                                                <span class="current-price">₹<%= related.salePrice %></span>
                                                 <% if(related.regularPrice > related.salePrice) { %>
-                                                    <span class="original-price">$<%= related.regularPrice %></span>
+                                                    <span class="original-price">₹<%= related.regularPrice %></span>
                                                 <% } %>
                                             </div>
                                         </div>

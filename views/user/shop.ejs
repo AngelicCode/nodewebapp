@@ -61,9 +61,10 @@
         }
 
         .hero-content p {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             opacity: 0.9;
-            font-weight: 300;
+            font-weight: 390;
+            color:white;
         }
 
         .search-section {
@@ -100,28 +101,41 @@
             outline: none;
             background: transparent;
             color: #333;
+        
         }
 
         .search-input::placeholder {
             color: #888;
         }
 
-        .search-button {
-            padding: 18px 30px;
-            background: #000;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border-radius: 50px;
-            margin: 5px;
+        .search-section .search-form .search-button {
+            padding: 18px 30px !important;
+            background: #000 !important;
+            color: white !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            border-radius: 50px !important;
+            margin: 5px !important;
+            outline: none !important;
+            box-shadow: none !important;
         }
 
-        .search-button:hover {
-            background: #333;
-            transform: scale(1.05);
+        .search-section .search-form .search-button:hover {
+            background: #333 !important;
+            transform: scale(1.05) !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .search-section .search-form .search-button:focus,
+        .search-section .search-form .search-button:active {
+            background: #000 !important;
+            color: white !important;
+            outline: none !important;
+            box-shadow: none !important;
         }
 
         .product-list-container {
@@ -254,10 +268,7 @@
         }
 
        .product-image-container {
-            height: 250px; 
             position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
         }
 
         .product-card img {
@@ -271,30 +282,34 @@
             transform: scale(1.1);
         }
 
-        .wishlist-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #000;
-            color: white;
-            padding: 12px;
-            border-radius: 50%;
+      .wishlist-btn {
+            background: transparent;
+            border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 18px;
-            width: 45px;
-            height: 45px;
+            font-size: 24px;
+            color: #999; 
+            transition: color 0.3s ease;
+            padding: 0;
+            outline: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: none;
-        }
+            width: 45px; height: 45px; 
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 90;
+            }
 
-        .wishlist-btn:hover {
-            background: #333;
+            .wishlist-btn:hover {
+            color: #e03131;
             transform: scale(1.1);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        }
+            }
+
+            .wishlist-btn.active {
+            color: #e03131; 
+            }
 
         .product-info {
             padding: 20px;
@@ -527,6 +542,16 @@
             border-bottom: 2px solid #3498db;
             padding-bottom: 5px;
         }
+
+        .product-info a {
+            color: inherit;
+            text-decoration: none;
+        }
+            .product-info a:hover h4 {
+            text-decoration: underline;
+        }
+
+
         @media (max-width: 1200px) {
             .product-list-container {
                 flex-direction: column;
@@ -587,6 +612,7 @@
         <section class="search-section">
             <form action="/shop" method="GET" class="search-form">
                 <input type="text" name="search" placeholder="Search for water bottles..." 
+                    style="margin-left: 30px; border-radius: 30px;"
                         value="<%= query.search || '' %>" class="search-input" />
                 <button type="submit" class="search-button">Search</button>
             </form>
@@ -758,35 +784,38 @@
             <main class="product-grid">
                 <% if (products && products.length > 0) { %>
                     <% for (let i = 0; i < products.length; i++) { %>
-                        <a href="/productDetails?id=<%= products[i]._id %>" class="product-card-link">
-                            <div class="product-card">
-                                <div class="product-image-container">
-                                    <button class="wishlist-btn" onclick="event.preventDefault()">❤️</button>
-                                    <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
-                                </div>
-                                <div class="product-info">
-                                    <h4><%=products[i].productName%></h4>
-                                    <p class="no-underline">Brand: <%= products[i].brand.brandName %></p>
-                                    <p class="no-underline">
-                                        Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
-                                        <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
-                                            <span class="text-muted" style="opacity: 0.5;">
-                                                <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
-                                            </span>
-                                        <% } %>
-                                    </p>
+                        <div class="product-card">
+                            <div class="product-image-container" style="position:relative;">
+                                <button class="wishlist-btn <%= wishlistProductIds.includes(products[i]._id.toString()) ? 'active' : '' %>" 
+                                onclick="toggleWishlist(event, '<%=products[i]._id%>', this)">
+                                <span class="heart-icon"><%= wishlistProductIds.includes(products[i]._id.toString()) ? '♥' : '♡' %></span>
+                                </button>
 
-                                    <%if(products[i].quantity == 0){%>
-                                        <div class="out-of-stock-icon"> Out of Stock </div> 
-
-                                        <% }else{ %>
-
-                                        <button class="add-to-cart-btn" onclick="event.preventDefault()">Add to Cart</button>
-                                    <%}%>
-
-                                </div>
+                                <a href="/productDetails?id=<%= products[i]._id %>">
+                                <img src="/uploads/product-images/<%=products[i].productImage[0]%>" alt="<%= products[i].productName %>" />
+                                </a>
                             </div>
-                        </a>
+                            <div class="product-info">
+                                <a href="/productDetails?id=<%= products[i]._id %>" style="text-decoration:none; color:inherit;">
+                                <h4><%= products[i].productName %></h4>
+                                </a>
+                                <p class="no-underline">Brand: <%= products[i].brand.brandName %></p>
+                                <p class="no-underline">
+                                Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
+                                <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                                    <span class="text-muted" style="opacity: 0.5;">
+                                    <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+                                    </span>
+                                <% } %>
+                                </p>
+                                <%if(products[i].quantity == 0){%>
+                                <div class="out-of-stock-icon"> Out of Stock </div> 
+                                <% } else { %>
+                                <button class="add-to-cart-btn" onclick="event.preventDefault()">Add to Cart</button>
+                                <% } %>
+                            </div>
+                            </div>
+
                     <% } %>
                 <% } else { %>
                         <p class="no-products-message">🔍 We couldn't find any matching products</p>
@@ -803,6 +832,48 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+
+    <script>
+        async function toggleWishlist(event, productId, btn, isInWishlist) {
+        event.stopPropagation();
+        const url = isInWishlist ? '/removeFromWishlist' : '/addToWishlist';
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: { productId },
+            success: (response) => {
+            if (response.status) {
+                Swal.fire({
+                title: "Added to Wishlist",
+                text: "The product has been added to wishlist",
+                icon: "success",
+                timer: 2000
+                });
+                $(btn).addClass('active'); 
+            } else {
+                Swal.fire({
+                title: 'Already in Wishlist',
+                text: response.message,
+                icon: 'info',
+                timer: 2000
+                });
+            }
+            },
+            error: () => {
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong!',
+                icon: 'error',
+                timer: 2000
+            });
+            }
+        });
+        }
+
+
+    </script>
+
 </body>
 </html>
 <%- include("../../views/partials/user/footer") %>

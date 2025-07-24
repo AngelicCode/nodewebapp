@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #334155;
+        }
+
+        /* Breadcrumb Styling */
+        .page-header {
+            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            padding: 22px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.3;
+        }
+
+        .breadcrumb {
+            background: none;
+            margin: 0;
+            padding: 0;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .breadcrumb a {
+            color: black;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .breadcrumb span {
+            color: black;
+            margin: 0 8px;
+        }
+
+        .breadcrumb span::before {
+            content: '›';
+            font-weight: bold;
+        }
+
+        /* Main Content Container */
+        .wishlist-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            margin: 40px auto;
+            overflow: hidden;
+            max-width: 1200px;
+        }
+
+        .wishlist-header {
+            background: linear-gradient(135deg, #c6f399 0%, #71cd14 100%);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .wishlist-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+
+        .wishlist-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+
+        .wishlist-title i {
+            margin-right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 50%;
+        }
+
+        /* Table Styling */
+        .table-container {
+            padding: 40px;
+        }
+
+        .table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 0;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border: none;
+            padding: 20px 15px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .table thead th:first-child {
+            border-radius: 16px 0 0 0;
+        }
+
+        .table thead th:last-child {
+            border-radius: 0 16px 0 0;
+        }
+
+        .table tbody td {
+            padding: 25px 15px;
+            border: none;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 16px;
+        }
+
+        .table tbody tr:last-child td:last-child {
+            border-radius: 0 0 16px 0;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Product Image */
+        .product-thumbnail img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .product-thumbnail img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Product Details */
+        .product-name h5 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .product-name a {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.3s ease;
+        }
+
+        .product-name a:hover {
+            color: #87ceeb;
+        }
+
+        .product-des p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Price Styling */
+        .price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #87ceeb;
+        }
+
+        .price span {
+            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Button Styling */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(135, 206, 235, 0.39);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(135, 206, 235, 0.5);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(248, 113, 113, 0.39);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(248, 113, 113, 0.5);
+            color: white;
+        }
+
+        .btn i {
+            font-size: 1rem;
+        }
+
+        /* Empty State */
+        .empty-wishlist {
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .empty-wishlist i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .empty-wishlist .lead {
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+
+        .empty-wishlist .btn {
+            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            color: white;
+            padding: 16px 32px;
+            font-size: 1rem;
+            border-radius: 12px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .wishlist-container {
+                margin: 20px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .table-container {
+                padding: 20px;
+            }
+
+            .wishlist-title {
+                font-size: 2rem;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wishlist-header {
+                padding: 20px;
+            }
+
+            .wishlist-title {
+                font-size: 1.8rem;
+            }
+
+            .table-responsive {
+                border-radius: 16px;
+                overflow: hidden;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 15px 10px;
+            }
+
+            .product-thumbnail img {
+                width: 60px;
+                height: 60px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.8rem;
+                min-width: 100px;
+            }
+
+            .price {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-container {
+                padding: 15px;
+            }
+
+            .empty-wishlist {
+                padding: 60px 20px;
+            }
+
+            .empty-wishlist i {
+                font-size: 3rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table tbody tr {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+        .table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+        .table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        .table tbody tr:nth-child(4) { animation-delay: 0.4s; }
+        .table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <!-- Include header partial -->
+     <%- include("../../views/partials/user/header") %> 
+
+    <main class="main">
+        <div class="page-header breadcrumb-wrap">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="/" rel="nofollow">Home</a>
+                    <span></span> Shop
+                    <span></span> My Wishlist
+                </div>
+            </div>
+        </div>
+
+        <section class="mt-50 mb-50">
+            <div class="container">
+                <div class="wishlist-container fade-in">
+                    <div class="wishlist-header">
+                        <h1 class="wishlist-title">
+                            <i class="fas fa-heart"></i>
+                            My Wishlist
+                        </h1>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-responsive">
+                            <table class="table text-center">
+                                <thead>
+                                    <tr class="main-heading">
+                                        <th scope="col">
+                                            <i class="fas fa-image me-2"></i>Image
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-tag me-2"></i>Product
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-rupee-sign me-2"></i>Price
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-times me-2"></i>Remove
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                  <%if(wishlist.length>0){%>
+                                    <%for(let product of wishlist){%>
+
+                                    <!-- Sample wishlist item (replace with your dynamic content) -->
+                                    <tr>
+                                        <td class="image product-thumbnail">
+                                            <img src="/uploads/product-images/<%=product.productImage[0]%>" alt="Product Image" />
+                                        </td>
+                                        <td class="product-des product-name">
+                                            <h5 class="product-name">
+                                                <a href="/productDetails?id=<%= product._id %>"><%=product.productName%></a>
+                                            </h5>
+                                            <p class="font-xs">
+                                                <%=product.category.name%><br />
+                                                <%=product.brand.brandName%>
+                                            </p>
+                                        </td>
+                                        <td class="price" data-title="Price">
+                                            ₹<span><%=product.salePrice%></span>
+                                        </td>
+                                        <td class="text-center" data-title="Add to Cart">
+                                            <a href="#" onclick="" class="btn btn-primary">
+                                                <i class="fas fa-cart-plus"></i>
+                                                Add to Cart
+                                            </a>
+                                        </td>
+                                        <td class="action" data-title="Remove">
+                                            <a class="btn btn-danger" href="#" onclick="">
+                                                <i class="fas fa-trash"></i>
+                                                Remove
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <%}%>
+                                    <%}else{%>
+                                    <!-- Empty state -->
+                                    <tr>
+                                        <td colspan="5" class="empty-wishlist">
+                                            <i class="fas fa-heart-broken"></i>
+                                            <p class="lead mb-4">Your wishlist is empty</p>
+                                            <p class="text-muted mb-4">Save items you love to your wishlist and never lose track of them!</p>
+                                            <a href="/shop" class="btn">
+                                                <i class="fas fa-shopping-bag me-2"></i>
+                                                Continue Shopping
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <%}%>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Include footer partial -->
+     <%- include("../../views/partials/user/footer") %> 
+
+    <script>
+        // Add smooth animations
+        window.addEventListener('load', function() {
+            const rows = document.querySelectorAll('.table tbody tr');
+            rows.forEach((row, index) => {
+                row.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        // Add button click effects
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Create ripple effect
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.height, rect.width);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn {
+                position: relative;
+                overflow: hidden;
+            }
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple-animation 0.6s linear;
+                pointer-events: none;
+            }
+            @keyframes ripple-animation {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
