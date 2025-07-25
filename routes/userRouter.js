@@ -74,5 +74,6 @@ router.get("/deleteAddress",userAuth,profileController.deleteAddress);
 //Wishlist Management
 router.get("/wishlist",userAuth,wishlistController.loadWishlist);
 router.post("/addToWishlist",userAuth,wishlistController.addToWishlist);
+router.get("/removeFromWishlist",userAuth,wishlistController.removeProduct);
 
 module.exports = router;

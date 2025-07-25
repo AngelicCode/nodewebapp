@@ -551,6 +551,11 @@
             text-decoration: underline;
         }
 
+        .no-border-title {
+        border-bottom: none !important;
+        }
+
+
 
         @media (max-width: 1200px) {
             .product-list-container {
@@ -786,9 +791,12 @@
                     <% for (let i = 0; i < products.length; i++) { %>
                         <div class="product-card">
                             <div class="product-image-container" style="position:relative;">
+
                                 <button class="wishlist-btn <%= wishlistProductIds.includes(products[i]._id.toString()) ? 'active' : '' %>" 
                                 onclick="toggleWishlist(event, '<%=products[i]._id%>', this)">
-                                <span class="heart-icon"><%= wishlistProductIds.includes(products[i]._id.toString()) ? '♥' : '♡' %></span>
+                                <span class="heart-icon">
+                                    <%= wishlistProductIds.includes(products[i]._id.toString()) ? '♥' : '♡' %>
+                                </span>
                                 </button>
 
                                 <a href="/productDetails?id=<%= products[i]._id %>">
@@ -832,10 +840,24 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <script>
         async function toggleWishlist(event, productId, btn, isInWishlist) {
         event.stopPropagation();
+        event.preventDefault();
+    
+        const heartIcon = btn.querySelector('.heart-icon');
+
+        if (isInWishlist) {
+            btn.classList.remove('active');
+            heartIcon.textContent = '♡';
+        } else {
+            btn.classList.add('active');
+            heartIcon.textContent = '♥';
+        }
+
         const url = isInWishlist ? '/removeFromWishlist' : '/addToWishlist';
 
         $.ajax({
@@ -848,15 +870,22 @@
                 title: "Added to Wishlist",
                 text: "The product has been added to wishlist",
                 icon: "success",
-                timer: 2000
+                timer: 2000,
+                customClass: {
+                    title: 'no-border-title'
+                },
                 });
+
                 $(btn).addClass('active'); 
             } else {
                 Swal.fire({
                 title: 'Already in Wishlist',
                 text: response.message,
                 icon: 'info',
-                timer: 2000
+                timer: 2000,
+                customClass: {
+                    title: 'no-border-title'
+                },
                 });
             }
             },
@@ -865,7 +894,10 @@
                 title: 'Error',
                 text: 'Something went wrong!',
                 icon: 'error',
-                timer: 2000
+                timer: 2000,
+                customClass: {
+                    title: 'no-border-title'
+                },
             });
             }
         });

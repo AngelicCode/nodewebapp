@@ -125,9 +125,12 @@
                                         <button style="background-color:yellow; color: black;" class="add-to-cart-btn" disabled>Sold Out</button>
                                         <%}%>
                                         
-                                    <button class="wishlist-btn" onclick="addToWishlist()">
-                                        <i class="fas fa-heart"></i>
+                                    <button class="wishlist-btn <%= wishlistProductIds && wishlistProductIds.includes(product._id.toString()) ? 'active' : '' %>" onclick="toggleWishlist(event, '<%=product._id%>', this)">
+                                    <span class="heart-icon">
+                                    <%= wishlistProductIds && wishlistProductIds.includes(product._id.toString()) ? '♥' : '♡' %>
+                                    </span>
                                     </button>
+
                                 </div>
                             </div>
                             
@@ -813,7 +816,30 @@
             transform: scale(2);
         }
     }
+
+    .wishlist-btn.active {
+        color: #e03131 !important;
+        background-color: #ffe6e6;
+        border-color: #e03131;
+    }
+
+    .wishlist-btn .heart-icon {
+        font-size: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .wishlist-btn:hover .heart-icon {
+        transform: scale(1.1);
+    }
+
+    .no-border-title {
+        border-bottom: none !important;
+    }
+
 </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 class InPlaceImageZoom {
@@ -975,18 +1001,50 @@ function addToCart() {
     console.log(`Added ${quantity} of ${productName} to cart`);
 }
 
-function addToWishlist() {
-    const wishlistBtn = document.querySelector('.wishlist-btn');
-    const icon = wishlistBtn.querySelector('i');
+async function toggleWishlist(event, productId, btn) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const heartIcon = btn.querySelector('.heart-icon');
     
-    if (icon.classList.contains('fas')) {
-        icon.classList.remove('fas');
-        icon.classList.add('far');
-        wishlistBtn.style.color = '#e74c3c';
-    } else {
-        icon.classList.remove('far');
-        icon.classList.add('fas');
-        wishlistBtn.style.color = '#c0392b';
-    }
+    $.ajax({
+        url: '/addToWishlist',
+        method: 'POST',
+        data: { productId },
+        success: (response) => {
+            if (response.status) {
+                btn.classList.add('active');
+                heartIcon.textContent = '♥';
+
+                Swal.fire({
+                    title: "Added to Wishlist",
+                    text: "The product has been added to wishlist",
+                    icon: "success",
+                    timer: 2000,
+                    customClass: { title: 'no-border-title' },
+                });
+            } else {
+                
+                 Swal.fire({
+                    title: 'Already in Wishlist',
+                    text: 'This product is already in your wishlist.',
+                    icon: 'info',
+                    timer: 2000,
+                    customClass: { title: 'no-border-title' },
+                });
+            }
+        },
+        error: () => {
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong!',
+                icon: 'error',
+                timer: 2000,
+                customClass: { title: 'no-border-title' },
+            });
+        }
+    });
 }
+
+    
 </script>

@@ -5,9 +5,20 @@ const User = require("../../models/userSchema");
 const productDetails = async (req, res) => { 
     try {    
        const userId = req.session.user;  
-        const userData = await User.findById(userId);    
+        const userData = await User.findById(userId);
+
+            let wishlistProductIds = [];  
+            if (userId) {
+            const wishlistData = await User.findById(userId).select('wishlist').lean();
+
+            if (wishlistData && wishlistData.wishlist) {
+              wishlistProductIds = wishlistData.wishlist.map(id => id.toString());
+            }
+          }
+        
          const productId = req.query.id;     
          const product = await Product.findById(productId).populate("category").populate("brand");  
+         
 
           if (
             !product ||
@@ -37,7 +48,9 @@ const productDetails = async (req, res) => {
           totalOffer: totalOffer,       
           category: findCategory,       
           brand: brand,
-          relatedProducts:relatedProducts
+          relatedProducts:relatedProducts,
+          wishlistProductIds,
+
         });
             
 
