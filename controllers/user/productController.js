@@ -1,6 +1,7 @@
 const Product = require("../../models/productSchema"); 
 const Category = require("../../models/categorySchema"); 
-const User = require("../../models/userSchema");  
+const User = require("../../models/userSchema"); 
+const Wishlist = require("../../models/wishlistSchema");
 
 const productDetails = async (req, res) => { 
     try {    
@@ -9,15 +10,17 @@ const productDetails = async (req, res) => {
 
             let wishlistProductIds = [];  
             if (userId) {
-            const wishlistData = await User.findById(userId).select('wishlist').lean();
+            const wishlistData = await Wishlist.findOne({ userId }).lean();
 
-            if (wishlistData && wishlistData.wishlist) {
-              wishlistProductIds = wishlistData.wishlist.map(id => id.toString());
+              if (wishlistData && Array.isArray(wishlistData.products)) {
+              wishlistProductIds = wishlistData.products.map(item => item.productId.toString());
             }
           }
         
          const productId = req.query.id;     
-         const product = await Product.findById(productId).populate("category").populate("brand");  
+         const product = await Product.findById(productId)
+         .populate("category")
+         .populate("brand");  
          
 
           if (

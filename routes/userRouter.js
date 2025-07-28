@@ -6,6 +6,8 @@ const {userAuth,isBlocked} = require("../middlewares/auth");
 const productController = require("../controllers/user/productController");
 const profileController = require("../controllers/user/profileController");
 const wishlistController = require("../controllers/user/wishlistController");
+const cartController = require("../controllers/user/cartController");
+
 
 router.get("/pageNotFound",userController.pageNotFound);
 
@@ -75,5 +77,12 @@ router.get("/deleteAddress",userAuth,profileController.deleteAddress);
 router.get("/wishlist",userAuth,wishlistController.loadWishlist);
 router.post("/addToWishlist",userAuth,wishlistController.addToWishlist);
 router.get("/removeFromWishlist",userAuth,wishlistController.removeProduct);
+
+// Cart Management
+router.get("/cart", userAuth, cartController.getCartPage)
+router.post("/addToCart",userAuth, cartController.addToCart)
+router.post("/changeQuantity", userAuth,cartController.changeQuantity)
+router.get("/deleteItem", userAuth, cartController.deleteProduct)
+
 
 module.exports = router;

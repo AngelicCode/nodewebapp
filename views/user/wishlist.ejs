@@ -228,7 +228,7 @@
         }
 
         .price span {
-            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            background: linear-gradient(135deg, #22af2e 0%, #207c0e 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -271,7 +271,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
+            background: linear-gradient(135deg, #0b81af 0%, #52aaddeb 100%);
             color: white;
             box-shadow: 0 4px 14px 0 rgba(135, 206, 235, 0.39);
         }
@@ -283,7 +283,7 @@
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            background: linear-gradient(135deg, #e85353e9 0%, #c11818 100%);
             color: white;
             box-shadow: 0 4px 14px 0 rgba(248, 113, 113, 0.39);
         }
@@ -469,6 +469,9 @@
                                             <i class="fas fa-rupee-sign me-2"></i>Price
                                         </th>
                                         <th scope="col">
+                                            <i class="fas fa-check-circle me-2"></i>Stock
+                                            </th>
+                                        <th scope="col">
                                             <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                         </th>
                                         <th scope="col">
@@ -498,11 +501,26 @@
                                         <td class="price" data-title="Price">
                                             ₹<span><%=product.salePrice%></span>
                                         </td>
+                                        <td class="stock-status" data-title="Stock">
+                                        <% if (product.quantity && product.quantity > 0) { %>
+                                            <span class="badge bg-success">In Stock</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        <% } %>
+                                        </td>
                                         <td class="text-center" data-title="Add to Cart">
+                                              <% if (product.quantity && product.quantity > 0) { %>
+
                                             <a href="#" onclick="" class="btn btn-primary">
                                                 <i class="fas fa-cart-plus"></i>
                                                 Add to Cart
                                             </a>
+                                            <% } else { %>
+                                            <button class="btn btn-secondary" disabled style="cursor:not-allowed;opacity:0.7;">
+                                            <i class="fas fa-cart-plus"></i>
+                                            Add to Cart
+                                            </button>
+                                        <% } %>
                                         </td>
                                         <td class="action" data-title="Remove">
                                             <a class="btn btn-danger"  onclick="confirmRemove('<%=product._id%>')">

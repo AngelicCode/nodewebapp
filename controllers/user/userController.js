@@ -2,6 +2,7 @@ const User = require('../../models/userSchema');
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
 const Brand = require("../../models/brandSchema");
+const Wishlist = require("../../models/wishlistSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
@@ -301,16 +302,16 @@ const loadShoppingPage = async (req, res) => {
 
     let wishlistProductIds = [];
     if (user) {
-      const userDoc = await User.findById(user._id).select('wishlist').lean();
-      if (userDoc && userDoc.wishlist && Array.isArray(userDoc.wishlist)) {
-        wishlistProductIds = userDoc.wishlist.map(id => id.toString());
+      const wishlistDoc = await Wishlist.findOne({ userId: user._id }).lean();
+      if (wishlistDoc && Array.isArray(wishlistDoc.products)) {
+        wishlistProductIds = wishlistDoc.products.map(p => p.productId.toString());
       }
     }
-
-
+    
     const [categories, brands] = await Promise.all([
       Category.find({ isListed: true }),
-      Brand.find({ isBlocked: false })
+      Brand.find({ isBlocked: false }),
+      
     ]);
 
     const page = parseInt(req.query.page) || 1;
