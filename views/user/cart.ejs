@@ -1,5 +1,4 @@
 <%- include("../../views/partials/user/header") %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -397,15 +396,14 @@
     </style>
 </head>
 <body>
-    <!-- Include user header here -->
     
     <div class="page-header">
         <div class="container">
             <h1><i class="fas fa-tint water-icon"></i> Your Cart</h1>
             <div class="breadcrumb">
-                <a href="index.html"><i class="fas fa-home"></i> Home</a>
+                <a href="/"><i class="fas fa-home"></i> Home</a>
                 <span><i class="fas fa-chevron-right"></i></span>
-                <span>Shop</span>
+                <a href="/shop">Shop</a>
                 <span><i class="fas fa-chevron-right"></i></span>
                 <span>Your Cart</span>
             </div>
@@ -422,54 +420,35 @@
                     </div>
                     
                     <!-- Cart Items will be populated by EJS -->
+                     <% let x = 0; %>
                     <% if (data.length > 0) { %>
-                        <% var x = 0 %>
-                        <% for (let i = 0; i < data.length; i++) { %>
+                        <% for (let i = 0; i < data.length; i++) { 
+                            var product = data[i];
+                        %>
                             <div class="cart-item">
-                                <img src="/uploads/product-images/<%= data[i].productDetails[0].productImage[0] %>" 
-                                     alt="<%= data[i].productDetails[0].productName %>" 
-                                     class="product-image">
-                                
-                                <div class="product-info">
-                                    <h5><%= data[i].productDetails[0].productName %></h5>
-                                    <p><i class="fas fa-tag"></i> <%= data[i].productDetails[0].category %></p>
-                                    <p><i class="fas fa-industry"></i> <%= data[i].productDetails[0].brand %></p>
-                                </div>
-                                
-                                <div class="price-info">
-                                    <div class="price-main">
-                                        ₹<span id="subTotal<%= data[i].productDetails[0].id %>">
-                                            <%= data[i].productDetails[0].salePrice * data[i].quantity %>
-                                        </span>
-                                    </div>
-                                    <div class="price-per-item">
-                                        ₹<%= data[i].productDetails[0].salePrice %> / item
-                                    </div>
-                                </div>
-                                
-                                <div class="quantity-control">
-                                    <button class="quantity-btn" 
-                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', '<%= data[i].quantity %>', -1, '<%= data[i].productDetails[0].salePrice %>', '<%= data[i].productDetails[0].id %>', '<%= data[i].productDetails[0].quantity%>')">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <input class="quantity-input" 
-                                           id="cartProductQuantity<%= data[i].productDetails[0].id %>"
-                                           value="<%= data[i].quantity %>" 
-                                           readonly>
-                                    <button class="quantity-btn"
-                                            onclick="changeQuantity('<%= data[i].productDetails[0]._id %>', '<%= data[i].quantity %>', 1, '<%= data[i].productDetails[0].salePrice %>', '<%= data[i].productDetails[0].id %>', '<%= data[i].productDetails[0].quantity%>')">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                                
-                                <button class="remove-btn" 
-                                        onclick="confirmRemove('<%= data[i].productDetails[0]._id %>')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            <img src="/uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="product-image">
+                            <div class="product-info">
+                                <h5><%= product.productName %></h5>
+                                <p><i class="fas fa-tag"></i> <%= product.category && product.category.name %></p>
+                                <p><i class="fas fa-industry"></i> <%= product.brand && product.brand.brandName %></p>
                             </div>
-                            <% x += data[i].productDetails[0].salePrice * data[i].quantity %>
+                            <div class="price-info">
+                                <div class="price-main">
+                                ₹<span><%= product.cartTotal %></span>
+                                </div>
+                                <div class="price-per-item">
+                                ₹<%= product.salePrice %> / item
+                                </div>
+                            </div>
+                            <div class="quantity-control">
+                                <button class="quantity-btn" onclick="changeQuantity('<%= product._id %>', <%= product.cartQuantity %>, -1, <%= product.salePrice %>, '<%= product._id %>', <%= product.quantity %>)"><i class="fas fa-minus"></i></button>
+                                <input class="quantity-input" value="<%= product.cartQuantity %>" readonly>
+                                <button class="quantity-btn" onclick="changeQuantity('<%= product._id %>', <%= product.cartQuantity %>, 1, <%= product.salePrice %>, '<%= product._id %>', <%= product.quantity %>)"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <button class="remove-btn" onclick="confirmRemove('<%= product._id %>')"><i class="fas fa-trash"></i></button>
+                            </div>
                         <% } %>
-                    <% } else { %>
+                        <% } else { %>
                         <div class="empty-cart">
                             <i class="fas fa-shopping-cart"></i>
                             <h3>Your cart is empty</h3>
@@ -508,7 +487,9 @@
         </div>
     </main>
 
-    <!-- Include user footer here -->
+    <!-- Pagination -->
+    <%- include("../partials/user/pagination") %>
+
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -653,3 +634,4 @@
 </body>
 </html>
 <%- include("../../views/partials/user/footer") %>
+

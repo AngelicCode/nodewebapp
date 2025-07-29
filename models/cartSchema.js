@@ -29,15 +29,9 @@ const cartSchema = new Schema({
       required: true
 
     },
-    status: {
-      type: String,
-      default: "placed"
-
-    },
-    cancelationReason: {
-      type: String,
-      default: "none"
-
+    addedAt: {
+      type: Date,
+      default: Date.now 
     }
 
   }]

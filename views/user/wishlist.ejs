@@ -438,7 +438,7 @@
             <div class="container">
                 <div class="breadcrumb">
                     <a href="/" rel="nofollow">Home</a>
-                    <span></span> Shop
+                    <span></span><a href="/shop" rel="nofollow">Shop</a>
                     <span></span> My Wishlist
                 </div>
             </div>
@@ -511,7 +511,7 @@
                                         <td class="text-center" data-title="Add to Cart">
                                               <% if (product.quantity && product.quantity > 0) { %>
 
-                                            <a href="#" onclick="" class="btn btn-primary">
+                                            <a href="" onclick="" class="btn btn-primary">
                                                 <i class="fas fa-cart-plus"></i>
                                                 Add to Cart
                                             </a>
@@ -553,6 +553,8 @@
             </div>
         </section>
     </main>
+
+    <%- include("../partials/user/pagination")%>
 
     <!-- Include footer partial -->
      <%- include("../../views/partials/user/footer") %> 

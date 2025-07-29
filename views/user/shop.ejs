@@ -818,6 +818,10 @@
                                 </p>
                                 <%if(products[i].quantity == 0){%>
                                 <div class="out-of-stock-icon"> Out of Stock </div> 
+
+                                <%}else if(cartProductIds && cartProductIds.includes(products[i]._id.toString())){%>  
+                                    <a href="/cart" class="add-to-cart-btn" style="background:#2e4319;text-align: center; color: white;">Go to Cart</a> 
+
                                 <% } else { %>
                                 
                                 <button 
@@ -909,7 +913,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-        const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+        const addToCartButtons = document.querySelectorAll("button.add-to-cart-btn");
 
         addToCartButtons.forEach(button => {
         button.addEventListener("click", async (e) => {
@@ -938,14 +942,22 @@
                 title: "Added to Cart",
                 text: "Product successfully added to your cart.",
                 timer: 1500,
-                showConfirmButton: false
+                showConfirmButton: false,
+                customClass: {
+                    title: 'no-border-title'
+                },
                 });
-                // Optional: Update cart count in UI here, if you have one
+
+                changeToGoToCart(button);
+
             } else {
                 Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: data.status || "Could not add product to cart."
+                text: data.status || "Could not add product to cart.",
+                customClass: {
+                    title: 'no-border-title'
+                },
                 });
             }
             } catch (err) {
@@ -953,12 +965,29 @@
             Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: "Something went wrong while adding to cart."
+                text: "Something went wrong while adding to cart.",
+                customClass: {
+                    title: 'no-border-title'
+                },
             });
             }
         });
         });
     });
+
+    function changeToGoToCart(button) {
+        // Replace button element with an <a> element linking to /cart
+        const goToCartBtn = document.createElement('a');
+        goToCartBtn.href = '/cart';
+        goToCartBtn.className = button.className; // copy all btn classes
+        goToCartBtn.style.backgroundColor = '#2e4319'; // same style as your "Go to Cart"
+        goToCartBtn.style.color = 'white';
+        goToCartBtn.style.textAlign = 'center';
+        goToCartBtn.textContent = 'Go to Cart';
+
+        // Replace the button in DOM
+        button.parentNode.replaceChild(goToCartBtn, button);
+}
 
 </script>
 

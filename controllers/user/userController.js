@@ -3,6 +3,7 @@ const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
 const Brand = require("../../models/brandSchema");
 const Wishlist = require("../../models/wishlistSchema");
+const Cart = require("../../models/cartSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
@@ -300,12 +301,20 @@ const loadShoppingPage = async (req, res) => {
   try {
     const user = req.session.user;
 
+    let cartProductIds = [];
     let wishlistProductIds = [];
     if (user) {
       const wishlistDoc = await Wishlist.findOne({ userId: user._id }).lean();
       if (wishlistDoc && Array.isArray(wishlistDoc.products)) {
         wishlistProductIds = wishlistDoc.products.map(p => p.productId.toString());
       }
+
+      const cartDoc = await Cart.findOne({ userId: user._id }).lean();
+      console.log(cartDoc)
+      if (cartDoc && Array.isArray(cartDoc.items)) {
+        cartProductIds = cartDoc.items.map(p => p.productId.toString()); 
+      }
+
     }
     
     const [categories, brands] = await Promise.all([
@@ -427,7 +436,8 @@ const loadShoppingPage = async (req, res) => {
         duration: 0.8,
         ease: "power2.out"
       },
-      wishlistProductIds,   
+      wishlistProductIds, 
+      cartProductIds,  
     });
 
   } catch (error) {

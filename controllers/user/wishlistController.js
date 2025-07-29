@@ -7,6 +7,10 @@ const loadWishlist = async (req, res) => {
     const userId = req.session.user;
     if (!userId) return res.redirect('/login');
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = 3;
+    const skip = (page-1)*limit;
+
     let wishlist = await Wishlist.findOne({ userId })
       .populate({
         path: "products.productId",
@@ -21,18 +25,24 @@ const loadWishlist = async (req, res) => {
       wishlist = await Wishlist.create({ userId, products: [] });
     }
 
+    const totalProducts = wishlist.products.length;
+    const totalPages = Math.ceil(totalProducts / limit);
+
     const sortedProducts = (wishlist?.products || [])
       .filter(item => item.productId)
       .sort((a, b) => new Date(b.addedOn) - new Date(a.addedOn)) 
-      .map(item => {
-        return {
-          ...item.productId,
-        };
-      });
+      .slice(skip, skip + limit);
+
+    const viewProducts = sortedProducts.map(item => ({
+      ...item.productId,
+    }));
 
     res.render("wishlist", {
       user: req.session.user,
-      wishlist: sortedProducts 
+      wishlist: viewProducts,
+      currentPage: page,
+      totalPages,
+      query: req.query || {},
     });
 
   } catch (error) {

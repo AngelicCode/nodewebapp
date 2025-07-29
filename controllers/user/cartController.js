@@ -12,48 +12,66 @@ const getCartPage = async (req, res) => {
       return res.redirect('/login');
     }
 
-    const user = await User.findOne({ _id: id });
-    const productIds = user.cart.map((item) => item.productId);
-    const products = await Product.find({ _id: { $in: productIds } });
-    const oid = new mongodb.ObjectId(id);
-    let data = await User.aggregate([
-      { $match: { _id: oid } },
-      { $unwind: "$cart" },
-      {
-        $project: {
-          proId: { $toObjectId: "$cart.productId" },
-          quantity: "$cart.quantity",
-        },
-      },
-      {
-        $lookup: {
-          from: "products",
-          localField: "proId",
-          foreignField: "_id",
-          as: "productDetails",
-        },
-      },
-    ]);
-    let quantity = 0;
-    for (const i of user.cart) {
-      quantity += i.quantity;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 3;
+    const skip = (page - 1) * limit;
+
+    const cart = await Cart.findOne({ userId: id })
+      .populate({
+        path: "items.productId",
+        populate: [
+          { path: "category" },
+          { path: "brand" }
+        ]
+      })
+      .lean();
+
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return res.render("cart", {
+        user: req.session.user,
+        data: [],
+        quantity: 0,
+        grandTotal: 0,
+        currentPage: page,
+        totalPages: 1,
+        query: {}
+      });
     }
-    let grandTotal = 0;
-    for (let i = 0; i < data.length; i++) {
-      if (products[i]) {
-        grandTotal += data[i].productDetails[0].salePrice * data[i].quantity;
-      }
-      req.session.grandTotal = grandTotal;
+
+    if (cart) {
+      cart.items.sort((a, b) => b.addedAt - a.addedAt);  
     }
+
+    const totalItems = cart.items.length;
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const paginatedItems = cart.items.slice(skip, skip + limit);
+
+    const data = paginatedItems.map(item => ({
+      ...item.productId,
+      cartQuantity: item.quantity,
+      cartTotal: item.totalPrice,
+      itemId: item._id,
+    }));
+
+    const quantity = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+    const grandTotal = cart.items.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
+
+    req.session.grandTotal = grandTotal;
+
     res.render("cart", {
-      user,
-      quantity,
+      user: req.session.user,
       data,
+      quantity,
       grandTotal,
+      currentPage: page,
+      totalPages,
+      query: req.query || {}, 
     });
+
   } catch (error) {
+    console.error(error);
     res.redirect("/pageNotFound");
-    console.log(error)
   }
 };
 
@@ -62,8 +80,6 @@ const addToCart = async (req, res) => {
   try {
     const userId = req.session.user._id;
     const productId = req.body.productId;
-        console.log("idddd:",productId);
-
 
     if (!userId) {
       return res.status(401).json({ status: "User not authenticated" });
@@ -79,7 +95,6 @@ const addToCart = async (req, res) => {
       return res.json({ status: "Product out of stock" });
     }
 
-    // Find existing cart for user
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -90,32 +105,28 @@ const addToCart = async (req, res) => {
           quantity: 1,
           price: product.salePrice,
           totalPrice: product.salePrice,
-          status: "placed",
-          cancelationReason: "none"
+          
         }]
       });
     } else {
       const existingItemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
 
       if (existingItemIndex === -1) {
-        // Add new product item to cart
         cart.items.push({
           productId,
           quantity: 1,
           price: product.salePrice,
           totalPrice: product.salePrice,
-          status: "placed",
-          cancelationReason: "none"
+          
         });
-      } else {
-        // Increment quantity if stock allows
-        if (cart.items[existingItemIndex].quantity < product.quantity) {
-          cart.items[existingItemIndex].quantity += 1;
-          cart.items[existingItemIndex].totalPrice = cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
-        } else {
-          return res.json({ status: "Product out of stock" });
-        }
-      }
+      // } else {
+      //   if (cart.items[existingItemIndex].quantity < product.quantity) {
+      //     cart.items[existingItemIndex].quantity += 1;
+      //     cart.items[existingItemIndex].totalPrice = cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
+      //   } else {
+      //     return res.json({ status: "Product out of stock" });
+      //   }
+       }
     }
 
     await cart.save();
@@ -183,7 +194,7 @@ const changeQuantity = async (req, res) => {
             },
           },
           {
-            $unwind: "$productDetails", // Unwind the array created by the $lookup stage
+            $unwind: "$productDetails", 
           },
 
           {
@@ -230,9 +241,6 @@ const deleteProduct = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
-
-
-
 
 
 module.exports = {
