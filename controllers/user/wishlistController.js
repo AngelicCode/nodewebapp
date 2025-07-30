@@ -1,6 +1,7 @@
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Wishlist = require("../../models/wishlistSchema");
+const Cart = require("../../models/cartSchema");
 
 const loadWishlist = async (req, res) => {
   try {
@@ -64,12 +65,16 @@ const addToWishlist = async (req, res) => {
         products: [{ productId }]
       });
       await wishlist.save();
+      
       return res.status(200).json({ status: true, message: "Product added to wishlist" });
     }
 
       if (wishlist.products.some(item => item.productId.toString() === productId)) {
       return res.status(200).json({ status: false, message: "Product already in wishlist" });
     }
+
+    const userCart = await Cart.findOne({ userId }).lean();
+    const existInCart = userCart?.items?.some(item => item.productId.toString() === productId);
 
     wishlist.products.push({ productId, addedOn: new Date() });
     await wishlist.save();
@@ -103,7 +108,67 @@ const removeProduct = async (req, res) => {
   }
 };
 
+const wishlistAddToCart = async (req,res)=>{
+  try {
+    const userId = req.session.user._id;
+    const productId = req.body.productId;
+
+    if (!userId) {
+      return res.status(401).json({ status: "User not authenticated" });
+    }
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.json({ status: "Product not found" });
+    }
+
+    if (product.quantity <= 0) {
+      return res.json({ status: "Product out of stock" });
+    }
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      cart = new Cart({
+        userId,
+        items: [{
+          productId,
+          quantity: 1,
+          price: product.salePrice,
+          totalPrice: product.salePrice,
+          
+        }]
+      });
+    } else {
+      const existingItemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+
+      if (existingItemIndex === -1) {
+        cart.items.push({
+          productId,
+          quantity: 1,
+          price: product.salePrice,
+          totalPrice: product.salePrice,
+          
+        });
+       }
+    }
+
+    await cart.save();
+    await Wishlist.updateOne(
+      { userId },
+      { $pull: { products: { productId: productId } } }
+    );
+
+    res.json({ status: true, cartLength: cart.items.length });
+
+  } catch (error) {
+    console.error("Add to Cart error:", error);
+    res.status(500).json({ status: false, error: "Server error" });
+  }
+};
+
 
 module.exports = {
-  loadWishlist,addToWishlist,removeProduct,
+  loadWishlist,addToWishlist,removeProduct,wishlistAddToCart,
 }

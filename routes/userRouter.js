@@ -77,6 +77,7 @@ router.get("/deleteAddress",userAuth,profileController.deleteAddress);
 router.get("/wishlist",userAuth,wishlistController.loadWishlist);
 router.post("/addToWishlist",userAuth,wishlistController.addToWishlist);
 router.get("/removeFromWishlist",userAuth,wishlistController.removeProduct);
+router.post("/wishlistAddToCart",userAuth,wishlistController.wishlistAddToCart);
 
 // Cart Management
 router.get("/cart", userAuth, cartController.getCartPage)

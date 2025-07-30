@@ -2,7 +2,7 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const mongodb = require("mongodb");
 const Cart = require("../../models/cartSchema");
-
+const Wishlist = require("../../models/wishlistSchema");
 
 
 const getCartPage = async (req, res) => {
@@ -130,6 +130,10 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
+    await Wishlist.updateOne(
+      { userId },
+      { $pull: { products: { productId: productId } } }
+    );
 
     res.json({ status: true, cartLength: cart.items.length });
 
