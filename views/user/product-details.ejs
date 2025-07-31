@@ -118,9 +118,16 @@
                                 <div class="action-buttons">
                                     
                                     <%if(product.quantity>0 && product.isBlocked == false){%>
-                                    <button class="add-to-cart-btn" onclick="addToCart()">
-                                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                                      <% if (cartProductIds && cartProductIds.includes(product._id.toString())) { %>
+                                        <a href="/cart" class="go-to-cart-btn" style="background:#2e4319; color: white;">
+                                        <i class="fas fa-shopping-cart"></i> Go to Cart
+                                        </a>  
+                                    <% } else { %>
+ 
+                                    <button class="add-to-cart-btn" data-product-id="<%= product._id %>">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
                                     </button>
+                                        <% } %>
                                     <%}else{%>
                                         <button style="background-color:yellow; color: black;" class="add-to-cart-btn" disabled>Sold Out</button>
                                         <%}%>
@@ -543,7 +550,7 @@
         gap: 15px;
     }
     
-    .add-to-cart-btn {
+    .add-to-cart-btn,.go-to-cart-btn {
         flex: 1;
         height: 50px;
         background-color: #3498db;
@@ -560,7 +567,7 @@
         gap: 10px;
     }
     
-    .add-to-cart-btn:hover {
+    .add-to-cart-btn:hover,.go-to-cart-btn:hover {
         background-color: #2980b9;
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
@@ -1045,6 +1052,74 @@ async function toggleWishlist(event, productId, btn) {
         }
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const addToCartBtn = document.querySelector('.add-to-cart-btn');
+  if (!addToCartBtn) return;
+
+  addToCartBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const productId = this.getAttribute('data-product-id');
+    const quantity = parseInt(document.getElementById('quantity').textContent);
+    if (!productId) {
+      alert('Product ID not found');
+      return;
+    }
+    if (quantity <= 0) {
+      alert('Please select a valid quantity');
+      return;
+    }
+
+    try {
+      const response = await fetch('/detailspageAddToCart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity }),
+      });
+      const data = await response.json();
+
+      if (data.status === true) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart',
+          text: `${quantity} item(s) added to your cart`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        // Replace button with Go to Cart link
+        changeToGoToCart(this);
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'Could not add product to cart',
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong while adding to cart',
+      });
+    }
+  });
+
+  function changeToGoToCart(button) {
+    const goToCartBtn = document.createElement('a');
+    goToCartBtn.href = '/cart';
+    goToCartBtn.className = "go-to-cart-btn";
+    goToCartBtn.textContent = 'Go to Cart';
+    goToCartBtn.style.backgroundColor = '#2e4319';
+    goToCartBtn.style.color = 'white';
+    goToCartBtn.style.padding = '12px';
+    goToCartBtn.style.borderRadius = '8px';
+    goToCartBtn.style.textAlign = 'center';
+    goToCartBtn.style.display = 'inline-flex';
+    goToCartBtn.style.justifyContent = 'center';
+    goToCartBtn.style.alignItems = 'center';
+    button.parentNode.replaceChild(goToCartBtn, button);
+  }
+});
 
     
 </script>

@@ -13,6 +13,7 @@ router.get("/pageNotFound",userController.pageNotFound);
 
 //Product Management
 router.get("/productDetails",isBlocked,productController.productDetails);
+router.post("/detailspageAddToCart",userAuth,productController.detailspageAddToCart);
 
 //Home page & Shopping page
 router.get("/",userController.loadHomepage);
