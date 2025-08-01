@@ -393,6 +393,62 @@
         .water-icon {
             animation: droplet 3s ease-in-out infinite;
         }
+
+        .cart-item.out-of-stock-card {
+            opacity: 0.7;
+            background: #f8d7da;
+            position: relative;
+            filter: grayscale(1);
+        }
+
+        .cart-item.out-of-stock-card > *:not(.remove-btn) {
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.6;
+        }
+
+        .cart-item.out-of-stock-card .remove-btn {
+            pointer-events: auto !important;
+            opacity: 1;
+            cursor: pointer;
+            background: #e74c3c !important;
+            transition: all 0.3s ease;
+            color: white !important;
+            
+        }
+
+        .cart-item.out-of-stock-card .remove-btn:hover {
+            background: #c0392b !important;
+            transform: scale(1.1) !important;
+        }
+
+        .out-of-stock-overlay {
+            position: absolute;
+            left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(220, 53, 69, 0.25); /* match "danger" color */
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .out-of-stock-text {
+            color: #d40029;
+            font-weight: bold;
+            font-size: 2rem;
+            padding: 10px 28px;
+            border: 3px solid #d40029;
+            background: rgba(255,255,255,0.97);
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(244,67,54,0.14);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            transform: rotate(-6deg);
+            pointer-events: none;
+            user-select: none;
+        }
+
     </style>
 </head>
 <body>
@@ -422,32 +478,52 @@
                     <!-- Cart Items will be populated by EJS -->
                      <% let x = 0; %>
                     <% if (data.length > 0) { %>
-                        <% for (let i = 0; i < data.length; i++) { 
+                        <% for (let i = 0; i < data.length; i++) {  
                             var product = data[i];
-                        %>
-                            <div class="cart-item">
-                            <img src="/uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="product-image">
+                            const outOfStock = product.quantity <= 0; %>
+                        <div class="cart-item<%= outOfStock ? " out-of-stock-card" : "" %>" <%= outOfStock ? 'data-outofstock="1"' : '' %>>
+                            <% if (outOfStock) { %>
+                                <div class="out-of-stock-overlay">
+                                    <span class="out-of-stock-text">OUT OF STOCK</span>
+                                </div>
+                            <% } %>
+
+                            <img src="/uploads/product-images/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="product-image" <%= outOfStock ? "style='filter: grayscale(1) opacity(0.5)'" : "" %>>
+
                             <div class="product-info">
                                 <h5><%= product.productName %></h5>
                                 <p><i class="fas fa-tag"></i> <%= product.category && product.category.name %></p>
                                 <p><i class="fas fa-industry"></i> <%= product.brand && product.brand.brandName %></p>
                             </div>
                             <div class="price-info">
-                                <div class="price-main">
-                                ₹<span><%= product.cartTotal %></span>
+                                <div class="price-main" id="subTotal<%= i%>">
+                                    ₹<span><%= product.cartTotal %></span>
                                 </div>
                                 <div class="price-per-item">
-                                ₹<%= product.salePrice %> / item
+                                    ₹<%= product.salePrice %> / item
                                 </div>
                             </div>
                             <div class="quantity-control">
-                                <button class="quantity-btn" onclick="changeQuantity('<%= product._id %>', <%= product.cartQuantity %>, -1, <%= product.salePrice %>, '<%= product._id %>', <%= product.quantity %>)"><i class="fas fa-minus"></i></button>
-                                <input class="quantity-input" value="<%= product.cartQuantity %>" readonly>
-                                <button class="quantity-btn" onclick="changeQuantity('<%= product._id %>', <%= product.cartQuantity %>, 1, <%= product.salePrice %>, '<%= product._id %>', <%= product.quantity %>)"><i class="fas fa-plus"></i></button>
+                                <button class="quantity-btn" 
+                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, -1, <%= product.salePrice %>, <%= product.quantity %>)"
+                                    <%= outOfStock ? "disabled" : "" %>>
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input id="cartProductQuantity<%= i %>" class="quantity-input"
+                                    value="<%= product.cartQuantity %>" readonly
+                                    <%= outOfStock ? "disabled" : "" %>>
+                                <button class="quantity-btn"
+                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, 1, <%= product.salePrice %>, <%= product.quantity %>)"
+                                    <%= outOfStock ? "disabled" : "" %>>
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
-                            <button class="remove-btn" onclick="confirmRemove('<%= product._id %>')"><i class="fas fa-trash"></i></button>
-                            </div>
+                            <button class="remove-btn" onclick="confirmRemove('<%= product._id %>')"><i class="fas fa-trash"></i>
+                            </button>
+
+                        </div>
                         <% } %>
+
                         <% } else { %>
                         <div class="empty-cart">
                             <i class="fas fa-shopping-cart"></i>
@@ -494,92 +570,110 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        function changeQuantity(productId, cartQuantity, count, productPrice, i, productQuantity) {
-            const abc = document.getElementById("totalabc").value
-            const cartProductQuantityElement = document.querySelector(`#cartProductQuantity${i}`)
-            const subtotalElement = document.querySelector(`#subTotal${i}`);
-            const totalElements = document.getElementById('total').innerHTML;
+       function changeQuantity(productId, idx, count, price, maxQuantity) {
+        const quantityInput = document.getElementById(`cartProductQuantity${idx}`);
+        const subtotalElement = document.getElementById(`subTotal${idx}`);
+        const totalElement = document.getElementById('total');
 
-            let currentQuantity = parseInt(cartProductQuantityElement.value)
-            const currentSubTotal = parseInt(subtotalElement.innerHTML);           
+        if (!quantityInput || !subtotalElement || !totalElement) {
+            console.error("Required elements not found in DOM");
+            return;
+        }
 
-            if (currentQuantity + count > 3) {
-                Swal.fire({
-                    title: 'Limit Exceeded!',
-                    text: 'You can only add up to 3 items to your cart.',
-                    icon: 'error',
-                    timer: 5000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-                return;
-            }
-            
-            const newQuantity = currentQuantity + count
+        let currentQuantity = parseInt(quantityInput.value);
+        let currentSubtotal = parseFloat(subtotalElement.textContent);
+        let newQuantity = currentQuantity + count;
+        
+        if (newQuantity < 1) return; 
+        if (newQuantity > maxQuantity) {
+            Swal.fire({
+            title: 'Out of Stock!',
+            text: 'You cannot add more than available stock.',
+            icon: 'error',
+            timer: 3000,
+            showConfirmButton: false,
+            position: 'top-end'
+            });
+            return;
+        }
 
-            if (count === -1 && newQuantity < 1) {
-                return; 
-            }
+        // Submit AJAX to backend
+        $.ajax({
+            url: '/changeQuantity',
+            method: 'POST',
+            data: {
+                productId,
+                count,
+            },
+            success: (response) => {
+                if(response.status){
+                    totalElement.textContent = response.grandTotal.toFixed(2);
 
-            if(currentSubTotal < currentSubTotal){
-                return
-            }
-            if (count == 1 && newQuantity > productQuantity) {
-                Swal.fire({
-                    title: 'Out of Stock!',
-                    text: 'This product is currently out of stock.',
-                    icon: 'error',
-                    timer: 5000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                })
-                return
-            }
+                    quantityInput.value = response.quantity;
+                    subtotalElement.textContent = parseFloat(response.totalPrice).toFixed(2);
 
-            const newSubtotal = newQuantity * productPrice
-            if (count == 1) {
-                document.getElementById(`subTotal${i}`).innerHTML = parseInt(subtotalElement.innerHTML) + parseInt(productPrice)
-            } else {
-                document.getElementById(`subTotal${i}`).innerHTML = parseInt(subtotalElement.innerHTML) - parseInt(productPrice)
-            }
-            
-            $.ajax({
-                url: '/changeQuantity',
-                method: 'POST',
-                data: {
-                    productId: productId,
-                    quantity: newQuantity,
-                    count: count
-                },
-                success: (response) => {
-                    let currentQuantity = parseInt(cartProductQuantityElement.value)
-                    let currentSubTotal = parseInt(subtotalElement.value)
-
-                    document.getElementById(`cartProductQuantity${i}`).value = currentQuantity + count
-                    document.getElementById(`subTotal${i}`).value = currentSubTotal * count
-                    
-                    if (response.count == 1) {
-                        document.getElementById(`total`).innerHTML = parseInt(response.grandTotal)
-                    } else {
-                        document.getElementById(`total`).innerHTML = parseInt(response.grandTotal)
+                    // If server says stock is zero, disable the card in UI
+                    if (response.quantity === 0 || response.message === 'Product out of stock' || response.stock === 0) {
+                        disableCartCard(idx);
                     }
-                },
-                error: (error) => {
+                } else {
                     Swal.fire({
-                        title: 'Error!',
-                        text: 'Something went wrong. Please try again.',
+                        title: 'Error',
+                        text: response.message || 'Failed to update quantity.',
                         icon: 'error',
                         timer: 3000,
                         showConfirmButton: false,
                         toast: true,
                         position: 'top-end'
                     });
+                    quantityInput.value = currentQuantity;
+                    subtotalElement.textContent = currentSubtotal.toFixed(2);
+
+                    // If not allowed due to stock, instantly visually disable
+                    if (response.message && response.message.toLowerCase().includes('stock')) {
+                        disableCartCard(idx);
+                    }
                 }
-            })
+            },
+            error: () => {
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
+                icon: 'error',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end'
+            });
+
+            // Revert UI changes on error
+            quantityInput.value = currentQuantity;
+            subtotalElement.textContent = currentSubtotal.toFixed(2);
+            }
+        });
+
+        function disableCartCard(idx) {
+        const card = document.querySelectorAll('.cart-item')[idx];
+        if (!card) return;
+        card.classList.add('out-of-stock-card');
+        if (!card.querySelector('.out-of-stock-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'out-of-stock-overlay';
+            overlay.innerHTML = `<span class="out-of-stock-text">OUT OF STOCK</span>`;
+            card.appendChild(overlay);
         }
 
+        card.querySelectorAll('button:not(.remove-btn), input').forEach(el => {
+            el.disabled = true;
+        
+    });
+
+    const removeBtn = card.querySelector('.remove-btn');
+    if (removeBtn) removeBtn.disabled = false;
+    removeBtn.style.pointerEvents = 'auto';
+}
+    }
+
+        
         function confirmRemove(productId) {
             Swal.fire({
                 title: 'Remove Item?',

@@ -38,24 +38,31 @@ const getCartPage = async (req, res) => {
       });
     }
 
-    if (cart) {
-      cart.items.sort((a, b) => b.addedAt - a.addedAt);  
-    }
+    const filteredItems = (cart.items || []).filter(item => {
+      const product = item.productId;
+      return product &&
+        !product.isBlocked &&
+        product.category && product.category.isListed !== false &&
+        product.brand && !product.brand.isBlocked;
+    });
 
-    const totalItems = cart.items.length;
+    const totalItems = filteredItems.length;
     const totalPages = Math.ceil(totalItems / limit);
 
-    const paginatedItems = cart.items.slice(skip, skip + limit);
+    const paginatedItems = filteredItems
+    .sort((a, b) => b.addedAt - a.addedAt)
+    .slice(skip, skip + limit);
 
     const data = paginatedItems.map(item => ({
       ...item.productId,
       cartQuantity: item.quantity,
       cartTotal: item.totalPrice,
       itemId: item._id,
+      inStock: item.productId.quantity > 0,
     }));
 
-    const quantity = cart.items.reduce((sum, i) => sum + i.quantity, 0);
-    const grandTotal = cart.items.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
+    const quantity = filteredItems.reduce((sum, i) => sum + i.quantity, 0);
+    const grandTotal = filteredItems.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
 
     req.session.grandTotal = grandTotal;
 
@@ -119,13 +126,6 @@ const addToCart = async (req, res) => {
           totalPrice: product.salePrice,
           
         });
-      // } else {
-      //   if (cart.items[existingItemIndex].quantity < product.quantity) {
-      //     cart.items[existingItemIndex].quantity += 1;
-      //     cart.items[existingItemIndex].totalPrice = cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
-      //   } else {
-      //     return res.json({ status: "Product out of stock" });
-      //   }
        }
     }
 
@@ -146,106 +146,66 @@ const addToCart = async (req, res) => {
 
 const changeQuantity = async (req, res) => {
   try {
-    const id = req.body.productId;
-    const user = req.session.user;
-    const count = req.body.count;
-    // count(-1,+1)
-    const findUser = await User.findOne({ _id: user });
-    const findProduct = await Product.findOne({ _id: id });
-    const oid = new mongodb.ObjectId(user);
-    if (findUser) {
-      const productExistinCart = findUser.cart.find(
-        (item) => item.productId === id
-      );
-      let newQuantity;
-      if (productExistinCart) {
-        if (count == 1) {
-          newQuantity = productExistinCart.quantity + 1;
-        } else if (count == -1) {
-          newQuantity = productExistinCart.quantity - 1;
-        } else {
-          return res
-            .status(400)
-            .json({ status: false, error: "Invalid count" });
-        }
-      } else {
-      }
-      if (newQuantity > 0 && newQuantity <= findProduct.quantity) {
-        let quantityUpdated = await User.updateOne(
-          { _id: user, "cart.productId": id },
-          {
-            $set: {
-              "cart.$.quantity": newQuantity,
-            },
-          }
-        );
-        const totalAmount = findProduct.salePrice * newQuantity;
-        const grandTotal = await User.aggregate([
-          { $match: { _id: oid } },
-          { $unwind: "$cart" },
-          {
-            $project: {
-              proId: { $toObjectId: "$cart.productId" },
-              quantity: "$cart.quantity",
-            },
-          },
-          {
-            $lookup: {
-              from: "products",
-              localField: "proId",
-              foreignField: "_id",
-              as: "productDetails",
-            },
-          },
-          {
-            $unwind: "$productDetails", 
-          },
+    const userId = req.session.user._id;
+    const { productId, count } = req.body;
 
-          {
-            $group: {
-              _id: null,
-              totalQuantity: { $sum: "$quantity" },
-              totalPrice: {
-                $sum: { $multiply: ["$quantity", "$productDetails.salePrice"] },
-              }, 
-            },
-          },
-        ]);
-        if (quantityUpdated) {
-          res.json({
-            status: true,
-            quantityInput: newQuantity,
-            count: count,
-            totalAmount: totalAmount,
-            grandTotal: grandTotal[0].totalPrice,
-          });
-        } else {
-          res.json({ status: false, error: "cart quantity is less" });
-        }
-      } else {
-        res.json({ status: false, error: "out of stock" });
-      }
+    if (!userId) return res.status(401).json({ status: false, message: "Unauthorized" });
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).json({ status: false, message: "Cart not found" });
+
+    const itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+    if (itemIndex === -1) return res.status(404).json({ status: false, message: "Product not in cart" });
+
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ status: false, message: "Product not found" });
+
+    let newQuantity = cart.items[itemIndex].quantity + parseInt(count);
+
+    if (newQuantity < 1) newQuantity = 1;
+    if (newQuantity > product.quantity) {
+      return res.status(400).json({ status: false, message: "Exceeds stock limit" });
     }
-  } catch (error) {
-    res.redirect("/pageNotFound");
-    return res.status(500).json({ status: false, error: "Server error" });
+
+    cart.items[itemIndex].quantity = newQuantity;
+    cart.items[itemIndex].totalPrice = newQuantity * cart.items[itemIndex].price;
+
+    await cart.save();
+
+    const grandTotal = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
+
+    res.json({
+      status: true,
+      productId,
+      quantity: newQuantity,
+      totalPrice: cart.items[itemIndex].totalPrice,
+      grandTotal
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = async(req,res)=>{
   try {
-    const id = req.query.id;
-    const userId = req.session.user;
-    const user = await User.findById(userId);
-    const cartIndex = user.cart.findIndex((item) => item.productId == id);
-    user.cart.splice(cartIndex, 1);
-    await user.save();
-    res.redirect("/cart");
+    const productId = req.query.id;
+    const userId = req.session.user._id;
+    if(!userId){
+      res.redirect("/login");
+    }
+    const cart = await Cart.findOne({userId});
+    const itemIndex = cart.items.findIndex((item)=>item.productId.toString() === productId);
+
+    cart.items.splice(itemIndex,1);
+    await cart.save();
+    return res.redirect("/cart");
+
   } catch (error) {
-    res.redirect("/pageNotFound");
+    console.error('Error removing product from cart:', error);
+    return res.redirect('/pageNotFound');  
   }
 };
-
 
 module.exports = {
   getCartPage,

@@ -60,9 +60,6 @@ const addProducts = [
           }
 
           try {
-            console.log(`Processing file: ${filename}`);
-            console.log(`Original path: ${originalPath}`);
-            console.log(`Resized path: ${resizedPath}`);
 
             if (file.mimetype === "image/gif") {
               await fs.copyFile(originalPath, resizedPath);

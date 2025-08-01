@@ -31,10 +31,13 @@ const productDetails = async (req, res) => {
          .populate("brand");  
          
 
-          if (
+          if ( 
             !product ||
             product.isBlocked ||
-            // product.quantity === 0 ||
+            !product.category ||
+            product.category.isListed == false ||
+            !product.brand || 
+            product.brand.isBlocked || 
             product.status !== "Available"
           ) {
             return res.redirect('/shop');

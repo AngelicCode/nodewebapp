@@ -12,7 +12,7 @@ const loadWishlist = async (req, res) => {
     const limit = 3;
     const skip = (page-1)*limit;
 
-    let wishlist = await Wishlist.findOne({ userId })
+    let wishlist = await Wishlist.findOne({ userId})
       .populate({
         path: "products.productId",
         populate: [
@@ -26,12 +26,20 @@ const loadWishlist = async (req, res) => {
       wishlist = await Wishlist.create({ userId, products: [] });
     }
 
-    const totalProducts = wishlist.products.length;
+    const filteredProducts = (wishlist?.products || [])
+      .filter(item => {
+        const product = item.productId;
+        return product &&
+               !product.isBlocked &&          
+               product.category &&           
+               product.category.isListed !== false && product.brand && !product.brand.isBlocked;  
+      });
+
+    const totalProducts = filteredProducts.length;
     const totalPages = Math.ceil(totalProducts / limit);
 
-    const sortedProducts = (wishlist?.products || [])
-      .filter(item => item.productId)
-      .sort((a, b) => new Date(b.addedOn) - new Date(a.addedOn)) 
+    const sortedProducts = filteredProducts
+      .sort((a, b) => new Date(b.addedOn) - new Date(a.addedOn))
       .slice(skip, skip + limit);
 
     const viewProducts = sortedProducts.map(item => ({

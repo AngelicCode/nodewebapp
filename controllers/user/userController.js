@@ -310,7 +310,7 @@ const loadShoppingPage = async (req, res) => {
       }
 
       const cartDoc = await Cart.findOne({ userId: user._id }).lean();
-      console.log(cartDoc)
+      // console.log(cartDoc)
       if (cartDoc && Array.isArray(cartDoc.items)) {
         cartProductIds = cartDoc.items.map(p => p.productId.toString()); 
       }
@@ -327,9 +327,9 @@ const loadShoppingPage = async (req, res) => {
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    const query = {
+    let query = {
       isBlocked: false,
-      //quantity: { $gt: 0 }
+      
     };
 
     const searchTerm = req.query.search || (req.body && req.body.search) || '';
@@ -393,15 +393,26 @@ const loadShoppingPage = async (req, res) => {
         break;
     }
 
-    const totalProducts = await Product.countDocuments(query);
-    const totalPages = Math.ceil(totalProducts / limit);
-
-    const products = await Product.find(query)
+    let products = await Product.find(query)
       .populate('category brand')
       .sort(sortCriteria)
       .skip(skip)
       .limit(limit)
       .lean();
+
+      products = products.filter(product => {
+      return product &&
+        product.category && product.category.isListed !== false &&
+        product.brand && product.brand.isBlocked === false &&
+        product.isBlocked === false;
+    });
+
+    const totalFilteredCount = await Product.countDocuments({
+      ...query,
+    });
+
+    const totalPages = Math.ceil(totalFilteredCount / limit);
+
 
     products.forEach((product, index) => {
       product.animationClass = "product-item";
@@ -424,7 +435,7 @@ const loadShoppingPage = async (req, res) => {
       products,
       category: categories,
       brand: brands,
-      totalProducts,
+      totalProducts: totalFilteredCount,
       currentPage: page,
       totalPages,
       query: viewQuery,
@@ -462,7 +473,8 @@ const loadShoppingPage = async (req, res) => {
         ease: "power2.out"
       },
       wishlistProductIds: [],
-      
+      cartProductIds: [],
+
     });
   }
 };
