@@ -649,6 +649,24 @@
                 });
                 const data = await res.json();
 
+                if(data.redirect){
+                    Swal.fire({
+                        icon:"error",
+                        title:"Unavailable",
+                        text:data.message,
+                        timer:3000,
+                        showConfirmButton:true,
+                        customClass:{
+                            title:"no-border-title"
+                        },
+
+                    })
+                    .then(()=>{
+                        window.location.href = data.redirect;
+                    });
+                    return;
+                }
+
                 if (data.status === true) {
                     Swal.fire({
                         icon: "success",

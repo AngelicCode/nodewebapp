@@ -81,10 +81,13 @@ router.get("/removeFromWishlist",userAuth,wishlistController.removeProduct);
 router.post("/wishlistAddToCart",userAuth,wishlistController.wishlistAddToCart);
 
 // Cart Management
-router.get("/cart", userAuth, cartController.getCartPage)
-router.post("/addToCart",userAuth, cartController.addToCart)
-router.post("/changeQuantity", userAuth,cartController.changeQuantity)
-router.get("/deleteItem", userAuth, cartController.deleteProduct)
+router.get("/cart", userAuth, cartController.getCartPage);
+router.post("/addToCart",userAuth, cartController.addToCart);
+router.post("/changeQuantity", userAuth,cartController.changeQuantity);
+router.get("/deleteItem", userAuth, cartController.deleteProduct);
+
+//Checkout Management
+
 
 
 module.exports = router;

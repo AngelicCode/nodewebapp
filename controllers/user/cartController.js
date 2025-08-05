@@ -92,10 +92,19 @@ const addToCart = async (req, res) => {
       return res.status(401).json({ status: "User not authenticated" });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId)
+      .populate('category')
+      .populate('brand');
 
     if (!product) {
       return res.json({ status: "Product not found" });
+    }
+
+    if(
+      product.isBlocked || !product.category || product.category.isListed === false || !product.brand || product.brand.isBlocked
+    ){
+      return res.json({redirect:"/shop",status:false,message:"This product is Blocked or Unavailable"});
+
     }
 
     if (product.quantity <= 0) {
@@ -163,6 +172,11 @@ const changeQuantity = async (req, res) => {
     let newQuantity = cart.items[itemIndex].quantity + parseInt(count);
 
     if (newQuantity < 1) newQuantity = 1;
+    
+    if (newQuantity > 5) {
+      return res.status(400).json({ status: false, message: "Maximum quantity per item in cart is 5" });
+    }
+
     if (newQuantity > product.quantity) {
       return res.status(400).json({ status: false, message: "Exceeds stock limit" });
     }

@@ -936,6 +936,24 @@
 
             const data = await response.json();
 
+            if (data.redirect) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unavailable",
+                    text: data.message || "This product is unavailable or blocked.",
+                    timer: 3000,
+                    showConfirmButton: true,
+                    customClass: {
+                    title: 'no-border-title'
+                },
+                
+                }).then(() => {
+                    window.location.href = data.redirect;
+                });
+                return;
+                }
+
+
             if (data.status === true) {
                 Swal.fire({
                 icon: "success",
@@ -976,16 +994,14 @@
     });
 
     function changeToGoToCart(button) {
-        // Replace button element with an <a> element linking to /cart
         const goToCartBtn = document.createElement('a');
         goToCartBtn.href = '/cart';
-        goToCartBtn.className = button.className; // copy all btn classes
-        goToCartBtn.style.backgroundColor = '#2e4319'; // same style as your "Go to Cart"
+        goToCartBtn.className = button.className; 
+        goToCartBtn.style.backgroundColor = '#2e4319'; 
         goToCartBtn.style.color = 'white';
         goToCartBtn.style.textAlign = 'center';
         goToCartBtn.textContent = 'Go to Cart';
 
-        // Replace the button in DOM
         button.parentNode.replaceChild(goToCartBtn, button);
 }
 

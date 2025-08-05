@@ -125,10 +125,18 @@ const wishlistAddToCart = async (req,res)=>{
       return res.status(401).json({ status: "User not authenticated" });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId)
+    .populate("category")
+    .populate("brand");
 
     if (!product) {
       return res.json({ status: "Product not found" });
+    }
+
+    if(
+      product.isBlocked || !product.category || product.category.isListed === false || !product.brand || product.brand.isBlocked
+    ){
+      res.json({status:false,redirect:"/wishlist",message:"The Product is Blocked or Unavailable"});
     }
 
     if (product.quantity <= 0) {

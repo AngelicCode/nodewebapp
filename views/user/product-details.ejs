@@ -970,10 +970,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function increaseQty() {
+    const MAX_CART_QTY = 5;
     const qtyElement = document.getElementById('quantity');
     let currentQty = parseInt(qtyElement.textContent);
-    const maxQty = parseInt(document.querySelector('.in-stock').textContent.split(' ')[0]);
+    const maxQty = parseInt(document.querySelector('.in-stock')?.textContent.split(' ')[0]) || MAX_CART_QTY;
     
+    if(currentQty>=MAX_CART_QTY){
+        Swal.fire({
+            title: 'Limit Exceeded!',
+                    text: 'You cannot add more than 5 units of this product.',
+                    icon: 'warning',
+                    timer: 2500,
+                    showConfirmButton: false,
+                })
+                return;
+    }
+
     if (currentQty < maxQty) {
         qtyElement.textContent = currentQty + 1;
     }
@@ -985,6 +997,7 @@ function decreaseQty() {
     if(currentQty > 1) {
         qtyElement.textContent = currentQty - 1;
     }
+   
 }
 
 function addToCart() {
@@ -1077,6 +1090,22 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ productId, quantity }),
       });
       const data = await response.json();
+
+      if (data.redirect) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Unavailable',
+            text: data.message || 'This product is unavailable or blocked.',
+            timer: 3000,
+            showConfirmButton: false,
+            willClose: () => {
+            window.location.href = data.redirect;
+            },
+            showConfirmButton: true,
+        });
+        return;
+        }
+
 
       if (data.status === true) {
         Swal.fire({

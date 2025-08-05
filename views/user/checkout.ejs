@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - HydroFlow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .checkout-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .checkout-form {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .order-summary {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #71cd14;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(113, 205, 20, 0.2);
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-radius: 15px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .product-details {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .product-specs {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .product-price {
+            font-weight: 700;
+            color: #71cd14;
+            font-size: 1.1rem;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .qty-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #71cd14;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .qty-btn:hover {
+            background: #5ba511;
+            transform: scale(1.1);
+        }
+
+        .qty-input {
+            width: 50px;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #71cd14;
+            padding-top: 15px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #71cd14;
+            color: white;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background: #5ba511;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(113, 205, 20, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #71cd14;
+            border: 2px solid #71cd14;
+            margin-right: 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #71cd14;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .payment-method {
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .payment-method:hover, .payment-method.active {
+            border-color: #71cd14;
+            background: #f8fff8;
+            transform: translateY(-2px);
+        }
+
+        .security-badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+
+        .security-badge {
+            padding: 8px 15px;
+            background: #34495e;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #71cd14, #5ba511);
+            width: 75%;
+            border-radius: 3px;
+            animation: progressAnimation 2s ease-in-out;
+        }
+
+        @keyframes progressAnimation {
+            from { width: 0%; }
+            to { width: 75%; }
+        }
+
+        .discount-code {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .discount-input {
+            flex: 1;
+        }
+
+        .apply-btn {
+            background: #71cd14;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .apply-btn:hover {
+            background: #5ba511;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-wrapper {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkout-form, .order-summary {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .animate-in {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header animate-in">
+            <h1>🌊 HydroFlow Checkout</h1>
+            <p>Complete your order for premium water bottles</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <div class="checkout-wrapper">
+            <div class="checkout-form animate-in">
+                <h2 class="section-title">Shipping Information</h2>
+                <form id="checkoutForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" name="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" id="lastName" name="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Street Address</label>
+                        <input type="text" id="address" name="address" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <select id="state" name="state" required>
+                                <option value="">Select State</option>
+                                <option value="CA">California</option>
+                                <option value="NY">New York</option>
+                                <option value="TX">Texas</option>
+                                <option value="FL">Florida</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zipCode">ZIP Code</label>
+                            <input type="text" id="zipCode" name="zipCode" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <select id="country" name="country" required>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="UK">United Kingdom</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h2 class="section-title" style="margin-top: 40px;">Payment Method</h2>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method active" data-method="card">
+                            💳<br>Card
+                        </div>
+                        <div class="payment-method" data-method="paypal">
+                            📱<br>PayPal
+                        </div>
+                        <div class="payment-method" data-method="apple">
+                            🍎<br>Apple Pay
+                        </div>
+                        <div class="payment-method" data-method="google">
+                            🔵<br>Google Pay
+                        </div>
+                    </div>
+
+                    <div id="cardDetails" style="margin-top: 25px;">
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number</label>
+                            <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry">Expiry Date</label>
+                                <input type="text" id="expiry" name="expiry" placeholder="MM/YY">
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" id="cvv" name="cvv" placeholder="123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-badges">
+                        <div class="security-badge">🔒 SSL Secured</div>
+                        <div class="security-badge">✅ Verified</div>
+                        <div class="security-badge">🛡️ Protected</div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="order-summary animate-in">
+                <h2 class="section-title">Order Summary</h2>
+                
+                <div class="product-item">
+                    <div class="product-image">💧</div>
+                    <div class="product-details">
+                        <div class="product-name">EcoFlow Steel Bottle</div>
+                        <div class="product-specs">750ml • Stainless Steel • Blue</div>
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="updateQuantity('item1', -1)">−</button>
+                            <input type="number" class="qty-input" id="qty-item1" value="2" min="1" onchange="updatePrice()">
+                            <button class="qty-btn" onclick="updateQuantity('item1', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="product-price" id="price-item1">$59.98</div>
+                </div>
+
+                <div class="product-item">
+                    <div class="product-image">🌿</div>
+                    <div class="product-details">
+                        <div class="product-name">BambooFlow Bottle</div>
+                        <div class="product-specs">500ml • Bamboo Fiber • Green</div>
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="updateQuantity('item2', -1)">−</button>
+                            <input type="number" class="qty-input" id="qty-item2" value="1" min="1" onchange="updatePrice()">
+                            <button class="qty-btn" onclick="updateQuantity('item2', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="product-price" id="price-item2">$24.99</div>
+                </div>
+
+                <div class="discount-code">
+                    <input type="text" class="discount-input" placeholder="Discount code">
+                    <button class="apply-btn" onclick="applyDiscount()">Apply</button>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$84.97</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping:</span>
+                        <span id="shipping">$8.99</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax:</span>
+                        <span id="tax">$7.50</span>
+                    </div>
+                    <div class="summary-row" id="discount-row" style="display: none; color: #71cd14;">
+                        <span>Discount:</span>
+                        <span id="discount">-$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="total">$101.46</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="goBack()">← Back to Cart</button>
+                    <button class="btn btn-primary" onclick="processPayment()">
+                        Complete Order 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animation on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.animate-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+
+        // Payment method selection
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', function() {
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+                this.classList.add('active');
+                
+                const cardDetails = document.getElementById('cardDetails');
+                if (this.dataset.method === 'card') {
+                    cardDetails.style.display = 'block';
+                } else {
+                    cardDetails.style.display = 'none';
+                }
+            });
+        });
+
+        // Quantity management
+        function updateQuantity(itemId, change) {
+            const qtyInput = document.getElementById('qty-' + itemId);
+            const currentQty = parseInt(qtyInput.value);
+            const newQty = Math.max(1, currentQty + change);
+            qtyInput.value = newQty;
+            updatePrice();
+        }
+
+        function updatePrice() {
+            const item1Qty = parseInt(document.getElementById('qty-item1').value);
+            const item2Qty = parseInt(document.getElementById('qty-item2').value);
+            
+            const item1Price = 29.99 * item1Qty;
+            const item2Price = 24.99 * item2Qty;
+            
+            document.getElementById('price-item1').textContent = '$' + item1Price.toFixed(2);
+            document.getElementById('price-item2').textContent = '$' + item2Price.toFixed(2);
+            
+            const subtotal = item1Price + item2Price;
+            const shipping = subtotal > 50 ? 0 : 8.99;
+            const tax = subtotal * 0.088;
+            const total = subtotal + shipping + tax;
+            
+            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2);
+            document.getElementById('tax').textContent = '$' + tax.toFixed(2);
+            document.getElementById('total').textContent = '$' + total.toFixed(2);
+        }
+
+        function applyDiscount() {
+            const discountRow = document.getElementById('discount-row');
+            const discountAmount = document.getElementById('discount');
+            discountRow.style.display = 'flex';
+            discountAmount.textContent = '-$10.00';
+            
+            const currentTotal = parseFloat(document.getElementById('total').textContent.replace('$', ''));
+            document.getElementById('total').textContent = '$' + (currentTotal - 10).toFixed(2);
+        }
+
+        function processPayment() {
+            const form = document.getElementById('checkoutForm');
+            if (form.checkValidity()) {
+                // Simulate payment processing
+                const btn = event.target;
+                btn.innerHTML = '⏳ Processing...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    alert('🎉 Order placed successfully! You will receive a confirmation email shortly.');
+                    btn.innerHTML = 'Complete Order 🚀';
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                form.reportValidity();
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Input formatting
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+        });
+
+        document.getElementById('expiry').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
+        });
+    </script>
+</body>
+</html>
