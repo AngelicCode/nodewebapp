@@ -552,10 +552,15 @@
                             <span>₹<span id="total"><%= grandTotal %></span></span>
                         </div>
                         
-                        <a href="/checkout?userId=<%= user._id %>" class="checkout-btn">
+                        <a href="/checkout?userId=<%= user._id %>" class="checkout-btn" <%= grandTotal <= 0 ? 'style="pointer-events: none; opacity: 0.7;"' : '' %>>
                             <i class="fas fa-credit-card"></i>
                             Proceed to Checkout
                         </a>
+                        <% if (data.length > 0 && grandTotal <= 0) { %>
+                        <div class="alert alert-warning" style="margin: 20px; padding: 15px; border-radius: 10px; background: #fff3cd; color: #856404;">
+                            <i class="fas fa-exclamation-triangle"></i> All items in your cart are currently out of stock. Please remove them or check back later.
+                        </div>
+                        <% } %>
                     </div>
                 </div>
             </div>

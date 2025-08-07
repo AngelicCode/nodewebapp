@@ -7,6 +7,7 @@ const productController = require("../controllers/user/productController");
 const profileController = require("../controllers/user/profileController");
 const wishlistController = require("../controllers/user/wishlistController");
 const cartController = require("../controllers/user/cartController");
+const checkoutController = require("../controllers/user/checkoutController");
 
 
 router.get("/pageNotFound",userController.pageNotFound);
@@ -87,7 +88,8 @@ router.post("/changeQuantity", userAuth,cartController.changeQuantity);
 router.get("/deleteItem", userAuth, cartController.deleteProduct);
 
 //Checkout Management
-
+router.get("/checkout",userAuth,checkoutController.loadCheckout);
+router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress);
 
 
 module.exports = router;
