@@ -28,8 +28,8 @@
 
         /* Header */
         .page-header {
-            background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
-            padding: 60px 0 40px;
+            background: linear-gradient(135deg, white 0%, white 100%);
+            padding: 60px 0 -3px;
             color: white;
             position: relative;
             overflow: hidden;
@@ -42,9 +42,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20h100V0L0 20z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: 200px 40px;
-            animation: wave 20s linear infinite;
+            
         }
 
         @keyframes wave {
@@ -68,7 +66,7 @@
             gap: 10px;
             position: relative;
             z-index: 2;
-            background-color: rgb(95, 95, 246);
+            background-color: #849bb1;
         }
 
         .breadcrumb a {
@@ -106,7 +104,7 @@
         }
 
         .cart-header {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            background: linear-gradient(135deg, #34495e 0%, #45617d 100%);
             color: white;
             padding: 25px 30px;
             font-size: 1.3rem;
@@ -454,7 +452,7 @@
     
     <div class="page-header">
         <div class="container">
-            <h1><i class="fas fa-tint water-icon"></i> Your Cart</h1>
+            <h1 style="margin-top: 15px;"><i class="fas fa-tint water-icon"></i> Your Cart</h1>
             <div class="breadcrumb">
                 <a href="/"><i class="fas fa-home"></i> Home</a>
                 <span><i class="fas fa-chevron-right"></i></span>

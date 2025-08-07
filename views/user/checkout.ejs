@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - HydroFlow</title>
+    <title>Checkout - Quick Sip</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +23,7 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 20px 20px;
         }
 
         .header {
@@ -220,7 +220,7 @@
         }
 
         .btn-primary {
-            background: #71cd14;
+            background: #2c3e50;
             color: white;
             width: 100%;
             padding: 18px;
@@ -229,7 +229,7 @@
         }
 
         .btn-primary:hover {
-            background: #5ba511;
+            background: #1a232d;
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(113, 205, 20, 0.3);
         }
@@ -320,7 +320,7 @@
         }
 
         .apply-btn {
-            background: #71cd14;
+            background: #2c3e50;
             color: white;
             border: none;
             padding: 15px 20px;
@@ -331,7 +331,7 @@
         }
 
         .apply-btn:hover {
-            background: #5ba511;
+            background: #1a2631;
         }
 
         @media (max-width: 768px) {
@@ -370,7 +370,7 @@
             top: 5px;
             width: 18px;
             height: 18px;
-            accent-color: #71cd14;
+            accent-color: #2c3e50;
         }
 
         .address-item label {
@@ -418,7 +418,7 @@
         #address-list + button {
             width: 100%;
             padding: 15px;
-            background: #71cd14;
+            background: #2c3e50;
             color: white;
             border: none;
             border-radius: 8px;
@@ -429,7 +429,7 @@
         }
 
         #address-list + button:hover {
-            background: #5ba511;
+            background: #131b23;
             transform: translateY(-2px);
         }
 
@@ -533,16 +533,57 @@
             background-color: #3498db;
             color: white;
         }
+
+        /* Breadcrumb Styles */
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-link {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .breadcrumb-link:hover {
+            color: #71cd14;
+        }
+
+        .breadcrumb-separator {
+            color: #7f8c8d;
+        }
+
+        .breadcrumb-current {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
     </style>
 </head>
 <body>
+    
     <div class="container">
         <div class="header animate-in">
-            <h1>🌊 HydroFlow Checkout</h1>
+            <h1>Checkout</h1>
             <p>Complete your order for premium water bottles</p>
         </div>
 
-        <div class="progress-bar">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb animate-in" style="background-color: #a9b7c5;">
+        <a href="/" class="breadcrumb-link">Home</a>
+        <span class="breadcrumb-separator">></span>
+        <a href="/cart" class="breadcrumb-link">Cart</a>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">Checkout</span>
+    </div>
+
+    <div class="progress-bar">
             <div class="progress-fill"></div>
         </div>
 
@@ -615,7 +656,7 @@
                 </div>
 
                 <div class="security-badges">
-                    <div class="security-badge">🔒 SSL Secured</div>
+                    
                     <div class="security-badge">✅ Verified</div>
                     <div class="security-badge">🛡️ Protected</div>
                 </div>
