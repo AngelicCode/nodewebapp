@@ -912,64 +912,70 @@
             }
         });
 
-        // Similar validation for edit address form
         document.getElementById('editAddressForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Updating...';
+        
+        try {
+            const name = formData.get('name').trim();
+            const phone = formData.get('phone').trim();
+            const altPhone = formData.get('altPhone')?.trim();
+            const city = formData.get('city').trim();
+            const state = formData.get('state').trim();
+            const pincode = formData.get('pincode').trim();
+            const landMark = formData.get('landMark').trim();
+            const addressType = formData.get('addressType').trim();
             
-            const form = e.target;
-            const formData = new FormData(form);
-            const submitBtn = form.querySelector('button[type="submit"]');
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Updating...';
-            
-            try {
-                // Same validation as add form
-                const name = formData.get('name').trim();
-                const phone = formData.get('phone').trim();
-                const altPhone = formData.get('altPhone')?.trim();
-                const city = formData.get('city').trim();
-                const state = formData.get('state').trim();
-                const pincode = formData.get('pincode').trim();
-                const landMark = formData.get('landMark').trim();
-                
-                if (!name || !phone || !city || !state || !pincode || !landMark) {
-                    throw new Error('Please fill all required fields');
-                }
-                
-                if (!/^\d{10}$/.test(phone)) {
-                    throw new Error('Phone number must be 10 digits');
-                }
-                
-                if (altPhone && !/^\d{10}$/.test(altPhone)) {
-                    throw new Error('Alternate phone must be 10 digits');
-                }
-                
-                if (!/^\d{6}$/.test(pincode)) {
-                    throw new Error('Pincode must be 6 digits');
-                }
-                
-                const response = await fetch(`/checkoutEditAddress/${formData.get('id')}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(Object.fromEntries(formData))
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to update address');
-                }
-                
-                window.location.reload();
-                
-            } catch (error) {
-                alert(error.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Update Address';
+            if (!name || !phone || !city || !state || !pincode || !landMark || !addressType) {
+                throw new Error('Please fill all required fields');
             }
-        });
+            
+            if (!/^[A-Za-z ]{2,}$/.test(name)) {
+                throw new Error('Name should contain only letters and spaces (min 2 characters)');
+            }
+            
+            if (!/^\d{10}$/.test(phone)) {
+                throw new Error('Phone number must be 10 digits');
+            }
+            
+            if (altPhone && !/^\d{10}$/.test(altPhone)) {
+                throw new Error('Alternate phone must be 10 digits');
+            }
+            
+            if (!/^\d{6}$/.test(pincode)) {
+                throw new Error('Pincode must be 6 digits');
+            }
+            
+            const response = await fetch(`/checkoutEditAddress/${formData.get('id')}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+            
+            const result = await response.json();
+            
+            if (!result.status) {
+                throw new Error(result.message || 'Failed to update address');
+            }
+            
+            closeModal('editAddressModal');
+            window.location.reload(); 
+            
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Update Address';
+        }
+    });
 
         function renderAddresses() {
             const addressList = document.getElementById('address-list');

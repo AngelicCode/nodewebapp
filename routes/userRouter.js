@@ -90,6 +90,7 @@ router.get("/deleteItem", userAuth, cartController.deleteProduct);
 //Checkout Management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress);
+router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAddress);
 
 
 module.exports = router;
