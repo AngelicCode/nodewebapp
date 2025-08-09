@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Quick Sip</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.min.css">
     <style>
         * {
             margin: 0;
@@ -115,7 +117,7 @@
         .product-item {
             display: flex;
             align-items: center;
-            padding: 20px 0;
+            padding: 15px 0;
             border-bottom: 1px solid #ecf0f1;
         }
 
@@ -124,16 +126,21 @@
         }
 
         .product-image {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            border-radius: 15px;
+            width: 70px;
+            height: 70px;
+            border-radius: 10px;
             margin-right: 15px;
+            overflow: hidden;
+            background: #f8f9fa;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            color: white;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .product-details {
@@ -146,7 +153,7 @@
             margin-bottom: 5px;
         }
 
-        .product-specs {
+        .product-quantity {
             color: #7f8c8d;
             font-size: 0.9rem;
         }
@@ -154,42 +161,9 @@
         .product-price {
             font-weight: 700;
             color: #71cd14;
-            font-size: 1.1rem;
-        }
-
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .qty-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            background: #71cd14;
-            color: white;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .qty-btn:hover {
-            background: #5ba511;
-            transform: scale(1.1);
-        }
-
-        .qty-input {
-            width: 50px;
-            text-align: center;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            font-size: 1rem;
+            min-width: 80px;
+            text-align: right;
         }
 
         .summary-row {
@@ -620,9 +594,6 @@
                     <div class="payment-method active" data-method="card">
                         💳<br>Card
                     </div>
-                    <div class="payment-method" data-method="paypal">
-                        📱<br>PayPal
-                    </div>
                     <div class="payment-method" data-method="cod">
                         💵<br>Cash on Delivery
                     </div>
@@ -665,73 +636,68 @@
             <div class="order-summary animate-in">
                 <h2 class="section-title">Order Summary</h2>
                 
+                <%cartItems.forEach((item, index)=>{%>
                 <div class="product-item">
-                    <div class="product-image">💧</div>
+                    <div class="product-image">
+                        <% if(item.productId.productImage && item.productId.productImage.length > 0) { %>
+                            <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productId.productName %>" style="width:100%;height:100%;object-fit:cover;border-radius:15px;">
+                        <% } else { %>
+                            📦
+                        <% } %>
+                    </div>
                     <div class="product-details">
-                        <div class="product-name">EcoFlow Steel Bottle</div>
-                        <div class="product-specs">750ml • Stainless Steel • Blue</div>
-                        <div class="quantity-controls">
-                            <button class="qty-btn" onclick="updateQuantity('item1', -1)">−</button>
-                            <input type="number" class="qty-input" id="qty-item1" value="2" min="1" onchange="updatePrice()">
-                            <button class="qty-btn" onclick="updateQuantity('item1', 1)">+</button>
+                        <div class="product-name"><%= item.productId.productName%></div>
+                        <div class="product-quantity">
+                            Quantity: <%= item.quantity %>
                         </div>
                     </div>
-                    <div class="product-price" id="price-item1">$59.98</div>
-                </div>
+                        <div class="product-price">
+                            ₹<%= (item.productId.salePrice * item.quantity).toFixed(2) %>
+                        </div>
+                        </div>
+                        <% }); %>
 
-                <div class="product-item">
-                    <div class="product-image">🌿</div>
-                    <div class="product-details">
-                        <div class="product-name">BambooFlow Bottle</div>
-                        <div class="product-specs">500ml • Bamboo Fiber • Green</div>
-                        <div class="quantity-controls">
-                            <button class="qty-btn" onclick="updateQuantity('item2', -1)">−</button>
-                            <input type="number" class="qty-input" id="qty-item2" value="1" min="1" onchange="updatePrice()">
-                            <button class="qty-btn" onclick="updateQuantity('item2', 1)">+</button>
+                        <!-- <div class="discount-code">
+                            <input type="text" class="discount-input" placeholder="Discount code">
+                            <button class="apply-btn" onclick="applyDiscount()">Apply</button>
+                        </div> -->
+                        <!-- <img src="/img/coupon.png" alt="Coupon with 10 Rs discount" style="max-width: 100%; height: auto;" /> -->
+
+
+                        <div style="margin-top: 25px;">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">₹<%= cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0).toFixed(2) %></span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Shipping:</span>
+                                <span id="shipping">₹50</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax:</span>
+                                <span id="tax">₹0.00</span>
+                            </div>
+                            <div class="summary-row" id="cod-charge-row" style="display: none;">
+                                <span>COD Charge:</span>
+                                <span id="cod-charge">₹5</span>
+                            </div>
+                            <div class="summary-row" id="discount-row" style="display: none; color: #71cd14;">
+                                <span>Discount:</span>
+                                <span id="discount">-₹0.00</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="total">₹<%= (cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) + 50).toFixed(2) %></span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <button class="btn btn-secondary" onclick="goBack()">← Back to Cart</button>
+                            <button class="btn btn-primary" onclick="processPayment()">
+                                Complete Order 
+                            </button>
                         </div>
                     </div>
-                    <div class="product-price" id="price-item2">$24.99</div>
-                </div>
-
-                <div class="discount-code">
-                    <input type="text" class="discount-input" placeholder="Discount code">
-                    <button class="apply-btn" onclick="applyDiscount()">Apply</button>
-                </div>
-
-                <div style="margin-top: 25px;">
-                    <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">$84.97</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Shipping:</span>
-                        <span id="shipping">$8.99</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax:</span>
-                        <span id="tax">$7.50</span>
-                    </div>
-                    <div class="summary-row" id="cod-charge-row" style="display: none;">
-                        <span>COD Charge:</span>
-                        <span id="cod-charge">$2.99</span>
-                    </div>
-                    <div class="summary-row" id="discount-row" style="display: none; color: #71cd14;">
-                        <span>Discount:</span>
-                        <span id="discount">-$0.00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total:</span>
-                        <span id="total">$101.46</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 30px;">
-                    <button class="btn btn-secondary" onclick="goBack()">← Back to Cart</button>
-                    <button class="btn btn-primary" onclick="processPayment()">
-                        Complete Order 🚀
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -867,11 +833,7 @@
                         <input type="text" id="edit-country" name="country" required>
                     </div>
                 </div>
-                <!-- <div class="form-group">
-                    <label for="edit-is-default">
-                        <input type="checkbox" id="edit-is-default" name="isDefault"> Set as default address
-                    </label>
-                </div> -->
+                
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('editAddressModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update Address</button>
@@ -1045,15 +1007,12 @@
             }
         }
 
-        // Handle address selection
         document.addEventListener('change', function(e) {
             if (e.target.name === 'selectedAddress') {
                 console.log('Selected address:', e.target.value);
-                // Here you could update shipping costs based on selected address
             }
         });
 
-        // Animation on load
         document.addEventListener('DOMContentLoaded', function() {
             const elements = document.querySelectorAll('.animate-in');
             elements.forEach((el, index) => {
@@ -1064,10 +1023,9 @@
             });
             
             // Initialize prices
-            updatePrice();
+            // updatePrice();
         });
 
-        // Payment method selection
         document.querySelectorAll('.payment-method').forEach(method => {
             method.addEventListener('click', function() {
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
@@ -1076,145 +1034,131 @@
                 const cardDetails = document.getElementById('cardDetails');
                 const codDetails = document.getElementById('codDetails');
                 const codChargeRow = document.getElementById('cod-charge-row');
+                const totalSpan = document.getElementById('total');
+                const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('₹', ''));
+                const shipping = parseFloat(document.getElementById('shipping').textContent.replace('₹', ''));
+                
+                let total = subtotal + shipping;
                 
                 if (this.dataset.method === 'card') {
                     cardDetails.style.display = 'block';
                     codDetails.style.display = 'none';
                     codChargeRow.style.display = 'none';
-                    updatePrice();
+                    // updatePrice();
                 } else if (this.dataset.method === 'cod') {
                     cardDetails.style.display = 'none';
                     codDetails.style.display = 'block';
                     codChargeRow.style.display = 'flex';
-                    updatePrice();
-                } else {
-                    cardDetails.style.display = 'none';
-                    codDetails.style.display = 'none';
-                    codChargeRow.style.display = 'none';
-                    updatePrice();
+                    total += 5;
+                    // updatePrice();
                 }
+                totalSpan.textContent = `₹${total.toFixed(2)}`;
             });
         });
 
-        // Quantity management
-        function updateQuantity(itemId, change) {
-            const qtyInput = document.getElementById('qty-' + itemId);
-            const currentQty = parseInt(qtyInput.value);
-            const newQty = Math.max(1, currentQty + change);
-            qtyInput.value = newQty;
-            updatePrice();
-        }
+        // function applyDiscount() {
+        //     const discountInput = document.querySelector('.discount-input');
+        //     const discountCode = discountInput.value.trim();
+            
+        //     if (!discountCode) {
+        //         Swal.fire({
+        //             icon: 'warning',
+        //             title: 'Missing Discount Code',
+        //             text: 'Please enter a discount code',
+        //             confirmButtonText: 'OK',
+        //             confirmButtonColor: '#71cd14'
+        //         });
+        //         return;
+        //     }
+            
+        //     // In a real app, you would validate the discount code with your backend
+        //     const discountRow = document.getElementById('discount-row');
+        //     const discountAmount = document.getElementById('discount');
+        //     discountRow.style.display = 'flex';
+        //     discountAmount.textContent = '-₹10.00';
+            
+        //     const currentTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+        //     document.getElementById('total').textContent = '₹' + (currentTotal - 10).toFixed(2);
+            
+        //     discountInput.value = '';
+        // }
 
-        function updatePrice() {
-            const item1Qty = parseInt(document.getElementById('qty-item1').value);
-            const item2Qty = parseInt(document.getElementById('qty-item2').value);
-            
-            const item1Price = 29.99 * item1Qty;
-            const item2Price = 24.99 * item2Qty;
-            
-            document.getElementById('price-item1').textContent = '$' + item1Price.toFixed(2);
-            document.getElementById('price-item2').textContent = '$' + item2Price.toFixed(2);
-            
-            const subtotal = item1Price + item2Price;
-            const shipping = subtotal > 50 ? 0 : 8.99;
-            
-            // Check if COD is selected
-            const isCOD = document.querySelector('.payment-method[data-method="cod"]').classList.contains('active');
-            const codCharge = isCOD ? 2.99 : 0;
-            
-            const tax = subtotal * 0.088;
-            const total = subtotal + shipping + tax + codCharge;
-            
-            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('shipping').textContent = shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2);
-            document.getElementById('tax').textContent = '$' + tax.toFixed(2);
-            document.getElementById('cod-charge').textContent = '$' + codCharge.toFixed(2);
-            document.getElementById('total').textContent = '$' + total.toFixed(2);
-        }
+    async function processPayment() {
+        const btn = document.querySelector('.btn-primary');
+        btn.innerHTML = '⏳ Processing...';
+        btn.disabled = true;
 
-        function applyDiscount() {
-            const discountInput = document.querySelector('.discount-input');
-            const discountCode = discountInput.value.trim();
-            
-            if (!discountCode) {
-                alert('Please enter a discount code');
-                return;
-            }
-            
-            // In a real app, you would validate the discount code with your backend
-            const discountRow = document.getElementById('discount-row');
-            const discountAmount = document.getElementById('discount');
-            discountRow.style.display = 'flex';
-            discountAmount.textContent = '-$10.00';
-            
-            const currentTotal = parseFloat(document.getElementById('total').textContent.replace('$', ''));
-            document.getElementById('total').textContent = '$' + (currentTotal - 10).toFixed(2);
-            
-            discountInput.value = '';
-        }
-
-        function processPayment() {
-            const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
-            
-            if (!selectedAddress && addresses.length > 0) {
-                alert('Please select a shipping address');
-                return;
-            }
-            
+        try {
             const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
-            
-            if (paymentMethod === 'cod') {
-                if (!document.getElementById('confirmCod').checked) {
-                    alert('Please confirm Cash on Delivery terms');
-                    return;
-                }
-                
-                placeCODOrder();
-            } else if (paymentMethod === 'card') {
-                const cardNumber = document.getElementById('cardNumber').value;
+            const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
+
+            if (!addressId) {
+                throw new Error('Please select a shipping address');
+            }
+
+            const orderData = {
+                addressId: addressId,
+                paymentMethod: paymentMethod,
+                cartItems: <%- JSON.stringify(cartItems) %>,
+                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
+                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
+                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
+                total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
+            };
+
+            if (paymentMethod === 'card') {
+                const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
                 const expiry = document.getElementById('expiry').value;
                 const cvv = document.getElementById('cvv').value;
-                
+
                 if (!cardNumber || !expiry || !cvv) {
-                    alert('Please enter complete card details');
-                    return;
+                    throw new Error('Please enter complete card details');
                 }
-                
-                processCardPayment();
-            } else {
-                // For other payment methods like PayPal
-                alert(`Redirecting to ${paymentMethod} payment...`);
-                // In a real app, you would redirect to the payment gateway
+
+                orderData.paymentDetails = {
+                    cardNumber: cardNumber,
+                    expiry: expiry,
+                    cvv: cvv
+                };
             }
-        }
 
-        function placeCODOrder() {
-            const btn = event.target;
-            btn.innerHTML = '⏳ Placing Order...';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                // In a real app, you would submit the form to your backend
-                window.location.href = '/order-success?cod=true';
-            }, 2000);
-        }
+            const response = await fetch('/place-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
 
-        function processCardPayment() {
-            const btn = event.target;
-            btn.innerHTML = '⏳ Processing Payment...';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                // Simulate successful payment
-                window.location.href = '/order-success';
-            }, 3000);
+            const result = await response.json();
+
+            if (!result.status) {
+                throw new Error(result.message || 'Failed to place order');
+            }
+
+            if (!result.orderId) {
+                throw new Error('Order ID not received');
+            }
+
+            window.location.href = `/order-success/${result.orderId}`;
+
+        } catch (error) {
+            console.error('Order error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Order Failed',
+                text: error.message,
+                confirmButtonColor: '#3085d6'
+            });
+            btn.innerHTML = 'Complete Order';
+            btn.disabled = false;
         }
+    }
 
         function goBack() {
             window.history.back();
         }
 
-        // Input formatting
         document.getElementById('cardNumber').addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
         });
@@ -1223,7 +1167,6 @@
             e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
         });
 
-        // Close modal when clicking outside
         window.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';

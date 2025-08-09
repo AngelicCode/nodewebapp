@@ -2,8 +2,8 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
-
-
+const Order = require("../../models/orderSchema");
+;
 const loadCheckout = async(req,res)=>{
   try {
     const userId = req.session.user._id;
@@ -14,7 +14,17 @@ const loadCheckout = async(req,res)=>{
     const addressDoc = await Address.findOne({userId:userId});
     const addresses = addressDoc?addressDoc.address :[];
 
-    res.render("checkout",{addresses});
+    const cart = await Cart.findOne({userId:userId})
+    .populate("items.productId");
+    if(!cart || cart.items.length == 0){
+      return res.redirect("/cart");
+    }
+
+    res.render("checkout",{
+      addresses,
+      cartItems: cart.items,
+      
+    });
 
   } catch (error) {
     console.error(error);
@@ -134,6 +144,114 @@ const checkoutEditAddress = async(req,res)=>{
   }
 };
 
+const placeOrder = async(req,res)=>{
+  try {
+    const userId = req.session.user._id;
+    if (!userId) {
+        return res.status(401).json({ status: false, message: 'User not authenticated' });
+    }
+
+     const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total } = req.body;
+
+    if (!addressId || !paymentMethod || !cartItems || !cartItems.length) {
+        return res.status(400).json({ 
+            status: false,
+            message: 'Missing required order data' 
+        });
+    }
+
+     const addressDoc = await Address.findOne({ 
+        userId: userId,
+        "address._id": addressId 
+    });
+
+    if (!addressDoc) {
+        return res.status(404).json({ 
+            status: false,
+            message: 'Address not found' 
+        });
+    }
+
+    const selectedAddress = addressDoc.address.find(addr => addr._id.toString() === addressId);
+
+    const cart = await Cart.findOne({ userId: userId }).populate('items.productId');
+    if (!cart || cart.items.length === 0) {
+        return res.status(400).json({ 
+            status: false,
+            message: 'Cart is empty' 
+        });
+    }
+
+    for (const item of cart.items) {
+        const product = await Product.findById(item.productId._id);
+        if (!product || product.stock < item.quantity) {
+            return res.status(400).json({
+                status: false,
+                message: `Product ${product?.productName || 'Unknown'} is out of stock`
+            });
+        }
+    }
+
+     const orderItems = cart.items.map(item => ({
+        productId: item.productId._id,
+        productName: item.productId.productName,
+        price: item.productId.salePrice,
+        quantity: item.quantity
+    }));
+
+    const newOrder = new Order({
+            userId: userId,
+            addressId: addressId,
+            shippingAddress: {
+                addressType: selectedAddress.addressType,
+                name: selectedAddress.name,
+                city: selectedAddress.city,
+                landMark: selectedAddress.landMark,
+                state: selectedAddress.state,
+                pincode: selectedAddress.pincode,
+                phone: selectedAddress.phone,
+                altPhone: selectedAddress.altPhone
+            },
+            paymentMethod: paymentMethod,
+            orderItems: orderItems,
+            total: parseFloat(subtotal),
+            shipping: parseFloat(shipping),
+            tax: parseFloat(tax),
+            finalAmount: parseFloat(total),
+            status: paymentMethod === 'cod' ? 'pending' : 'processing',
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'processing'
+        });
+
+        await newOrder.save();
+      
+
+        for (const item of cart.items) {
+        await Product.findByIdAndUpdate(item.productId._id, {
+            $inc: { stock: -item.quantity }
+        });
+    }
+
+        await Cart.findOneAndUpdate(
+            { userId: userId },
+            { $set: { items: [] } }
+        );
+
+         return res.json({
+            status: true,
+            message: 'Order placed successfully',
+            orderId:  newOrder._id
+        });        
+
+  } catch (error) {
+    console.error('Error placing order:', error);
+        return res.status(500).json({
+            status: false,
+            message: 'Failed to place order'
+        });
+  }
+}
+
+
 module.exports = {
-  loadCheckout,checkoutAddAddress,checkoutEditAddress,
+  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,
 }

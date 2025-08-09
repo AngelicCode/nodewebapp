@@ -8,6 +8,7 @@ const profileController = require("../controllers/user/profileController");
 const wishlistController = require("../controllers/user/wishlistController");
 const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
+const orderController = require("../controllers/user/orderController");
 
 
 router.get("/pageNotFound",userController.pageNotFound);
@@ -91,6 +92,10 @@ router.get("/deleteItem", userAuth, cartController.deleteProduct);
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress);
 router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAddress);
+router.post("/place-order",userAuth,checkoutController.placeOrder);
+
+//Order Management
+router.get("/order-success/:id",userAuth,orderController.orderSuccess);
 
 
 module.exports = router;
