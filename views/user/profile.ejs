@@ -710,10 +710,9 @@
                                                         <% order.orderItems.forEach((item, index) => { %>
                                                             <tr>
                                                                 <% if (index === 0) { %>
-                                                                    <!-- Only show order details in first row for each order -->
                                                                     <td rowspan="<%= order.orderItems.length %>">
-                                                                        <% if (item.productId && item.productId.images && item.productId.images.length > 0) { %>
-                                                                            <img src="/<%= item.productId.images[0] %>" alt="<%= item.productName %>" 
+                                                                        <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                                                            <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productName %>" 
                                                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                                                         <% } else { %>
                                                                             <img src="/path/to/default/image.jpg" alt="No image" 
@@ -898,6 +897,40 @@
                 });
             });
         });
+
+        
+            document.addEventListener('DOMContentLoaded', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                const page = urlParams.get('page');
+                
+                if (tab === 'orders') {
+                    const tabEl = document.getElementById('orders-tab');
+                    new bootstrap.Tab(tabEl).show();
+                }
+
+                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                    tab.addEventListener('click', function(e) {
+                        const tabName = e.target.getAttribute('aria-controls').replace('-tab', '');
+                        const url = new URL(window.location);
+                        
+                        url.searchParams.delete('page');
+                        url.searchParams.set('tab', tabName);
+                        
+                        window.history.pushState({}, '', url);
+                    });
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.pagination-glass a')) {
+                        e.preventDefault();
+                        const url = new URL(e.target.href);
+                        url.searchParams.set('tab', 'orders'); 
+                        window.location.href = url.toString();
+                    }
+                });
+            });
+
         </script>
     </body>
 </html>

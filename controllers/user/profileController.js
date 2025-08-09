@@ -149,7 +149,7 @@ const verifyForgotPassOtp = async (req,res)=>{
     }
   }
 
-  const userProfile = async(req,res)=>{
+     const userProfile = async(req,res)=>{
     try {
       const userId = req.session.user;
       const userData = await User.findById(userId);
@@ -160,7 +160,7 @@ const verifyForgotPassOtp = async (req,res)=>{
       }).sort({createdAt:-1})
         .populate({
           path: "orderItems.productId",
-          select: "images"
+          select: "productImage"
         });
 
       res.render("profile",{
