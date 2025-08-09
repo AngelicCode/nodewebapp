@@ -1,5 +1,6 @@
 const User = require("../../models/userSchema");
 const Address = require("../../models/addressSchema");
+const Order = require("../../models/orderSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
@@ -153,9 +154,19 @@ const verifyForgotPassOtp = async (req,res)=>{
       const userId = req.session.user;
       const userData = await User.findById(userId);
       const addressData = await Address.findOne({userId:userId});
+
+      const orders = await Order.find({
+        userId:userId
+      }).sort({createdAt:-1})
+        .populate({
+          path: "orderItems.productId",
+          select: "images"
+        });
+
       res.render("profile",{
         user:userData,
         userAddress:addressData,
+        orders:orders
 
       })
 

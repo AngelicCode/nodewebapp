@@ -96,6 +96,7 @@ router.post("/place-order",userAuth,checkoutController.placeOrder);
 
 //Order Management
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);
+router.get("/orders",userAuth,orderController.getOrders);
 
 
 module.exports = router;

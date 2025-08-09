@@ -32,6 +32,29 @@ const orderSuccess = async (req, res) => {
     }
 }
 
+const getOrders = async(req,res)=>{
+  try {
+    const userId = req.session.user._id;
+    const orders = await Order.find({userId})
+        .sort({createdAt:-1})
+        .populate({
+          path: "orderItems.productId",
+          select:"images"
+        });
+
+        res.render("profile",{
+          orders,
+          user:req.session.user,
+          userAddress:req.session.userAddress || {}
+        });
+
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.redirect('/profile');
+  }
+}
+
+
 module.exports = {
-  orderSuccess,
+  orderSuccess,getOrders,
 }
