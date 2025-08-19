@@ -54,7 +54,47 @@ const getOrders = async(req,res)=>{
   }
 }
 
+const getOrderDetails = async (req,res)=>{
+  try {
+    const orderId = req.params.id;
+    const userId = req.session.user._id;
+
+    const order = await Order.findOne({
+      _id:orderId,
+      userId:userId
+    })
+    .populate({
+      path: "orderItems.productId",
+      select: "productImage description brand category",
+      populate: [
+        {
+          path: "brand",
+          select: "brandName" 
+        },
+        {
+          path: "category", 
+          select: "name" 
+        }
+      ]
+    })
+    .populate("addressId");
+
+    if(!order){
+      return res.redirect("/userProfile?tab=orders");
+    }
+
+    res.render("order-details",{
+      order,
+      user:req.session.user
+    });
+
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    res.redirect('/userProfile?tab=orders');
+  }
+}
+
 
 module.exports = {
-  orderSuccess,getOrders,
+  orderSuccess,getOrders,getOrderDetails,
 }

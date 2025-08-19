@@ -1,0 +1,712 @@
+<%- include("../../views/partials/user/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick sip - Order Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        :root {
+            --primary-blue: #5a8dc7;
+            --accent-blue: #7ba5d8;
+            --light-blue: #e8f4f8;
+            --water-blue: #4db8d4;
+            --gradient-primary: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-water: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            --button-green: #71cd14;
+            --button-green-hover: #5ba411;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-radius: 20px;
+            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            background: none;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            position: relative;
+            margin: 0 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+            color: var(--text-light);
+        }
+
+        .card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-heavy);
+            margin-bottom: 30px;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            padding: 25px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 66px;
+        }
+
+        .btn-primary {
+            background: var(--button-green);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(113, 205, 20, 0.4);
+            background: var(--button-green-hover);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--button-green);
+            color: var(--button-green);
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--button-green);
+            color: white;
+        }
+
+        .table {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .table thead th {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .table tbody td {
+            padding: 18px 20px;
+            vertical-align: middle;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .badge {
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .water-bottle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 10 L70 10 L65 20 L65 80 Q65 90 55 90 L45 90 Q35 90 35 80 L35 20 Z" fill="%23ffffff"/></svg>');
+            background-repeat: repeat;
+            background-size: 100px;
+        }
+
+        .order-timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .order-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            height: 100%;
+            width: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+        }
+
+        .timeline-step {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            z-index: 1;
+        }
+
+        .timeline-step.active::before {
+            background: var(--button-green);
+            box-shadow: 0 0 0 5px rgba(113, 205, 20, 0.2);
+        }
+
+        .timeline-step.completed::before {
+            background: var(--button-green);
+        }
+
+        .product-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                margin-bottom: 20px;
+            }
+            
+            .btn-primary, .btn-outline-primary {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="water-bottle-bg"></div>
+    
+    <main class="main">
+        <div class="page-header breadcrumb-wrap mb-3">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="/" rel="nofollow"><i class="fas fa-home"></i> Home</a>
+                    <span><i class="fas fa-chevron-right"></i></span>
+                    <a href="/userProfile?tab=orders">Orders</a>
+                    <span><i class="fas fa-chevron-right"></i></span> Order Details
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-receipt"></i> Order Details</h5>
+                            <span class="badge 
+                                <%= order.status === 'delivered' ? 'bg-success' : 
+                                order.status === 'cancelled' ? 'bg-danger' : 
+                                order.status === 'shipped' ? 'bg-info' : 
+                                order.status === 'Return requested' ? 'bg-warning' :
+                                order.status === 'Return approved' ? 'bg-success' :
+                                order.status === 'Return rejected' ? 'bg-danger' :
+                                order.status === 'refunded' ? 'bg-info' :
+                                'bg-secondary' %>">
+                                <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-hashtag"></i> Order Information</h6><br>
+                                    <p><strong>Order ID:</strong> <%= order.orderId %></p>
+                                    <p><strong>Order Date:</strong> <%= new Date(order.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %></p>
+                                    <p><strong>Payment Method:</strong> 
+                                        <%= order.paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                                           order.paymentMethod === 'razorpay' ? 'Razorpay' :
+                                           order.paymentMethod === 'wallet' ? 'Wallet' : 'Card' %>
+                                    </p>
+                                    <p><strong>Payment Status:</strong> 
+                                        <span class="badge <%= order.paymentStatus === 'success' ? 'bg-success' : 'bg-warning' %>">
+                                            <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-truck"></i> Shipping Information</h6><br>
+                                    <p><strong>Name:</strong> <%= order.shippingAddress.name %></p>
+                                    <p><strong>Address:</strong> <%= order.shippingAddress.landMark %>, <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %></p>
+                                    <p><strong>Phone:</strong> <%= order.shippingAddress.phone %></p>
+                                    <% if (order.shippingAddress.altPhone) { %>
+                                        <p><strong>Alternate Phone:</strong> <%= order.shippingAddress.altPhone %></p>
+                                    <% } %>
+                                </div>
+                            </div><br>
+
+                            <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6><br>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Brand</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Quantity</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% order.orderItems.forEach(item => { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                                            <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" 
+                                                                alt="<%= item.productName %>" class="product-img me-3">
+                                                        <% } else { %>
+                                                            <img src="/path/to/default/image.jpg" 
+                                                                alt="No image" class="product-img me-3">
+                                                        <% } %>
+                                                        <div>
+                                                            <p class="mb-0"><strong><%= item.productName %></strong></p>
+                                                            <% if (item.productId && item.productId.description) { %>
+                                                                <small class="text-muted"><%= item.productId.description.substring(0, 50) %>...</small>
+                                                            <% } %>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <% if (item.productId && item.productId.brand) { %>
+                                                        <% if (item.productId.brand.brandName) { %>
+                                                            <%= item.productId.brand.brandName %>
+                                                        <% } else if (typeof item.productId.brand === 'string') { %>
+                                                            <%= item.productId.brand %>
+                                                        <% } else { %>
+                                                            <span class="text-muted">Not specified</span>
+                                                        <% } %>
+                                                    <% } else { %>
+                                                        <span class="text-muted">Not specified</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% if (item.productId && item.productId.category) { %>
+                                                        <% if (item.productId.category.name) { %>
+                                                            <%= item.productId.category.name %>
+                                                        <% } else if (typeof item.productId.category === 'string') { %>
+                                                            <%= item.productId.category %>
+                                                        <% } else { %>
+                                                            <span class="text-muted">Not specified</span>
+                                                        <% } %>
+                                                    <% } else { %>
+                                                        <span class="text-muted">Not specified</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>₹<%= item.price.toFixed(2) %></td>
+                                                <td><%= item.quantity %></td>
+                                                <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
+                                                <td>
+                                                    <span class="badge 
+                                                        <%= item.itemStatus === 'delivered' ? 'bg-success' : 
+                                                        item.itemStatus === 'cancelled' ? 'bg-danger' : 
+                                                        item.itemStatus === 'shipped' ? 'bg-info' : 
+                                                        item.itemStatus === 'returned' ? 'bg-warning' : 
+                                                        'bg-secondary' %>">
+                                                        <%= item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1) %>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6 offset-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-receipt"></i> Order Summary</h6>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Subtotal:</span>
+                                                <span>₹<%= order.total.toFixed(2) %></span>
+                                            </div>
+                                            <% if (order.discount > 0) { %>
+                                                <div class="d-flex justify-content-between mb-2 text-success">
+                                                    <span>Discount:</span>
+                                                    <span>-₹<%= order.discount.toFixed(2) %></span>
+                                                </div>
+                                            <% } %>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Shipping:</span>
+                                                <span>Free</span>
+                                            </div>
+                                            <hr>
+                                            <div class="d-flex justify-content-between mb-2 fw-bold">
+                                                <span>Total:</span>
+                                                <span>₹<%= order.finalAmount.toFixed(2) %></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-timeline mt-5">
+                                <h6 class="mb-4" style="margin-left: 50px;"><i class="fas fa-history"></i> Order Status Timeline</h6>
+                                
+                                <div class="timeline-step <%= ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status) ? 'completed' : '' %>">
+                                    <h6 class="mb-1">Order Confirmed</h6>
+                                    <p class="text-muted mb-0">Your order has been confirmed</p>
+                                    <small class="text-muted"><%= new Date(order.createdAt).toLocaleDateString() %></small>
+                                </div>
+                                
+                                <% if (['processing', 'shipped', 'delivered'].includes(order.status)) { %>
+                                <div class="timeline-step <%= ['shipped', 'delivered'].includes(order.status) ? 'completed' : '' %>">
+                                    <h6 class="mb-1">Processing</h6>
+                                    <p class="text-muted mb-0">Your order is being processed</p>
+                                </div>
+                                <% } %>
+                                
+                                <% if (['shipped', 'delivered'].includes(order.status)) { %>
+                                <div class="timeline-step <%= order.status === 'delivered' ? 'completed' : 'active' %>">
+                                    <h6 class="mb-1">Shipped</h6>
+                                    <p class="text-muted mb-0">Your order has been shipped</p>
+                                    <% if (order.status === 'shipped') { %>
+                                    <small class="text-muted">Expected delivery: <%= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString() %></small>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                                
+                                <% if (order.status === 'delivered') { %>
+                                <div class="timeline-step completed">
+                                    <h6 class="mb-1">Delivered</h6>
+                                    <p class="text-muted mb-0">Your order has been delivered</p>
+                                    <small class="text-muted"><%= new Date(order.updatedAt).toLocaleDateString() %></small>
+                                </div>
+                                <% } %>
+                                
+                                <% if (order.status === 'cancelled') { %>
+                                <div class="timeline-step">
+                                    <h6 class="mb-1 text-danger">Cancelled</h6>
+                                    <p class="text-muted mb-0">Your order has been cancelled</p>
+                                    <% if (order.returnReason) { %>
+                                    <p class="mb-0"><strong>Reason:</strong> <%= order.returnReason %></p>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                                
+                                <% if (['Return requested', 'Return approved', 'Return rejected', 'refunded'].includes(order.status)) { %>
+                                <div class="timeline-step <%= ['Return approved', 'Return rejected', 'refunded'].includes(order.status) ? 'completed' : 'active' %>">
+                                    <h6 class="mb-1">Return Requested</h6>
+                                    <p class="text-muted mb-0">You have requested a return</p>
+                                    <% if (order.returnReason) { %>
+                                    <p class="mb-0"><strong>Reason:</strong> <%= order.returnReason %></p>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                                
+                                <% if (['Return approved', 'refunded'].includes(order.status)) { %>
+                                <div class="timeline-step <%= order.status === 'refunded' ? 'completed' : 'active' %>">
+                                    <h6 class="mb-1">Return Approved</h6>
+                                    <p class="text-muted mb-0">Your return has been approved</p>
+                                </div>
+                                <% } %>
+                                
+                                <% if (order.status === 'refunded') { %>
+                                <div class="timeline-step completed">
+                                    <h6 class="mb-1">Refunded</h6>
+                                    <p class="text-muted mb-0">Your refund has been processed</p>
+                                </div>
+                                <% } %>
+                                
+                                <% if (order.status === 'Return rejected') { %>
+                                <div class="timeline-step">
+                                    <h6 class="mb-1 text-danger">Return Rejected</h6>
+                                    <p class="text-muted mb-0">Your return request has been rejected</p>
+                                    <% if (order.adminReturnStatus) { %>
+                                    <p class="mb-0"><strong>Reason:</strong> <%= order.adminReturnStatus %></p>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-5">
+                                <a href="/userProfile?tab=orders" class="btn btn-outline-primary">
+                                    <i class="fas fa-arrow-left"></i> Back to Orders
+                                </a>
+                                
+                                <% if (['confirmed', 'processing'].includes(order.status)) { %>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                                    <i class="fas fa-times-circle"></i> Cancel Order
+                                </button>
+                                <% } %>
+                                
+                                <% if (order.status === 'delivered' && order.paymentMethod !== 'cod') { %>
+                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
+                                    <i class="fas fa-undo"></i> Return Order
+                                </button>
+                                <% } %>
+                                
+                                <% if (order.status === 'delivered') { %>
+                                <a href="#" class="btn btn-success">
+                                    <i class="fas fa-download"></i> Download Invoice
+                                </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cancel Order Modal -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this order?</p>
+                    <form id="cancelOrderForm">
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label">Reason for cancellation</label>
+                            <select class="form-select" id="cancelReason" required>
+                                <option value="">Select a reason</option>
+                                <option value="Changed mind">Changed mind</option>
+                                <option value="Found better price">Found better price</option>
+                                <option value="Shipping takes too long">Shipping takes too long</option>
+                                <option value="Ordered by mistake">Ordered by mistake</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="otherReasonContainer" style="display: none;">
+                            <label for="otherReason" class="form-label">Please specify</label>
+                            <textarea class="form-control" id="otherReason" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancel">Cancel Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Order Modal -->
+    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnOrderModalLabel">Return Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please select the reason for returning this order:</p>
+                    <form id="returnOrderForm">
+                        <div class="mb-3">
+                            <label for="returnReason" class="form-label">Reason for return</label>
+                            <select class="form-select" id="returnReason" required>
+                                <option value="">Select a reason</option>
+                                <option value="Product damaged">Product damaged</option>
+                                <option value="Wrong product delivered">Wrong product delivered</option>
+                                <option value="Product not as described">Product not as described</option>
+                                <option value="Received extra product">Received extra product</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="returnOtherReasonContainer" style="display: none;">
+                            <label for="returnOtherReason" class="form-label">Please specify</label>
+                            <textarea class="form-control" id="returnOtherReason" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" id="confirmReturn">Submit Return Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle cancel reason selection
+            const cancelReason = document.getElementById('cancelReason');
+            const otherReasonContainer = document.getElementById('otherReasonContainer');
+            
+            if (cancelReason) {
+                cancelReason.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        otherReasonContainer.style.display = 'block';
+                    } else {
+                        otherReasonContainer.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Handle return reason selection
+            const returnReason = document.getElementById('returnReason');
+            const returnOtherReasonContainer = document.getElementById('returnOtherReasonContainer');
+            
+            if (returnReason) {
+                returnReason.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        returnOtherReasonContainer.style.display = 'block';
+                    } else {
+                        returnOtherReasonContainer.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Confirm cancel order
+            const confirmCancel = document.getElementById('confirmCancel');
+            if (confirmCancel) {
+                confirmCancel.addEventListener('click', function() {
+                    const reason = document.getElementById('cancelReason').value;
+                    let finalReason = reason;
+                    
+                    if (reason === 'Other') {
+                        finalReason = document.getElementById('otherReason').value;
+                    }
+                    
+                    if (!finalReason) {
+                        Swal.fire('Error', 'Please provide a reason for cancellation', 'error');
+                        return;
+                    }
+                    
+                    // Send request to cancel order
+                    fetch(`/order/<%= order._id %>/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: finalReason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Order cancelled successfully', 'success')
+                                .then(() => {
+                                    location.reload();
+                                });
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to cancel order', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'An error occurred while cancelling the order', 'error');
+                    });
+                });
+            }
+            
+            // Confirm return order
+            const confirmReturn = document.getElementById('confirmReturn');
+            if (confirmReturn) {
+                confirmReturn.addEventListener('click', function() {
+                    const reason = document.getElementById('returnReason').value;
+                    let finalReason = reason;
+                    
+                    if (reason === 'Other') {
+                        finalReason = document.getElementById('returnOtherReason').value;
+                    }
+                    
+                    if (!finalReason) {
+                        Swal.fire('Error', 'Please provide a reason for return', 'error');
+                        return;
+                    }
+                    
+                    // Send request to return order
+                    fetch(`/order/<%= order._id %>/return`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: finalReason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Return request submitted successfully', 'success')
+                                .then(() => {
+                                    location.reload();
+                                });
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'An error occurred while submitting the return request', 'error');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
+<%- include("../../views/partials/user/footer") %>
