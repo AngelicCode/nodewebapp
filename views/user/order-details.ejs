@@ -231,6 +231,26 @@
                 margin: 10px 0;
             }
         }
+
+        .cancel-item-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+        }
+        
+        .cancel-item-btn:hover {
+            color: #c82333;
+        }
+        
+        .item-cancelled {
+            opacity: 0.7;
+            background-color: #f8f9fa;
+        }
+        
+
     </style>
 </head>
 <body>
@@ -300,7 +320,8 @@
                                 </div>
                             </div><br>
 
-                            <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6><br>
+                            <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6>
+                            
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
@@ -312,11 +333,12 @@
                                             <th>Quantity</th>
                                             <th>Total</th>
                                             <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <% order.orderItems.forEach(item => { %>
-                                            <tr>
+                                        <% order.orderItems.forEach((item, index) => { %>
+                                            <tr class="<%= item.itemStatus === 'cancelled' ? 'item-cancelled' : '' %>">
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
@@ -373,12 +395,44 @@
                                                         <%= item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1) %>
                                                     </span>
                                                 </td>
+                                                <td>
+                                                <%
+                                                // DEBUG: Check what values we have
+                                                console.log('=== DEBUG INFO ===');
+                                                console.log('Order status:', order.status);
+                                                console.log('Item status:', item.itemStatus);
+                                                console.log('Can cancel check:', ['pending', 'confirmed', 'processing'].includes(order.status));
+                                                console.log('Not cancelled check:', item.itemStatus !== 'cancelled');
+                                                console.log('Should show button:', ['pending', 'confirmed', 'processing'].includes(order.status) && item.itemStatus !== 'cancelled');
+                                                console.log('Product ID exists:', !!item.productId);
+                                                if (item.productId) {
+                                                    console.log('Product ID:', item.productId._id);
+                                                    console.log('Product ID type:', typeof item.productId._id);
+                                                }
+                                                %>
+                                                
+                                                <% if (['pending', 'confirmed', 'processing'].includes(order.status) && item.itemStatus !== 'cancelled') { %>
+                                                    <button class="cancel-item-btn" data-bs-toggle="modal" data-bs-target="#cancelItemModal" 
+                                                        data-item-index="<%= index %>" 
+                                                        data-product-id="<%= item.productId ? item.productId._id : '' %>" 
+                                                        data-quantity="<%= item.quantity %>" 
+                                                        data-product-name="<%= item.productName %>">
+                                                        <i class="fas fa-times-circle"></i> Cancel
+                                                    </button>
+                                                <% } else if (item.itemStatus === 'cancelled') { %>
+                                                    <small class="text-muted">Cancelled</small>
+                                                <% } else { %>
+                                                    <small class="text-muted">Cannot cancel</small>
+                                                    <br><small class="text-muted">Status: <%= order.status %></small>
+                                                <% } %>
+                                            </td>
                                             </tr>
                                         <% }); %>
                                     </tbody>
                                 </table>
                             </div>
 
+                            <!-- Order Summary Section -->
                             <div class="row mt-4">
                                 <div class="col-md-6 offset-md-6">
                                     <div class="card">
@@ -414,6 +468,7 @@
                                 </div>
                             </div>
 
+                            <!-- Order Timeline Section -->
                             <div class="order-timeline mt-5">
                                 <h6 class="mb-4" style="margin-left: 50px;"><i class="fas fa-history"></i> Order Status Timeline</h6>
                                 
@@ -498,9 +553,9 @@
                                     <i class="fas fa-arrow-left"></i> Back to Orders
                                 </a>
                                 
-                                <% if (['confirmed', 'processing'].includes(order.status)) { %>
+                                <% if (['pending','confirmed', 'processing'].includes(order.status)) { %>
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
-                                    <i class="fas fa-times-circle"></i> Cancel Order
+                                    <i class="fas fa-times-circle"></i> Cancel Entire Order
                                 </button>
                                 <% } %>
                                 
@@ -523,16 +578,16 @@
         </div>
     </main>
 
-    <!-- Cancel Order Modal -->
+    <!-- Cancel Entire Order Modal -->
     <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order</h5>
+                    <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Entire Order</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to cancel this order?</p>
+                    <p>Are you sure you want to cancel this entire order?</p>
                     <form id="cancelOrderForm">
                         <div class="mb-3">
                             <label for="cancelReason" class="form-label">Reason for cancellation</label>
@@ -553,7 +608,43 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" id="confirmCancel">Cancel Order</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelOrder">Cancel Entire Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Single Item Modal -->
+    <div class="modal fade" id="cancelItemModal" tabindex="-1" aria-labelledby="cancelItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelItemModalLabel">Cancel Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel <span id="itemName"></span>?</p>
+                    <form id="cancelItemForm">
+                        <div class="mb-3">
+                            <label for="cancelItemReason" class="form-label">Reason for cancellation</label>
+                            <select class="form-select" id="cancelItemReason" required>
+                                <option value="">Select a reason</option>
+                                <option value="Changed mind">Changed mind</option>
+                                <option value="Found better price">Found better price</option>
+                                <option value="No longer needed">No longer needed</option>
+                                <option value="Ordered by mistake">Ordered by mistake</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="itemOtherReasonContainer" style="display: none;">
+                            <label for="itemOtherReason" class="form-label">Please specify</label>
+                            <textarea class="form-control" id="itemOtherReason" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelItem">Cancel Item</button>
                 </div>
             </div>
         </div>
@@ -599,7 +690,10 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle cancel reason selection
+            // Variables to store selected item data
+            let selectedItemData = null;
+            
+            // Handle cancel reason selection for order
             const cancelReason = document.getElementById('cancelReason');
             const otherReasonContainer = document.getElementById('otherReasonContainer');
             
@@ -609,6 +703,20 @@
                         otherReasonContainer.style.display = 'block';
                     } else {
                         otherReasonContainer.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Handle cancel reason selection for item
+            const cancelItemReason = document.getElementById('cancelItemReason');
+            const itemOtherReasonContainer = document.getElementById('itemOtherReasonContainer');
+            
+            if (cancelItemReason) {
+                cancelItemReason.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        itemOtherReasonContainer.style.display = 'block';
+                    } else {
+                        itemOtherReasonContainer.style.display = 'none';
                     }
                 });
             }
@@ -627,10 +735,29 @@
                 });
             }
             
-            // Confirm cancel order
-            const confirmCancel = document.getElementById('confirmCancel');
-            if (confirmCancel) {
-                confirmCancel.addEventListener('click', function() {
+            // Set up single item cancellation
+            document.querySelectorAll('.cancel-item-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    selectedItemData = {
+                        index: this.getAttribute('data-item-index'),
+                        productId: this.getAttribute('data-product-id'),
+                        quantity: this.getAttribute('data-quantity'),
+                        productName: this.getAttribute('data-product-name')
+                    };
+                    
+                    document.getElementById('itemName').textContent = selectedItemData.productName;
+                    
+                    // Reset the form
+                    document.getElementById('cancelItemReason').value = '';
+                    document.getElementById('itemOtherReason').value = '';
+                    itemOtherReasonContainer.style.display = 'none';
+                });
+            });
+            
+            // Confirm cancel entire order
+            const confirmCancelOrder = document.getElementById('confirmCancelOrder');
+            if (confirmCancelOrder) {
+                confirmCancelOrder.addEventListener('click', function() {
                     const reason = document.getElementById('cancelReason').value;
                     let finalReason = reason;
                     
@@ -643,13 +770,16 @@
                         return;
                     }
                     
-                    // Send request to cancel order
+                    // Send request to cancel entire order
                     fetch(`/order/<%= order._id %>/cancel`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ reason: finalReason })
+                        body: JSON.stringify({ 
+                            reason: finalReason,
+                            cancelType: 'entire'
+                        })
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -665,6 +795,58 @@
                     .catch(error => {
                         console.error('Error:', error);
                         Swal.fire('Error', 'An error occurred while cancelling the order', 'error');
+                    });
+                });
+            }
+            
+            // Confirm cancel single item
+            const confirmCancelItem = document.getElementById('confirmCancelItem');
+            if (confirmCancelItem) {
+                confirmCancelItem.addEventListener('click', function() {
+                    const reason = document.getElementById('cancelItemReason').value;
+                    let finalReason = reason;
+                    
+                    if (reason === 'Other') {
+                        finalReason = document.getElementById('itemOtherReason').value;
+                    }
+                    
+                    if (!finalReason) {
+                        Swal.fire('Error', 'Please provide a reason for cancellation', 'error');
+                        return;
+                    }
+                    
+                    if (!selectedItemData) {
+                        Swal.fire('Error', 'No item selected for cancellation', 'error');
+                        return;
+                    }
+                    
+                    // Send request to cancel single item
+                    fetch(`/order/<%= order._id %>/cancel-item`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            reason: finalReason,
+                            itemIndex: selectedItemData.index,
+                            productId: selectedItemData.productId,
+                            quantity: selectedItemData.quantity
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Item cancelled successfully', 'success')
+                                .then(() => {
+                                    location.reload();
+                                });
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'An error occurred while cancelling the item', 'error');
                     });
                 });
             }

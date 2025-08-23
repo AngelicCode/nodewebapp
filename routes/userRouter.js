@@ -98,6 +98,8 @@ router.post("/place-order",userAuth,checkoutController.placeOrder);
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);
 router.get("/orders",userAuth,orderController.getOrders);
 router.get("/order-details/:id",userAuth,orderController.getOrderDetails);
+router.post("/order/:id/cancel", userAuth, orderController.cancelOrder);
+router.post("/order/:id/cancel-item", userAuth, orderController.cancelOrderItem);
 
 
 module.exports = router;
