@@ -688,77 +688,85 @@
 
 
                         <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Your Orders</h5>
-                                </div>
-                                <div class="card-body">
-                                    <% if (orders && orders.length > 0) { %>
-                                        <div class="table-responsive">
-                                            <table class="table">
-                                                <thead>
-                                                    <tr>
-                                                        <th><i class="fas fa-image"></i> Image</th>
-                                                        <th><i class="fas fa-hashtag"></i> Order ID</th>
-                                                        <th><i class="fas fa-info-circle"></i> Status</th>
-                                                        <th><i class="fas fa-inr"></i> Total</th>
-                                                        <th><i class="fas fa-cog"></i> Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <% orders.forEach(order => { %>
-                                                        <% order.orderItems.forEach((item, index) => { %>
-                                                            <tr>
-                                                                <% if (index === 0) { %>
-                                                                    <td rowspan="<%= order.orderItems.length %>">
-                                                                        <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
-                                                                            <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productName %>" 
-                                                                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                                                                        <% } else { %>
-                                                                            <img src="/path/to/default/image.jpg" alt="No image" 
-                                                                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                                                                        <% } %>
-                                                                    </td>
-                                                                    <td rowspan="<%= order.orderItems.length %>">
-                                                                        <%= order.orderId %>
-                                                                    </td>
-                                                                    <td rowspan="<%= order.orderItems.length %>">
-                                                                        <span class="badge 
-                                                                            <%= order.status === 'delivered' ? 'bg-success' : 
-                                                                            order.status === 'cancelled' ? 'bg-danger' : 
-                                                                            order.status === 'shipped' ? 'bg-info' : 
-                                                                            'bg-warning' %>">
-                                                                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                                                                        </span>
-                                                                    </td>
-                                                                    <td rowspan="<%= order.orderItems.length %>">
-                                                                        ₹<%= order.finalAmount.toFixed(2) %>
-                                                                    </td>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Your Orders</h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (orders && orders.length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th><i class="fas fa-image"></i> Image</th>
+                                                    <th><i class="fas fa-cube"></i> Product</th>
+                                                    <th><i class="fas fa-hashtag"></i> Order ID</th>
+                                                    <th><i class="fas fa-info-circle"></i> Status</th>
+                                                    <th><i class="fas fa-inr"></i> Price</th>
+                                                    <th><i class="fas fa-box"></i> Quantity</th>
+                                                    <th><i class="fas fa-inr"></i> Total</th>
+                                                    <th><i class="fas fa-cog"></i> Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% orders.forEach(order => { %>
+                                                    <% order.orderItems.forEach((item, index) => { %>
+                                                        <tr>
+                                                            <td>
+                                                                <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                                                    <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productName %>" 
+                                                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                                <% } else { %>
+                                                                    <img src="/path/to/default/image.jpg" alt="No image" 
+                                                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                                                 <% } %>
-                                                                <td>
+                                                            </td>
+                                                            <td><%= item.productName %></td>
+                                                            <% if (index === 0) { %>
+                                                                <td rowspan="<%= order.orderItems.length %>">
+                                                                    <%= order.orderId %>
+                                                                </td>
+                                                                <td rowspan="<%= order.orderItems.length %>">
+                                                                    <span class="badge 
+                                                                        <%= order.status === 'delivered' ? 'bg-success' : 
+                                                                        order.status === 'cancelled' ? 'bg-danger' : 
+                                                                        order.status === 'shipped' ? 'bg-info' : 
+                                                                        'bg-warning' %>">
+                                                                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                                                    </span>
+                                                                </td>
+                                                            <% } %>
+                                                            <td>₹<%= item.price.toFixed(2) %></td>
+                                                            <td><%= item.quantity %></td>
+                                                            <% if (index === 0) { %>
+                                                                <td rowspan="<%= order.orderItems.length %>">
+                                                                    ₹<%= order.finalAmount.toFixed(2) %>
+                                                                </td>
+                                                                <td rowspan="<%= order.orderItems.length %>">
                                                                     <a href="/order-details/<%= order._id %>" class="btn-small">
                                                                         <i class="fas fa-eye"></i> View
                                                                     </a>
                                                                 </td>
-                                                            </tr>
-                                                        <% }); %>
+                                                            <% } %>
+                                                        </tr>
                                                     <% }); %>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    <% } else { %>
-                                        <div class="text-center py-5">
-                                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                            <h5>No orders found</h5>
-                                            <p>You haven't placed any orders yet.</p>
-                                            <a href="/products" class="btn btn-success">
-                                                <i class="fas fa-shopping-bag"></i> Shop Now
-                                            </a>
-                                        </div>
-                                    <% } %>
-                                </div>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                        <h5>No orders found</h5>
+                                        <p>You haven't placed any orders yet.</p>
+                                        <a href="/shop" class="btn btn-success">
+                                            <i class="fas fa-shopping-bag"></i> Shop Now
+                                        </a>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
+                    </div>
 
                         <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
                             <div class="card">

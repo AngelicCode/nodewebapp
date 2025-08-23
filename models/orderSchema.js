@@ -58,6 +58,15 @@ const orderSchema = new Schema({
       enum: ["cod", "razorpay","card","wallet"],
       required: true
    },
+   cancellationReason: {
+    type: String,
+    default: null   
+  },
+  cancelledBy: {
+    type: String,
+    enum: ["user", "admin", "system"],
+    default: null
+  },
    orderItems: [{
       productId: {
          type: Schema.Types.ObjectId,
@@ -84,7 +93,20 @@ const orderSchema = new Schema({
       returnReason: { 
          type: String, 
          default: null 
-      }
+      },
+      cancellationReason: { 
+      type: String, 
+      default: null 
+    },
+    cancelledBy: { 
+      type: String, 
+      enum: ["user", "admin", "system"],
+      default: null
+    },
+    cancelledAt: {
+      type: Date,
+      default: null
+    }
       
    }],
    total: {
@@ -126,7 +148,7 @@ const orderSchema = new Schema({
       type: Date,
       default: Date.now
    },
-   coupenApplied: {
+   couponApplied: {
       type: Boolean,
       default: false
    },

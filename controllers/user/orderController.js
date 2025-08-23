@@ -19,7 +19,7 @@ const orderSuccess = async (req, res) => {
 
         if (!order) {
             return res.redirect('/');
-            
+
         }
 
         res.render('order-success', {
