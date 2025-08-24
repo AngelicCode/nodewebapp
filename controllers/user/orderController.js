@@ -113,11 +113,12 @@ const getOrderDetails = async (req,res)=>{
 
         if (cancelType === 'entire') {
             order.status = 'cancelled';
+            order.paymentStatus = 'cancelled';
             order.cancellationReason = reason;
             order.cancelledBy = 'user';
             const originalProductTotal = order.total;
             order.finalAmount = 0;
-                        
+
             for (const item of order.orderItems) {
                 if (item.itemStatus !== 'cancelled') {
                     await Product.findByIdAndUpdate(
@@ -178,6 +179,7 @@ const cancelOrderItem = async(req,res)=>{
 
     if(allCancelled){
       order.status = "cancelled";
+      order.paymentStatus = 'cancelled';
       order.cancellationReason = "All items cancelled";
       order.cancelledBy = "user";
     }
