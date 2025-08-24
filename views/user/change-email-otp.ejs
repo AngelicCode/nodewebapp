@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification - Quick Sip</title>
+    <!-- Include SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         * {
             margin: 0;
@@ -329,26 +331,17 @@
             <div class="logo">
                 <div class="water-bottle-icon"></div>
                 <h2>Quick Sip</h2>
-              
             </div>
             
             <h3>Email Verification</h3>
             
-            <form action="/verify-email-otp" method="post">
+            <form id="otpForm">
                 <div class="form-group">
                     <label for="otp">Enter OTP Code:</label>
                     <input type="text" id="otp" name="otp" class="otp-input" required maxlength="6" placeholder="000000">
                 </div>
                 
-                <!-- Example alert - replace with your EJS template logic -->
-                 <% if (typeof error !== 'undefined') { %>
-                  <div class="alert alert-danger">
-                    <%= error %>
-                  </div>
-                <% } %>
-
                 <div id="otp-message" style="display: none; color: red; font-weight: bold; margin-top: 10px;"></div>
-
 
                 <button type="submit" class="btn-primary">Verify OTP</button>
                 
@@ -357,21 +350,20 @@
                 </div>
 
                 <button type="button" id="resendBtn" onclick="resendOTP()" class="resend-btn" style="display: none;">Resend OTP</button>
-                
-              </form>
+            </form>
             
             <div class="security-features">
-                
                 <div class="security-item">
                     <div class="security-icon">⏰</div>
                     <span>OTP expires in 1 minute</span>
                 </div>
-                
             </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Include SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
     let otpTimerInterval;
     let timer = 60;
@@ -379,7 +371,7 @@
     function startOTPTimer() {
         const timerElement = document.getElementById('otpTimer');
         const resendBtn = document.getElementById('resendBtn');
-        resendBtn.style.display = 'none'; // Hide resend button initially
+        resendBtn.style.display = 'none';
 
         otpTimerInterval = setInterval(function() {
             const minutes = Math.floor(timer / 60);
@@ -391,21 +383,21 @@
                 clearInterval(otpTimerInterval);
                 timerElement.textContent = 'OTP Expired';
                 timerElement.style.color = '#e74c3c';
-                resendBtn.style.display = 'block'; // Show resend button when timer expires
+                resendBtn.style.display = 'block';
             }
         }, 1000);
     }
 
     function showOtpMessage(message, isSuccess) {
-    const messageBox = document.getElementById('otp-message');
-    messageBox.innerText = message;
-    messageBox.style.display = 'block';
-    messageBox.style.color = isSuccess ? 'green' : 'red';
+        const messageBox = document.getElementById('otp-message');
+        messageBox.innerText = message;
+        messageBox.style.display = 'block';
+        messageBox.style.color = isSuccess ? 'green' : 'red';
 
-    setTimeout(() => {
-      messageBox.style.display = 'none';
-    }, 4000); 
-   }
+        setTimeout(() => {
+            messageBox.style.display = 'none';
+        }, 4000);
+    }
 
     function resendOTP() {
         $.ajax({
@@ -413,40 +405,70 @@
             url: '/resend-otp',
             success: function(response) {
                 if (response.success) {
-                    // Reset timer
                     clearInterval(otpTimerInterval);
                     timer = 60;
                     startOTPTimer();
-                    // Reset timer color
                     document.getElementById('otpTimer').style.color = '#6c757d';
-                    
                     showOtpMessage('OTP has been resent successfully!', true);
-
                 } else {
                     showOtpMessage('Failed to resend OTP. Please try again.', false);
-
                 }
             },
             error: function() {
                 showOtpMessage('Error occurred while resending OTP. Please try again.', false);
-
             }
         });
     }
 
-    // Auto-format OTP input
     document.getElementById('otp').addEventListener('input', function(e) {
-        // Remove any non-numeric characters
         this.value = this.value.replace(/\D/g, '');
-        
-        // Limit to 6 digits
         if (this.value.length > 6) {
             this.value = this.value.slice(0, 6);
         }
     });
 
-    // Start timer on page load
+    $('#otpForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const otpValue = $('#otp').val();
+        
+        if (otpValue.length !== 6) {
+            showOtpMessage('Please enter a valid 6-digit OTP', false);
+            return;
+        }
+        
+        $('.btn-primary').prop('disabled', true).text('Verifying...');
+        
+        $.ajax({
+            type: 'POST',
+            url: '/verify-email-otp',
+            data: { otp: otpValue },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        confirmButtonColor: '#6bb6ff',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = response.redirectUrl;
+                        }
+                    });
+                } else {
+                    showOtpMessage(response.message, false);
+                    $('.btn-primary').prop('disabled', false).text('Verify OTP');
+                }
+            },
+            error: function() {
+                showOtpMessage('An error occurred. Please try again.', false);
+                $('.btn-primary').prop('disabled', false).text('Verify OTP');
+            }
+        });
+    });
+
     startOTPTimer();
-</script>
+    </script>
 </body>
 </html>

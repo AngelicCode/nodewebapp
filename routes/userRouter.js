@@ -42,6 +42,7 @@ router.post("/update-email",userAuth,profileController.updateEmail);
 router.get("/change-password",userAuth,profileController.changePassword);
 router.post("/change-password",userAuth,profileController.changePasswordValid);
 router.post("/verify-changepassword-otp",userAuth,profileController.verifyChangePasswordOtp);
+router.get("/new-email", userAuth, profileController.getNewEmailPage);
 
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);

@@ -221,23 +221,36 @@ const verifyForgotPassOtp = async (req,res)=>{
     try {
       const enteredOtp = req.body.otp;
       if(enteredOtp === req.session.userOtp){
-        req.session.userData = req.body.userData;
-        res.render("new-email",{
-          userData:req.session.userData,
-
-        })
+         res.json({ 
+        success: true, 
+        message: "Email verified successfully!",
+        redirectUrl: "/new-email" 
+      })
       }else{
-        res.render("change-email-otp",{
-          error: 'Invalid OTP. Please try again.',
-          userData:req.session.userData,
-        })
+         res.json({ 
+        success: false, 
+        message: "Invalid OTP. Please try again." 
+      });
       }
 
     } catch (error) {
-      res.redirect("/pageNotFound")
-    }
+      res.status(500).json({ 
+      success: false, 
+      message: "An error occurred. Please try again." 
+    });   
+   }
 
   }
+
+  const getNewEmailPage = async (req, res) => {
+  try {
+    res.render("new-email", {
+      userData: req.session.userData
+    });
+  } catch (error) {
+    res.redirect("/pageNotFound");
+  }
+ }
 
   const updateEmail = async (req,res)=>{
     try {
@@ -437,5 +450,5 @@ const verifyForgotPassOtp = async (req,res)=>{
   }
 
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,getNewEmailPage,
 }
