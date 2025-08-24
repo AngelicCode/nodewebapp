@@ -115,7 +115,9 @@ const getOrderDetails = async (req,res)=>{
             order.status = 'cancelled';
             order.cancellationReason = reason;
             order.cancelledBy = 'user';
-            
+            const originalProductTotal = order.total;
+            order.finalAmount = 0;
+                        
             for (const item of order.orderItems) {
                 if (item.itemStatus !== 'cancelled') {
                     await Product.findByIdAndUpdate(
@@ -131,7 +133,8 @@ const getOrderDetails = async (req,res)=>{
         }
 
         await order.save();
-        res.json({ success: true, message: 'Order cancelled successfully' });
+        res.json({ success: true, message: 'Order cancelled successfully',
+        finalAmount: order.finalAmount });
 
     } catch (error) {
         console.error('Error cancelling order:', error);
@@ -160,6 +163,10 @@ const cancelOrderItem = async(req,res)=>{
       return res.status(400).json({success:false,message:"Item not found or already cancelled"});
     }
 
+    const itemTotal = item.price * item.quantity;
+    order.total -= itemTotal;
+    order.finalAmount -= itemTotal;
+
     item.itemStatus = "cancelled";
     item.cancellationReason = reason;
     item.cancelledBy = "user";
@@ -176,7 +183,14 @@ const cancelOrderItem = async(req,res)=>{
     }
 
     await order.save();
-    res.json({success:true,message:"Item cancelled successfully"});
+    const refundMessage = order.paymentMethod === 'cod' 
+      ? 'Item cancelled successfully. Your payable amount has been updated.' 
+      : `Item cancelled successfully. Refund amount: ₹${itemTotal.toFixed(2)}`;
+
+    res.json({success:true,message: refundMessage,
+      refundAmount: itemTotal,
+      paymentMethod: order.paymentMethod
+    });
 
   } catch (error) {
     console.error("Error cancelling item:",error);

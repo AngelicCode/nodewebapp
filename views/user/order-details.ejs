@@ -320,7 +320,7 @@
                                 </div>
                             </div><br>
 
-                            <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6>
+                            <h6 class="mb-3"><i class="fas fa-box-open"></i> Order Items</h6><br>
                             
                             <div class="table-responsive">
                                 <table class="table">
@@ -448,21 +448,73 @@
                                                     <span>-₹<%= order.discount.toFixed(2) %></span>
                                                 </div>
                                             <% } %>
-                                            <% if (order.paymentMethod === 'cod') { %>
+                                            
+                                            <!-- Only show shipping and COD charges if order is not completely cancelled -->
+                                            <% if (order.status !== 'cancelled') { %>
+                                                <% if (order.paymentMethod === 'cod') { %>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span>COD Fee:</span>
+                                                        <span>₹5.00</span>
+                                                    </div>
+                                                <% } %>
                                                 <div class="d-flex justify-content-between mb-2">
-                                                    <span>COD Fee:</span>
-                                                    <span>₹5.00</span>
+                                                    <span>Shipping:</span>
+                                                    <span>₹50.00</span>
                                                 </div>
                                             <% } %>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Shipping:</span>
-                                                <span>₹50.00</span>
-                                            </div>
+                                            
+                                            <!-- Display adjustment for cancelled items -->
+                                            <% 
+                                            let cancelledItemsTotal = 0;
+                                            let activeItemsCount = 0;
+                                            
+                                            order.orderItems.forEach(item => {
+                                                if (item.itemStatus === 'cancelled') {
+                                                    cancelledItemsTotal += item.price * item.quantity;
+                                                } else {
+                                                    activeItemsCount++;
+                                                }
+                                            });
+                                            %>
+                                            
+                                            <% if (cancelledItemsTotal > 0) { %>
+                                                <div class="d-flex justify-content-between mb-2 text-danger">
+                                                    <span><%= order.paymentMethod === 'cod' ? 'Amount Reduced' : 'Refunded' %>:</span>
+                                                    <span>-₹<%= cancelledItemsTotal.toFixed(2) %></span>
+                                                </div>
+                                            <% } %>
+                                            
                                             <hr>
                                             <div class="d-flex justify-content-between mb-2 fw-bold">
-                                                <span>Total:</span>
-                                                <span>₹<%= order.finalAmount.toFixed(2) %></span>
+                                                <span>
+                                                    <% if (order.status === 'cancelled') { %>
+                                                        Order Cancelled
+                                                    <% } else { %>
+                                                        Total <%= order.paymentMethod === 'cod' ? 'Payable' : '' %>:
+                                                    <% } %>
+                                                </span>
+                                                <span>
+                                                    <% if (order.status === 'cancelled') { %>
+                                                        ₹0.00
+                                                    <% } else { %>
+                                                        ₹<%= order.finalAmount.toFixed(2) %>
+                                                    <% } %>
+                                                </span>
                                             </div>
+                                            
+                                            <!-- Information messages -->
+                                            <% if (order.status === 'cancelled') { %>
+                                                <div class="alert alert-info mt-3">
+                                                    <i class="fas fa-info-circle"></i> 
+                                                    This order has been completely cancelled. No payment is required.
+                                                </div>
+                                            <% } else if (order.paymentMethod === 'cod' && cancelledItemsTotal > 0) { %>
+                                                <div class="alert alert-info mt-3">
+                                                    <i class="fas fa-info-circle"></i> 
+                                                    Since this is a COD order, your payable amount has been adjusted. 
+                                                    You'll pay ₹<%= order.finalAmount.toFixed(2) %> upon delivery.
+                                                </div>
+                                            <% } %>
                                         </div>
                                     </div>
                                 </div>
@@ -578,41 +630,45 @@
         </div>
     </main>
 
-    <!-- Cancel Entire Order Modal -->
-    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Entire Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Cancel Entire Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Entire Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    If you cancel the entire order, shipping and COD charges will be removed.
                 </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to cancel this entire order?</p>
-                    <form id="cancelOrderForm">
-                        <div class="mb-3">
-                            <label for="cancelReason" class="form-label">Reason for cancellation</label>
-                            <select class="form-select" id="cancelReason" required>
-                                <option value="">Select a reason</option>
-                                <option value="Changed mind">Changed mind</option>
-                                <option value="Found better price">Found better price</option>
-                                <option value="Shipping takes too long">Shipping takes too long</option>
-                                <option value="Ordered by mistake">Ordered by mistake</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="otherReasonContainer" style="display: none;">
-                            <label for="otherReason" class="form-label">Please specify</label>
-                            <textarea class="form-control" id="otherReason" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" id="confirmCancelOrder">Cancel Entire Order</button>
-                </div>
+                <p>Are you sure you want to cancel this entire order?</p>
+                <form id="cancelOrderForm">
+                    <div class="mb-3">
+                        <label for="cancelReason" class="form-label">Reason for cancellation</label>
+                        <select class="form-select" id="cancelReason" required>
+                            <option value="">Select a reason</option>
+                            <option value="Changed mind">Changed mind</option>
+                            <option value="Found better price">Found better price</option>
+                            <option value="Shipping takes too long">Shipping takes too long</option>
+                            <option value="Ordered by mistake">Ordered by mistake</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="otherReasonContainer" style="display: none;">
+                        <label for="otherReason" class="form-label">Please specify</label>
+                        <textarea class="form-control" id="otherReason" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelOrder">Cancel Entire Order</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Cancel Single Item Modal -->
     <div class="modal fade" id="cancelItemModal" tabindex="-1" aria-labelledby="cancelItemModalLabel" aria-hidden="true">
@@ -784,10 +840,13 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            Swal.fire('Success', 'Order cancelled successfully', 'success')
-                                .then(() => {
-                                    location.reload();
-                                });
+                            Swal.fire({
+                                title: 'Success', 
+                                html: 'Order cancelled successfully. <br><br>Shipping and COD charges have been removed.',
+                                icon: 'success'
+                            }).then(() => {
+                                location.reload();
+                            });
                         } else {
                             Swal.fire('Error', data.message || 'Failed to cancel order', 'error');
                         }
@@ -836,10 +895,15 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            Swal.fire('Success', 'Item cancelled successfully', 'success')
-                                .then(() => {
-                                    location.reload();
-                                });
+                            let successMessage = data.message;
+                            
+                            Swal.fire({
+                                title: 'Success', 
+                                html: successMessage ,
+                                icon: 'success'
+                            }).then(() => {
+                                location.reload();
+                            });
                         } else {
                             Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
                         }
