@@ -136,18 +136,42 @@ const orderSchema = new Schema({
       default: "pending"
    },
    
-   returnReason:{
-      type:String,
-      default:null   
+   returnRequestedAt: {
+      type: Date,
+      default: null
    },
+
+   returnReason: {
+      type: String,
+      default: null   
+   },
+
+   adminReturnStatus: {
+      type: String,
+      enum: [null, "Return Required", "Approved", "Rejected"],
+      default: null
+   },
+
+   returnActionDate: {
+      type: Date,
+      default: null
+   },
+
+   adminReturnNotes: {
+      type: String,
+      default: null
+   },
+
    adminReturnStatus:{
       type:String,
       default:null
    },
+
    invoiceDate: {
       type: Date,
       default: Date.now
    },
+   
    couponApplied: {
       type: Boolean,
       default: false

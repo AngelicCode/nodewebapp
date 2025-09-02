@@ -101,6 +101,7 @@ router.get("/orders",userAuth,orderController.getOrders);
 router.get("/order-details/:id",userAuth,orderController.getOrderDetails);
 router.post("/order/:id/cancel", userAuth, orderController.cancelOrder);
 router.post("/order/:id/cancel-item", userAuth, orderController.cancelOrderItem);
+router.post("/order/:id/return",userAuth,orderController.returnOrder);
 
 
 module.exports = router;

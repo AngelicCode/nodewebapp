@@ -200,7 +200,36 @@ const cancelOrderItem = async(req,res)=>{
   }
 };
 
+const returnOrder = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { reason } = req.body;
+        const userId = req.session.user._id;
+
+        const order = await Order.findOne({ _id: orderId, userId });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.status !== 'delivered') {
+            return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+        }
+
+        order.status = 'Return requested';
+        order.returnReason = reason;
+        
+        await order.save();
+
+        res.json({ success: true, message: 'Return request submitted successfully' });
+
+  } catch (error) {
+    console.error('Error processing return request:', error);
+    res.status(500).json({ success: false, message: 'Failed to process return request' });
+  }
+};
+
 
 module.exports = {
-  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,
+  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,returnOrder,
 }

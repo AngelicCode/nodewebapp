@@ -305,12 +305,13 @@
                                     </p>
                                     <p><strong>Payment Status:</strong> 
                                     <span class="badge 
-                                        <%= order.paymentStatus === 'success' ? 'bg-success' : 
-                                        order.paymentStatus === 'cancelled' ? 'bg-danger' : 
-                                        'bg-warning' %>">
-                                        <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                        <%= order.paymentStatus === 'paid' || order.paymentStatus === 'success' ? 'bg-success' : 
+                                        order.paymentStatus === 'pending' ? 'bg-warning' : 
+                                        order.paymentStatus === 'cancelled' || order.paymentStatus === 'failed' ? 'bg-danger' : 
+                                        order.paymentStatus === 'refunded' ? 'bg-info' : 'bg-secondary' %>">
+                                        <%= order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : 'N/A' %>
                                     </span>
-                                </p>
+                                    </p>
                                 </div>
                                 <div class="col-md-6">
                                     <h6><i class="fas fa-truck"></i> Shipping Information</h6><br>
@@ -614,7 +615,7 @@
                                 </button>
                                 <% } %>
                                 
-                                <% if (order.status === 'delivered' && order.paymentMethod !== 'cod') { %>
+                                <% if (order.status === 'delivered') { %>
                                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
                                     <i class="fas fa-undo"></i> Return Order
                                 </button>
@@ -709,41 +710,43 @@
         </div>
     </div>
 
-    <!-- Return Order Modal -->
-    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="returnOrderModalLabel">Return Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Please select the reason for returning this order:</p>
-                    <form id="returnOrderForm">
-                        <div class="mb-3">
-                            <label for="returnReason" class="form-label">Reason for return</label>
-                            <select class="form-select" id="returnReason" required>
-                                <option value="">Select a reason</option>
-                                <option value="Product damaged">Product damaged</option>
-                                <option value="Wrong product delivered">Wrong product delivered</option>
-                                <option value="Product not as described">Product not as described</option>
-                                <option value="Received extra product">Received extra product</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="returnOtherReasonContainer" style="display: none;">
-                            <label for="returnOtherReason" class="form-label">Please specify</label>
-                            <textarea class="form-control" id="returnOtherReason" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-warning" id="confirmReturn">Submit Return Request</button>
-                </div>
+<!-- Return Order Modal -->
+<div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnOrderModalLabel">Return Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please select the reason for returning this order:</p>
+                <form id="returnOrderForm">
+                    <div class="mb-3">
+                        <label for="returnReason" class="form-label">Reason for return <span class="text-danger">*</span></label>
+                        <select class="form-select" id="returnReason" required>
+                            <option value="">Select a reason</option>
+                            <option value="Product damaged">Product damaged</option>
+                            <option value="Wrong product delivered">Wrong product delivered</option>
+                            <option value="Product not as described">Product not as described</option>
+                            <option value="Received extra product">Received extra product</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a reason for return.</div>
+                    </div>
+                    <div class="mb-3" id="returnOtherReasonContainer" style="display: none;">
+                        <label for="returnOtherReason" class="form-label">Please specify <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="returnOtherReason" rows="2" required></textarea>
+                        <div class="invalid-feedback">Please provide details for your return reason.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="confirmReturn">Submit Return Request</button>
             </div>
         </div>
     </div>
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -918,48 +921,60 @@
                 });
             }
             
-            // Confirm return order
-            const confirmReturn = document.getElementById('confirmReturn');
-            if (confirmReturn) {
-                confirmReturn.addEventListener('click', function() {
-                    const reason = document.getElementById('returnReason').value;
-                    let finalReason = reason;
-                    
-                    if (reason === 'Other') {
-                        finalReason = document.getElementById('returnOtherReason').value;
-                    }
-                    
-                    if (!finalReason) {
-                        Swal.fire('Error', 'Please provide a reason for return', 'error');
+        // Confirm return order
+        const confirmReturn = document.getElementById('confirmReturn');
+        if (confirmReturn) {
+            confirmReturn.addEventListener('click', function() {
+                const reasonSelect = document.getElementById('returnReason');
+                const otherReason = document.getElementById('returnOtherReason');
+                let finalReason = '';
+                
+                // Validate the form
+                if (reasonSelect.value === '') {
+                    reasonSelect.classList.add('is-invalid');
+                    return;
+                } else {
+                    reasonSelect.classList.remove('is-invalid');
+                }
+                
+                if (reasonSelect.value === 'Other') {
+                    if (!otherReason.value.trim()) {
+                        otherReason.classList.add('is-invalid');
                         return;
+                    } else {
+                        otherReason.classList.remove('is-invalid');
+                        finalReason = otherReason.value;
                     }
-                    
-                    // Send request to return order
-                    fetch(`/order/<%= order._id %>/return`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ reason: finalReason })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire('Success', 'Return request submitted successfully', 'success')
-                                .then(() => {
-                                    location.reload();
-                                });
-                        } else {
-                            Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'An error occurred while submitting the return request', 'error');
-                    });
+                } else {
+                    finalReason = reasonSelect.value;
+                }
+                
+                fetch(`/order/<%= order._id %>/return`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: finalReason })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success', 'Return request submitted successfully', 'success')
+                            .then(() => {
+                                location.reload();
+                            });
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'An error occurred while submitting the return request', 'error');
                 });
-            }
+            });
+        }
         });
+        
     </script>
 </body>
 </html>
