@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose
-const { v4: uuidv4 } = require('uuid');
 const Product = require('./productSchema');
+const shortid = require('shortid');
+
+function generateOrderId() {
+  return 'OD' + shortid.generate().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+}
 
 const orderSchema = new Schema({
    orderId: {
       type: String,
-      default: () => uuidv4(),
+      default: generateOrderId,
       unique: true
    },
    userId: {
