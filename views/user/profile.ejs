@@ -790,6 +790,9 @@
                                             </tbody>
                                         </table>
                                     </div>
+
+                                   <%- include("../../views/partials/user/pagination") %>
+
                                 <% } else { %>
                                     <div class="text-center py-5">
                                         <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
@@ -943,7 +946,7 @@
         });
 
         
-            document.addEventListener('DOMContentLoaded', function() {
+           document.addEventListener('DOMContentLoaded', function() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const tab = urlParams.get('tab');
                 const page = urlParams.get('page');
@@ -958,6 +961,7 @@
                         const tabName = e.target.getAttribute('aria-controls').replace('-tab', '');
                         const url = new URL(window.location);
                         
+                        // Remove page parameter when switching tabs
                         url.searchParams.delete('page');
                         url.searchParams.set('tab', tabName);
                         
@@ -965,8 +969,9 @@
                     });
                 });
 
+                // Handle pagination clicks
                 document.addEventListener('click', function(e) {
-                    if (e.target.closest('.pagination-glass a')) {
+                    if (e.target.closest('.pagination a')) {
                         e.preventDefault();
                         const url = new URL(e.target.href);
                         url.searchParams.set('tab', 'orders'); 
@@ -974,7 +979,6 @@
                     }
                 });
             });
-
         </script>
     </body>
 </html>

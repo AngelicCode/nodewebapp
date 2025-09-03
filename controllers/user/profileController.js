@@ -155,18 +155,33 @@ const verifyForgotPassOtp = async (req,res)=>{
       const userData = await User.findById(userId);
       const addressData = await Address.findOne({userId:userId});
 
+      const page = parseInt(req.query.page) || 1;
+      const limit = 3; 
+      const skip = (page - 1) * limit;
+
+      const totalOrders = await Order.countDocuments({userId: userId});
+
       const orders = await Order.find({
         userId:userId
       }).sort({createdAt:-1})
+        .skip(skip)
+        .limit(limit)
         .populate({
           path: "orderItems.productId",
           select: "productImage"
         });
 
+      const totalPages = Math.ceil(totalOrders / limit);
+
       res.render("profile",{
         user:userData,
         userAddress:addressData,
-        orders:orders
+        orders:orders,
+        currentPage: page,
+        totalPages: totalPages,
+        totalOrders: totalOrders,
+        baseUrl: '/userProfile?tab=orders&',
+        query: req.query,
 
       })
 
@@ -192,7 +207,7 @@ const verifyForgotPassOtp = async (req,res)=>{
       const userExists = await User.findOne({email});
       if(userExists){
         const otp = generateOtp();
-      
+        console.log("otp:",otp);
       const emailSent = await sendVerificationEmail(email,otp);
       if(emailSent){
         req.session.userOtp = otp;
