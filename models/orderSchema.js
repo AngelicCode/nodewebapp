@@ -181,6 +181,15 @@ const orderSchema = new Schema({
       default: false
    },
    
+   razorpayOrderId: {
+      type: String,
+      default: null
+   },
+   razorpayPaymentId: {
+      type: String,
+      default: null
+   },
+   
 }, { timestamps: true });
 
 

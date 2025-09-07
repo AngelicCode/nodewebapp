@@ -3,7 +3,12 @@ const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
-;
+const Razorpay = require('razorpay');
+const razorpayInstance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
 const loadCheckout = async(req,res)=>{
   try {
     const userId = req.session.user._id;
@@ -160,6 +165,32 @@ const placeOrder = async(req,res)=>{
         });
     }
 
+    if (paymentMethod === 'razorpay') {
+            try {
+                const razorpayOrder = await createRazorpayOrder(total);
+                
+                return res.json({
+                    status: true,
+                    message: 'Razorpay order created',
+                    razorpayOrder: razorpayOrder,
+                    orderData: {
+                        addressId,
+                        paymentMethod,
+                        cartItems,
+                        subtotal,
+                        shipping,
+                        tax,
+                        total
+                    }
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    status: false,
+                    message: 'Failed to create Razorpay order'
+                });
+            }
+        }
+
      const addressDoc = await Address.findOne({ 
         userId: userId,
         "address._id": addressId 
@@ -251,7 +282,140 @@ const placeOrder = async(req,res)=>{
   }
 }
 
+const createRazorpayOrder = async (amount, currency = 'INR') => {
+    try {
+        const options = {
+            amount: amount * 100, 
+            currency: currency,
+            receipt: `receipt_${Date.now()}`
+        };
+        
+        const order = await razorpayInstance.orders.create(options);
+        return order;
+    } catch (error) {
+        console.error('Razorpay order creation error:', error);
+        throw new Error('Failed to create payment order');
+    }
+};
+
+const verifyRazorpayPayment = async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            orderData
+        } = req.body;
+
+        const userId = req.session.user._id;
+        
+        const crypto = require('crypto');
+        const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+        const generatedSignature = hmac.digest('hex');
+        
+        if (generatedSignature !== razorpay_signature) {
+            return res.status(400).json({
+                status: false,
+                message: 'Payment verification failed'
+            });
+        }
+        
+        const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total } = orderData;
+        
+        const addressDoc = await Address.findOne({ 
+            userId: userId,
+            "address._id": addressId 
+        });
+
+        if (!addressDoc) {
+            return res.status(404).json({ 
+                status: false,
+                message: 'Address not found' 
+            });
+        }
+
+        const selectedAddress = addressDoc.address.find(addr => addr._id.toString() === addressId);
+
+        const cart = await Cart.findOne({ userId: userId }).populate('items.productId');
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ 
+                status: false,
+                message: 'Cart is empty' 
+            });
+        }
+
+        for (const item of cart.items) {
+            const product = await Product.findById(item.productId._id);
+            if (!product || product.stock < item.quantity) {
+                return res.status(400).json({
+                    status: false,
+                    message: `Product ${product?.productName || 'Unknown'} is out of stock`
+                });
+            }
+        }
+
+        const orderItems = cart.items.map(item => ({
+            productId: item.productId._id,
+            productName: item.productId.productName,
+            price: item.productId.salePrice,
+            quantity: item.quantity
+        }));
+
+        const newOrder = new Order({
+            userId: userId,
+            addressId: addressId,
+            shippingAddress: {
+                addressType: selectedAddress.addressType,
+                name: selectedAddress.name,
+                city: selectedAddress.city,
+                landMark: selectedAddress.landMark,
+                state: selectedAddress.state,
+                pincode: selectedAddress.pincode,
+                phone: selectedAddress.phone,
+                altPhone: selectedAddress.altPhone
+            },
+            paymentMethod: 'razorpay',
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            orderItems: orderItems,
+            total: parseFloat(subtotal),
+            shipping: parseFloat(shipping),
+            tax: parseFloat(tax),
+            finalAmount: parseFloat(total),
+            status: 'confirmed',
+            paymentStatus: 'paid'
+        });
+
+        await newOrder.save();
+
+        for (const item of cart.items) {
+            await Product.findByIdAndUpdate(item.productId._id, {
+                $inc: { stock: -item.quantity }
+            });
+        }
+
+        await Cart.findOneAndUpdate(
+            { userId: userId },
+            { $set: { items: [] } }
+        );
+
+        return res.json({
+            status: true,
+            message: 'Order placed successfully',
+            orderId: newOrder._id
+        });
+
+    } catch (error) {
+        console.error('Error verifying payment:', error);
+        return res.status(500).json({
+            status: false,
+            message: 'Failed to verify payment'
+        });
+    }
+};
+
 
 module.exports = {
-  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,
+  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,
 }
