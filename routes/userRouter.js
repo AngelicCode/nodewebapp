@@ -95,6 +95,7 @@ router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress
 router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAddress);
 router.post("/place-order",userAuth,checkoutController.placeOrder);
 router.post("/verify-payment", userAuth, checkoutController.verifyRazorpayPayment);
+router.get("/order-failure", userAuth,checkoutController.orderFailure);
 
 //Order Management
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);

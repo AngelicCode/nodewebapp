@@ -415,7 +415,33 @@ const verifyRazorpayPayment = async (req, res) => {
     }
 };
 
+const orderFailure = async(req,res)=>{
+  try {
+    const reason = req.query.reason || 'unknown';    
+    const reasonMessages = {
+        'payment_failed': 'Your payment could not be processed.',
+        'verification_failed': 'Payment verification failed.',
+        'server_error': 'A server error occurred during payment processing.',
+        'insufficient_funds': 'Insufficient funds in your account.',
+        'card_declined': 'Your card was declined by the bank.',
+        'unknown': 'An unknown error occurred during payment.'
+    };
+    
+    const errorMessage = reasonMessages[reason] || reasonMessages['unknown'];
+    
+    res.render("order-failure", {
+        errorMessage: errorMessage,
+        errorReason: reason
+    });
+
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    res.redirect("/pageNotFound");
+
+  }
+}
+
 
 module.exports = {
-  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,
+  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,orderFailure,
 }

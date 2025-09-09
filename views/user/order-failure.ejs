@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Failed - Quick Sip</title>
     <style>
-        * {
+       * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -57,6 +58,19 @@
             font-size: 1.1rem;
             margin-bottom: 25px;
             line-height: 1.6;
+        }
+
+        .error-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .error-details h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
         }
 
         .btn-group {
@@ -131,12 +145,21 @@
         <div class="error-card">
             <div class="error-icon">✕</div>
             <h1>Payment Failed</h1>
-            <p>We're sorry, but your payment could not be processed. This could be due to insufficient funds, incorrect card details, or a technical issue.</p>
-            <p>Please try again or use a different payment method.</p>
+            
+            <p><%= errorMessage %></p>
+            
+            <div class="error-details">
+                <h3>Error Details:</h3>
+                <p>Reason: <%= errorReason %></p>
+                <p>Please try again or contact support if the problem persists.</p>
+            </div>
+            
+            <p>You can retry the payment or view your order history.</p>
             
             <div class="btn-group">
                 <a href="/checkout" class="btn btn-primary">Retry Payment</a>
                 <a href="/userProfile?tab=orders" class="btn btn-secondary">View Orders</a>
+                
             </div>
         </div>
     </div>

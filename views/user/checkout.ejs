@@ -1088,77 +1088,6 @@
         //     discountInput.value = '';
         // }
 
-    async function processPayment() {
-        const btn = document.querySelector('.btn-primary');
-        btn.innerHTML = '⏳ Processing...';
-        btn.disabled = true;
-
-        try {
-            const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
-            const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
-
-            if (!addressId) {
-                throw new Error('Please select a shipping address');
-            }
-
-            const orderData = {
-                addressId: addressId,
-                paymentMethod: paymentMethod,
-                cartItems: <%- JSON.stringify(cartItems) %>,
-                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-                total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
-            };
-
-            if (paymentMethod === 'card') {
-                const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-                const expiry = document.getElementById('expiry').value;
-                const cvv = document.getElementById('cvv').value;
-
-                if (!cardNumber || !expiry || !cvv) {
-                    throw new Error('Please enter complete card details');
-                }
-
-                orderData.paymentDetails = {
-                    cardNumber: cardNumber,
-                    expiry: expiry,
-                    cvv: cvv
-                };
-            }
-
-            const response = await fetch('/place-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
-
-            const result = await response.json();
-
-            if (!result.status) {
-                throw new Error(result.message || 'Failed to place order');
-            }
-
-            if (!result.orderId) {
-                throw new Error('Order ID not received');
-            }
-
-            window.location.href = `/order-success/${result.orderId}`;
-
-        } catch (error) {
-            console.error('Order error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Order Failed',
-                text: error.message,
-                confirmButtonColor: '#3085d6'
-            });
-            btn.innerHTML = 'Complete Order';
-            btn.disabled = false;
-        }
-    }
 
         function goBack() {
             window.history.back();
@@ -1206,23 +1135,12 @@ async function initiateRazorpayPayment(orderData, razorpayOrder) {
                 if (result.status) {
                     window.location.href = `/order-success/${result.orderId}`;
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Payment Failed',
-                        text: result.message || 'Payment verification failed',
-                        confirmButtonColor: '#3085d6'
-                    }).then(() => {
-                        window.location.reload();
-                    });
+                    
+                    window.location.href = '/order-failure?reason=verification_failed';
                 }
             } catch (error) {
                 console.error('Payment verification error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Payment Error',
-                    text: 'An error occurred during payment verification',
-                    confirmButtonColor: '#3085d6'
-                });
+                window.location.href = '/order-failure?reason=server_error';
             }
         },
         prefill: {
@@ -1239,16 +1157,13 @@ async function initiateRazorpayPayment(orderData, razorpayOrder) {
     rzp.open();
     
     rzp.on('payment.failed', function(response) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Payment Failed',
-            text: response.error.description || 'Payment failed. Please try again.',
-            confirmButtonColor: '#3085d6'
-        });
+        
+        const errorReason = response.error.description || 'payment_failed';
+        window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}`;
     });
 }
 
-async function processPayment() {
+    async function processPayment() {
     const btn = document.querySelector('.btn-primary');
     btn.innerHTML = '⏳ Processing...';
     btn.disabled = true;
@@ -1271,55 +1186,52 @@ async function processPayment() {
             total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
         };
 
-        if (paymentMethod === 'razorpay') {
-            const response = await fetch('/place-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
+        // Handle card payment (from first function)
+        if (paymentMethod === 'card') {
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            const expiry = document.getElementById('expiry').value;
+            const cvv = document.getElementById('cvv').value;
 
-            const result = await response.json();
-
-            if (!result.status) {
-                throw new Error(result.message || 'Failed to create payment order');
+            if (!cardNumber || !expiry || !cvv) {
+                throw new Error('Please enter complete card details');
             }
 
-            await initiateRazorpayPayment(orderData, result.razorpayOrder);
+            orderData.paymentDetails = {
+                cardNumber: cardNumber,
+                expiry: expiry,
+                cvv: cvv
+            };
         }
-        else {
-            const response = await fetch('/place-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
 
-            const result = await response.json();
+        const response = await fetch('/place-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+        });
 
-            if (!result.status) {
-                throw new Error(result.message || 'Failed to place order');
-            }
+        const result = await response.json();
 
+        if (!result.status) {
+            window.location.href = '/order-failure?reason=order_creation_failed';
+            return;
+        }
+
+        // Handle Razorpay payment (from second function)
+        if (paymentMethod === 'razorpay') {
+            await initiateRazorpayPayment(orderData, result.razorpayOrder);
+        } else {
             if (!result.orderId) {
-                throw new Error('Order ID not received');
+                window.location.href = '/order-failure?reason=order_id_missing';
+                return;
             }
-
             window.location.href = `/order-success/${result.orderId}`;
         }
 
     } catch (error) {
         console.error('Order error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Order Failed',
-            text: error.message,
-            confirmButtonColor: '#3085d6'
-        });
-        btn.innerHTML = 'Complete Order';
-        btn.disabled = false;
+        window.location.href = '/order-failure?reason=network_error';
     }
 }
 
