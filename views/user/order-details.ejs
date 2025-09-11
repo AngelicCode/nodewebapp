@@ -275,16 +275,16 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-receipt"></i> Order Details</h5>
                             <span class="badge 
-                                <%= order.status === 'delivered' ? 'bg-success' : 
-                                order.status === 'cancelled' ? 'bg-danger' : 
-                                order.status === 'shipped' ? 'bg-info' : 
-                                order.status === 'Return requested' ? 'bg-warning' :
-                                order.status === 'Return approved' ? 'bg-success' :
-                                order.status === 'Return rejected' ? 'bg-danger' :
-                                order.status === 'refunded' ? 'bg-info' :
-                                'bg-secondary' %>">
-                                <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                            </span>
+                            <%= order.status === 'delivered' ? 'bg-success' : 
+                            order.status === 'cancelled' ? 'bg-danger' : 
+                            order.status === 'shipped' || order.status === 'out for delivery' ? 'bg-info' : 
+                            order.status === 'Return requested' ? 'bg-warning' :
+                            order.status === 'Return approved' ? 'bg-success' :
+                            order.status === 'Return rejected' ? 'bg-danger' :
+                            order.status === 'refunded' ? 'bg-info' :
+                            'bg-secondary' %>">
+                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                        </span>
                         </div>
                         <div class="card-body">
                             <div class="row mb-4">
@@ -393,10 +393,10 @@
                                                     <span class="badge 
                                                         <%= item.itemStatus === 'delivered' ? 'bg-success' : 
                                                         item.itemStatus === 'cancelled' ? 'bg-danger' : 
-                                                        item.itemStatus === 'shipped' ? 'bg-info' : 
+                                                        item.itemStatus === 'shipped' || order.status === 'out for delivery' ? 'bg-info' : 
                                                         item.itemStatus === 'returned' ? 'bg-warning' : 
                                                         'bg-secondary' %>">
-                                                        <%= item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1) %>
+                                                        <%= order.status === 'out for delivery' ? 'Out for delivery' : item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1) %>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -405,9 +405,9 @@
                                                 console.log('=== DEBUG INFO ===');
                                                 console.log('Order status:', order.status);
                                                 console.log('Item status:', item.itemStatus);
-                                                console.log('Can cancel check:', ['pending', 'confirmed', 'processing'].includes(order.status));
+                                                console.log('Can cancel check:', ['pending', 'confirmed', 'processing'].includes(order.status) && order.status !== 'out for delivery');
                                                 console.log('Not cancelled check:', item.itemStatus !== 'cancelled');
-                                                console.log('Should show button:', ['pending', 'confirmed', 'processing'].includes(order.status) && item.itemStatus !== 'cancelled');
+                                                console.log('Should show button:', ['pending', 'confirmed', 'processing'].includes(order.status) && order.status !== 'out for delivery' && item.itemStatus !== 'cancelled');
                                                 console.log('Product ID exists:', !!item.productId);
                                                 if (item.productId) {
                                                     console.log('Product ID:', item.productId._id);
@@ -415,20 +415,24 @@
                                                 }
                                                 %>
                                                 
-                                                <% if (['pending', 'confirmed', 'processing'].includes(order.status) && item.itemStatus !== 'cancelled') { %>
-                                                    <button class="cancel-item-btn" data-bs-toggle="modal" data-bs-target="#cancelItemModal" 
-                                                        data-item-index="<%= index %>" 
-                                                        data-product-id="<%= item.productId ? item.productId._id : '' %>" 
-                                                        data-quantity="<%= item.quantity %>" 
-                                                        data-product-name="<%= item.productName %>">
-                                                        <i class="fas fa-times-circle"></i> Cancel
-                                                    </button>
-                                                <% } else if (item.itemStatus === 'cancelled') { %>
-                                                    <small class="text-muted">Cancelled</small>
+                                                <% if (['pending', 'confirmed', 'processing'].includes(order.status) && item.itemStatus !== 'cancelled' && order.status !== 'out for delivery') { %>
+                                                <button class="cancel-item-btn" data-bs-toggle="modal" data-bs-target="#cancelItemModal" 
+                                                    data-item-index="<%= index %>" 
+                                                    data-product-id="<%= item.productId ? item.productId._id : '' %>" 
+                                                    data-quantity="<%= item.quantity %>" 
+                                                    data-product-name="<%= item.productName %>">
+                                                    <i class="fas fa-times-circle"></i> Cancel
+                                                </button>
+                                            <% } else if (item.itemStatus === 'cancelled') { %>
+                                                <small class="text-muted">Cancelled</small>
+                                            <% } else { %>
+                                                <small class="text-muted">Cannot cancel</small>
+                                                <% if (order.status === 'out for delivery') { %>
+                                                    <br><small class="text-muted">Status: Out for delivery</small>
                                                 <% } else { %>
-                                                    <small class="text-muted">Cannot cancel</small>
                                                     <br><small class="text-muted">Status: <%= order.status %></small>
                                                 <% } %>
+                                            <% } %>
                                             </td>
                                             </tr>
                                         <% }); %>
@@ -541,12 +545,22 @@
                                 </div>
                                 <% } %>
                                 
-                                <% if (['shipped', 'delivered'].includes(order.status)) { %>
-                                <div class="timeline-step <%= order.status === 'delivered' ? 'completed' : 'active' %>">
+                                <% if (['shipped', 'out for delivery', 'delivered'].includes(order.status)) { %>
+                                <div class="timeline-step <%= ['out for delivery', 'delivered'].includes(order.status) ? 'completed' : 'active' %>">
                                     <h6 class="mb-1">Shipped</h6>
                                     <p class="text-muted mb-0">Your order has been shipped</p>
                                     <% if (order.status === 'shipped') { %>
                                     <small class="text-muted">Expected delivery: <%= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString() %></small>
+                                    <% } %>
+                                </div>
+                                <% } %>
+
+                                <% if (['out for delivery', 'delivered'].includes(order.status)) { %>
+                                <div class="timeline-step <%= order.status === 'delivered' ? 'completed' : 'active' %>">
+                                    <h6 class="mb-1">Out for Delivery</h6>
+                                    <p class="text-muted mb-0">Your order is out for delivery</p>
+                                    <% if (order.status === 'out for delivery') { %>
+                                    <small class="text-muted">Expected delivery today</small>
                                     <% } %>
                                 </div>
                                 <% } %>
@@ -609,7 +623,7 @@
                                     <i class="fas fa-arrow-left"></i> Back to Orders
                                 </a>
                                 
-                                <% if (['pending','confirmed', 'processing'].includes(order.status)) { %>
+                                <% if (['pending','confirmed', 'processing'].includes(order.status) && order.status !== 'out for delivery') { %>
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
                                     <i class="fas fa-times-circle"></i> Cancel Entire Order
                                 </button>

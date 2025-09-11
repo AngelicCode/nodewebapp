@@ -107,7 +107,7 @@ const getOrderDetails = async (req,res)=>{
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        if (!['pending','confirmed', 'processing'].includes(order.status)) {
+        if (!['pending','confirmed', 'processing'].includes(order.status) || order.status === 'out for delivery') {
             return res.status(400).json({ success: false, message: 'Order cannot be cancelled at this stage' });
         }
 
@@ -155,8 +155,8 @@ const cancelOrderItem = async(req,res)=>{
       return res.status(404).json({success:false,message:"Order not Found"});
     }
 
-    if(!['pending',"confirmed","processing"].includes(order.status)){
-      return res.status(400).json({success:false,message:"Items cannot be cancelled at this stage"});
+    if (!['pending',"confirmed","processing"].includes(order.status) || order.status === 'out for delivery') {
+    return res.status(400).json({success:false,message:"Items cannot be cancelled at this stage"});
     }
 
     const item = order.orderItems[itemIndex];

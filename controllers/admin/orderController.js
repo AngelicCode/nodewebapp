@@ -97,7 +97,7 @@ const updateOrderStatus = async (req,res)=>{
   try {
     const {orderId, status} = req.body;
 
-    const validStatuses = ["pending","processing","shipped","out of delivery","delivered","cancelled", "Return requested", "Return approved", "Return rejected", "refunded"];
+    const validStatuses = ["pending","processing","shipped","out for delivery","delivered","cancelled", "Return requested", "Return approved", "Return rejected", "refunded"];
 
     if(!validStatuses.includes(status)){
       return res.status(400).json({success:false,message:"Invalid status"});

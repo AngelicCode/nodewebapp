@@ -131,7 +131,7 @@ const orderSchema = new Schema({
    },
    status: {
       type: String,
-      enum: ["pending","confirmed", "processing", "shipped", "delivered", "cancelled","Return requested", "Return approved","Return rejected", "refunded","failed"],
+      enum: ["pending","confirmed", "processing", "shipped",  "out for delivery","delivered", "cancelled","Return requested", "Return approved","Return rejected", "refunded","failed"],
       default: "pending"
    },
    paymentStatus: {
