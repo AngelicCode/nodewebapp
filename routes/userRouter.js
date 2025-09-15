@@ -9,6 +9,7 @@ const wishlistController = require("../controllers/user/wishlistController");
 const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
 const orderController = require("../controllers/user/orderController");
+const { validateCheckoutItems } = require("../middlewares/inventoryValidation");
 
 
 router.get("/pageNotFound",userController.pageNotFound);
@@ -93,7 +94,7 @@ router.get("/deleteItem", userAuth, cartController.deleteProduct);
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress);
 router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAddress);
-router.post("/place-order",userAuth,checkoutController.placeOrder);
+router.post("/place-order",userAuth,validateCheckoutItems, checkoutController.placeOrder);
 router.post("/verify-payment", userAuth, checkoutController.verifyRazorpayPayment);
 router.get("/order-failure", userAuth,checkoutController.orderFailure);
 

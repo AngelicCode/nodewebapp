@@ -204,6 +204,11 @@ const handleReturnAction = async (req, res) => {
   try {
     const { orderId, action, notes } = req.body;
     
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
     const updateData = {
       adminReturnStatus: action === 'approve' ? 'approved' : 'rejected',
       returnActionDate: new Date(),
@@ -211,7 +216,15 @@ const handleReturnAction = async (req, res) => {
     };
     
     if (action === 'approve') {
+      for (const item of order.orderItems) {
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { quantity: item.quantity } }
+        );
+      }
+      
       updateData.status = 'refunded';
+      updateData.paymentStatus = 'refunded';
     } else if (action === 'reject') {
       updateData.status = 'Return rejected';
     }
@@ -226,13 +239,15 @@ const handleReturnAction = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
     
-    res.json({ success: true, message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully` });
+    res.json({ 
+      success: true, 
+      message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully` 
+    });
   } catch (error) {
     console.error('Error handling return action:', error);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 module.exports = {
   orderList,updateOrderStatus,getOrderDetails,getReturnRequests,handleReturnAction,

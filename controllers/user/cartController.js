@@ -175,6 +175,7 @@ const changeQuantity = async (req, res) => {
 
     if (!product) return res.status(404).json({ status: false, message: "Product not found" });
 
+    // Check product availability first
     if (
       product.isBlocked || 
       !product.category || 
@@ -188,37 +189,38 @@ const changeQuantity = async (req, res) => {
       });
     }
 
+    // Calculate new quantity
     let newQuantity = cart.items[itemIndex].quantity + parseInt(count);
-
     if (newQuantity < 1) newQuantity = 1;
 
+    // Check maximum quantity limit
     if (newQuantity > 5) {
       return res.status(400).json({ status: false, message: "Maximum quantity per item in cart is 5" });
     }
 
-    if (product.quantity <= 0) {
-      return res.status(400).json({ 
-        status: false, 
-        message: "Product is out of stock",
-        stock: 0
+    // Check stock availability using the helper function
+    const availability = await checkProductAvailability(productId, newQuantity);
+    if (!availability.available) {
+      return res.status(400).json({
+        status: false,
+        message: availability.message,
+        availableQuantity: availability.availableQuantity
       });
     }
 
-    if (newQuantity > product.quantity) {
-      return res.status(400).json({ status: false, message: "Exceeds stock limit",stock: product.quantity });
-    }
-
+    // Update cart item
     cart.items[itemIndex].quantity = newQuantity;
     cart.items[itemIndex].totalPrice = newQuantity * cart.items[itemIndex].price;
 
     await cart.save();
 
+    // Calculate grand total
     const productIds = cart.items.map(i => i.productId);
     const products = await Product.find({ _id: { $in: productIds } })
       .populate('category')
       .populate('brand');
 
-      const grandTotal = cart.items.reduce((sum, item) => {
+    const grandTotal = cart.items.reduce((sum, item) => {
       const product = products.find(p => p._id.toString() === item.productId.toString());
 
       if (
@@ -265,6 +267,38 @@ const deleteProduct = async(req,res)=>{
     console.error('Error removing product from cart:', error);
     return res.redirect('/pageNotFound');  
   }
+};
+
+const checkProductAvailability = async (productId, requestedQuantity) => {
+  const product = await Product.findById(productId)
+    .populate('category')
+    .populate('brand');
+  
+  if (!product) {
+    return { available: false, message: "Product not found" };
+  }
+  
+  if (product.isBlocked) {
+    return { available: false, message: "Product is unavailable" };
+  }
+  
+  if (!product.brand || product.brand.isBlocked) {
+    return { available: false, message: "Brand is unavailable" };
+  }
+  
+  if (!product.category || product.category.isListed === false) {
+    return { available: false, message: "Category is unavailable" };
+  }
+  
+  if (product.quantity < requestedQuantity) {
+    return { 
+      available: false, 
+      message: `Only ${product.quantity} units available`,
+      availableQuantity: product.quantity
+    };
+  }
+  
+  return { available: true, product };
 };
 
 module.exports = {
