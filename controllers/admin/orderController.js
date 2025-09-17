@@ -93,21 +93,32 @@ const orderList = async (req,res)=>{
   }
 }
 
-const updateOrderStatus = async (req,res)=>{
+const updateOrderStatus = async (req, res) => {
   try {
-    const {orderId, status} = req.body;
+    const { orderId, status } = req.body;
 
-    const validStatuses = ["pending","processing","shipped","out for delivery","delivered","cancelled", "Return requested", "Return approved", "Return rejected", "refunded"];
+    const currentOrder = await Order.findOne({ orderId });
+    if (!currentOrder) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
 
-    if(!validStatuses.includes(status)){
-      return res.status(400).json({success:false,message:"Invalid status"});
+    const immutableStatuses = ["cancelled", "Return rejected", "delivered"];
+    if (immutableStatuses.includes(currentOrder.status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot change status from "${currentOrder.status}"` 
+      });
+    }
+
+    const validStatuses = ["pending", "processing", "shipped", "out for delivery", "delivered", "cancelled", "Return requested", "Return approved", "Return rejected", "refunded"];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
     }
 
     const updateData = { status };
     
     if (status === "delivered") {
-      const currentOrder = await Order.findOne({ orderId });
-      
       if (currentOrder && currentOrder.paymentStatus === "pending") {
         updateData.paymentStatus = "paid";
       }

@@ -432,6 +432,16 @@ body {
   }
 }
 
+.status-select:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.status-select:disabled + .text-muted {
+  display: block;
+}
+
 </style>
 </head>
 <body>
@@ -598,20 +608,24 @@ body {
                         </span>
                       </td>
                       <td>
-                        <select class="status-select" data-order-id="<%= order.orderId %>">
+                      <select class="status-select" data-order-id="<%= order.orderId %>" 
+                        <% if (['cancelled', 'Return rejected', 'delivered'].includes(order.status)) { %>disabled<% } %>>
                         <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
                         <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
                         <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
                         <option value="out for delivery" <%= order.status === 'out for delivery' ? 'selected' : '' %>>Out for Delivery</option>
                         <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
                         <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                        <!-- Add return status options -->
+
                         <option value="Return requested" <%= order.status === 'Return requested' ? 'selected' : '' %>>Return Requested</option>
                         <option value="Return approved" <%= order.status === 'Return approved' ? 'selected' : '' %>>Return Approved</option>
                         <option value="Return rejected" <%= order.status === 'Return rejected' ? 'selected' : '' %>>Return Rejected</option>
                         <option value="refunded" <%= order.status === 'refunded' ? 'selected' : '' %>>Refunded</option>
                       </select>
-                      </td>
+                      <% if (['cancelled', 'Return rejected', 'delivered'].includes(order.status)) { %>
+                        <div class="text-muted small mt-1">Status cannot be changed</div>
+                      <% } %>
+                    </td>
                       <td>
                         <div class="btn-group">
                           <button class="btn btn-sm btn-outline-primary view-order" data-order-id="<%= order.orderId %>">
@@ -699,7 +713,6 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.6/dist/sweetalert2.all.min.js"></script>
 
 <script>
-  // Initialize popovers
   $(document).ready(function() {
     $('[data-bs-toggle="popover"]').popover({
       trigger: 'hover',
@@ -716,13 +729,11 @@ body {
     $('.screen-overlay').toggleClass('show');
   });
 
-  // Close sidebar when clicking on overlay
   $('.screen-overlay').on('click', function () {
     $('.navbar-aside').removeClass('show');
     $('.screen-overlay').removeClass('show');
   });
 
-  // Add active class to current menu item
   $(document).ready(function() {
     const currentLocation = window.location.pathname;
     $('.menu-link').each(function() {
@@ -732,22 +743,18 @@ body {
     });
   });
 
-  // Filter functionality
   $('#applyFilters').on('click', function() {
     applyFilters();
   });
 
-  // Clear filters functionality
   $('#clearFilters').on('click', function() {
     window.location.href = '/admin/orderList';
   });
 
-  // Apply filters when sort changes
   $('#sortFilter').on('change', function() {
     applyFilters();
   });
 
-  // Apply filters function
   function applyFilters() {
   const status = $('#statusFilter').val();
   const dateRange = $('#dateFilter').val();
@@ -765,66 +772,51 @@ body {
   window.location.href = `/admin/orderList${queryParams.length ? '?' + queryParams.join('&') : ''}`;
 }
 
-  // Update order status
-  $('.status-select').on('change', function() {
+  
+$(document).ready(function() {
+  $('.status-select:not(:disabled)').on('change', function() {
     const orderId = $(this).data('order-id');
     const newStatus = $(this).val();
+    const originalValue = $(this).data('original-value') || $(this).val();
     
     Swal.fire({
       title: 'Update Order Status',
-      text: `Are you sure you want to change order #${orderId} status to ${newStatus}?`,
+      text: `Change order #${orderId} to "${newStatus}"?`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Yes, update it!',
-      cancelButtonText: 'Cancel',
-      showLoaderOnConfirm: true,
-      preConfirm: () => {
-        return fetch('/admin/updateOrderStatus', {
+      confirmButtonText: 'Update',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch('/admin/updateOrderStatus', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId: orderId,
-            status: newStatus
-          })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({orderId, status: newStatus})
         })
         .then(response => response.json())
         .then(data => {
-          if (!data.success) {
+          if (data.success) {
+            Swal.fire('Success!', 'Status updated successfully', 'success');
+            $(this).data('original-value', newStatus);
+          } else {
             throw new Error(data.message);
           }
-          return data;
         })
         .catch(error => {
-          Swal.showValidationMessage(`Request failed: ${error}`);
-        });
-      },
-      allowOutsideClick: () => !Swal.isLoading()
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Status Updated',
-          text: `Order #${orderId} status has been updated to ${newStatus}`,
-          timer: 1500
-        }).then(() => {
-          // Optionally reload the page to see changes
-          window.location.reload();
+          Swal.fire('Error!', error.message || 'Update failed', 'error');
+          $(this).val(originalValue);
         });
       } else {
-        // Reset the select to its original value if cancelled
-        $(this).val($(this).data('original-value'));
+        $(this).val(originalValue);
       }
     });
   });
-
-  // Store the original value on page load
+  
   $('.status-select').each(function() {
     $(this).data('original-value', $(this).val());
   });
+});
 
-  // View order details
   $('.view-order').on('click', function() {
     const orderId = $(this).data('order-id');
     
@@ -837,11 +829,9 @@ body {
       </div>
     `);
     
-    // Show the modal first
     const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
     modal.show();
     
-    // Then fetch the order details
     fetch(`/admin/getOrderDetails/${orderId}`)
       .then(response => {
         if (!response.ok) {
@@ -852,7 +842,7 @@ body {
       .then(data => {
         if (data.success) {
           const order = data.order;
-          // Format the order details for display with safe property access
+          
           $('#orderDetailsContent').html(`
             <div class="row">
               <div class="col-md-6">
@@ -936,7 +926,6 @@ body {
       });
   });
 
-  // Helper function to get badge color based on status
   function getStatusBadgeColor(status) {
     switch(status) {
       case 'delivered': return 'success';
@@ -948,12 +937,10 @@ body {
     }
   }
 
-  // Print order
   $('#printOrder').on('click', function() {
     window.print();
   });
 
-// Load return requests
 function loadReturnRequests() {
   fetch('/admin/returnRequests')
     .then(response => response.json())
