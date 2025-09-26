@@ -91,7 +91,7 @@ const orderSchema = new Schema({
       },
       itemStatus: {
          type: String,
-         enum: ["confirmed", "shipped", "delivered", "cancelled", "returned"],
+         enum: ["confirmed","processing", "shipped", "out for delivery", "delivered", "cancelled", "return requested", "returned", "return rejected"],
          default: "confirmed"
       },
       returnReason: { 
@@ -130,16 +130,19 @@ const orderSchema = new Schema({
       required: true
    },
    status: {
-      type: String,
-      enum: ["pending","confirmed", "processing", "shipped",  "out for delivery","delivered", "cancelled","Return requested", "Return approved","Return rejected", "refunded","failed"],
-      default: "pending"
+   type: String,
+   enum: [
+      "pending", "confirmed", "processing", "shipped", "out for delivery", "delivered", "cancelled", "partially cancelled", "return requested", "return approved","return rejected", "partially returned", "refunded", "partially refunded", "failed"
+   ],
+   default: "pending"
    },
+
    paymentStatus: {
-      type: String,
-      enum: ["paid","cancelled","pending", "success", "failed"],
-      default: "pending"
+   type: String,
+   enum: ["paid", "cancelled", "pending", "success", "failed", "refunded", "partially refunded"],
+   default: "pending"
    },
-   
+      
    returnRequestedAt: {
       type: Date,
       default: null
@@ -194,5 +197,70 @@ const orderSchema = new Schema({
 
 
 
+orderSchema.methods.calculateOrderStatus = function() {
+  const items = this.orderItems;
+  
+  const statusCount = {};
+  items.forEach(item => {
+    statusCount[item.itemStatus] = (statusCount[item.itemStatus] || 0) + 1;
+  });
+
+  const totalItems = items.length;
+
+  if (statusCount.cancelled === totalItems) {
+    return { status: "cancelled", paymentStatus: this.paymentStatus === "paid" ? "refunded" : "cancelled" };
+  }
+
+  if (statusCount.cancelled > 0 && statusCount.cancelled < totalItems) {
+    return { status: "partially cancelled", paymentStatus: this.paymentStatus };
+  }
+
+  if (statusCount.returned === totalItems) {
+    return { status: "refunded", paymentStatus: "refunded" };
+  }
+
+  if (statusCount["return rejected"] === totalItems) {
+    return { status: "return rejected", paymentStatus: this.paymentStatus };
+  }
+
+  if (statusCount["return requested"] === totalItems) {
+    return { status: "return requested", paymentStatus: this.paymentStatus };
+  }
+
+  const returnedCount = statusCount.returned || 0;
+  const returnRejectedCount = statusCount["return rejected"] || 0;
+  const returnRequestedCount = statusCount["return requested"] || 0;
+
+   const hasReturnRelatedItems = returnedCount > 0 || returnRejectedCount > 0 || returnRequestedCount > 0;
+  const hasNonReturnItems = totalItems > (returnedCount + returnRejectedCount + returnRequestedCount);
+  
+  if (returnedCount > 0 && returnRejectedCount > 0 && !hasNonReturnItems) {
+    return { status: "partially refunded", paymentStatus: "partially refunded" };
+  }
+
+  if (returnRejectedCount > 0 && returnedCount === 0 && returnRejectedCount < totalItems && !hasNonReturnItems) {
+    return { status: "partially returned", paymentStatus: this.paymentStatus };
+  }
+
+  const activeItems = items.filter(item => !["cancelled", "returned"].includes(item.itemStatus));
+  if (activeItems.length === 0) return { status: this.status, paymentStatus: this.paymentStatus };
+
+  const statusPriority = {
+     "delivered": 8, "out for delivery": 7, "shipped": 6, "processing": 5, 
+    "confirmed": 4, "return requested": 3, "return rejected": 2, "pending": 1
+  };
+
+  let highestStatus = "pending";
+  activeItems.forEach(item => {
+    if (statusPriority[item.itemStatus] > statusPriority[highestStatus]) {
+      highestStatus = item.itemStatus;
+    }
+  });
+
+  return { status: highestStatus, paymentStatus: this.paymentStatus };
+};
+
+
 const Order = mongoose.model('Order', orderSchema);
+
 module.exports = Order;

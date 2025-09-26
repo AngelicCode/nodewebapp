@@ -84,9 +84,13 @@ const getOrderDetails = async (req,res)=>{
       return res.redirect("/userProfile?tab=orders");
     }
 
+    const statusSummary = calculateOrderStatus(order.orderItems, order.status);
+    
+
     res.render("order-details",{
       order,
-      user:req.session.user
+      user:req.session.user,
+      statusSummary
     });
 
   } catch (error) {
@@ -94,6 +98,64 @@ const getOrderDetails = async (req,res)=>{
     res.redirect('/userProfile?tab=orders');
   }
 }
+
+function calculateOrderStatus(orderItems, currentStatus) {
+  const totalItems = orderItems.length;
+  
+  const statusCount = {};
+  orderItems.forEach(item => {
+    statusCount[item.itemStatus] = (statusCount[item.itemStatus] || 0) + 1;
+  });
+
+  if (statusCount.cancelled === totalItems) {
+    return { overallStatus: "cancelled" };
+  }
+
+  if (statusCount.cancelled > 0 && statusCount.cancelled < totalItems) {
+    return { overallStatus: "partially cancelled" };
+  }
+
+  if (statusCount.returned === totalItems) {
+    return { overallStatus: "refunded" };
+  }
+
+  const returnedCount = statusCount.returned || 0;
+  const returnRejectedCount = statusCount["return rejected"] || 0;
+  
+  if (returnedCount > 0 && returnRejectedCount > 0) {
+    return { overallStatus: "partially refunded" };
+  }
+
+  if (returnRejectedCount > 0 && returnedCount === 0 && returnRejectedCount < totalItems) {
+    return { overallStatus: "partially returned" };
+  }
+
+  if (returnRejectedCount === totalItems) {
+    return { overallStatus: "return rejected" };
+  }
+
+  if (statusCount["return requested"] === totalItems) {
+    return { overallStatus: "return requested" };
+  }
+
+  const activeItems = orderItems.filter(item => !["cancelled", "returned", "return rejected"].includes(item.itemStatus));
+  if (activeItems.length === 0) return { overallStatus: currentStatus };
+
+  const statusPriority = {
+    "delivered": 7, "out for delivery": 6, "shipped": 5, "processing": 4, 
+    "confirmed": 3, "return requested": 2, "pending": 1
+  };
+
+  let highestStatus = "pending";
+  activeItems.forEach(item => {
+    if (statusPriority[item.itemStatus] > statusPriority[highestStatus]) {
+      highestStatus = item.itemStatus;
+    }
+  });
+
+  return { overallStatus: highestStatus };
+}
+
 
 const cancelOrder = async (req, res) => {
   try {
@@ -113,7 +175,12 @@ const cancelOrder = async (req, res) => {
 
     if (cancelType === 'entire') {
       order.status = 'cancelled';
-      order.paymentStatus = 'cancelled';
+
+      if (order.paymentMethod === 'cod') {
+        order.paymentStatus = 'cancelled';
+      } else if (order.paymentMethod === 'razorpay') {
+        order.paymentStatus = 'refunded'; 
+      }
       order.cancellationReason = reason;
       order.cancelledBy = 'user';
       order.finalAmount = 0;
@@ -136,7 +203,8 @@ const cancelOrder = async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Order cancelled successfully',
-      finalAmount: order.finalAmount 
+      finalAmount: order.finalAmount,
+      paymentStatus: order.paymentStatus
     });
 
   } catch (error) {
@@ -157,13 +225,16 @@ const cancelOrderItem = async(req,res)=>{
       return res.status(404).json({success:false,message:"Order not Found"});
     }
 
-    if (!['pending',"confirmed","processing"].includes(order.status) || order.status === 'out for delivery') {
-      return res.status(400).json({success:false,message:"Items cannot be cancelled at this stage"});
-    }
-
     const item = order.orderItems[itemIndex];
     if(!item || item.itemStatus === "cancelled"){
       return res.status(400).json({success:false,message:"Item not found or already cancelled"});
+    }
+
+    if (!['pending',"confirmed","processing"].includes(item.itemStatus)) {
+      return res.status(400).json({success:false,message:"Items cannot be cancelled at this stage"});
+    }
+    if (order.status === 'out for delivery') {
+      return res.status(400).json({success:false,message:"Items cannot be cancelled when order is out for delivery"});
     }
 
     const itemTotal = item.price * item.quantity;
@@ -177,16 +248,12 @@ const cancelOrderItem = async(req,res)=>{
 
     await Product.findByIdAndUpdate(productId, { $inc: { quantity: quantity } });
 
-    const allCancelled = order.orderItems.every(item => item.itemStatus === "cancelled");
-
-    if(allCancelled){
-      order.status = "cancelled";
-      order.paymentStatus = 'cancelled';
-      order.cancellationReason = "All items cancelled";
-      order.cancelledBy = "user";
-    }
+    const newStatus = order.calculateOrderStatus();
+    order.status = newStatus.status;
+    order.paymentStatus = newStatus.paymentStatus;
 
     await order.save();
+    
     const refundMessage = order.paymentMethod === 'cod' 
       ? 'Item cancelled successfully. Your payable amount has been updated.' 
       : `Item cancelled successfully. Refund amount: ₹${itemTotal.toFixed(2)}`;
@@ -233,7 +300,50 @@ const returnOrder = async (req, res) => {
   }
 };
 
+const returnOrderItem = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { reason, itemIndex, productId, quantity } = req.body;
+    const userId = req.session.user._id;
+
+    const order = await Order.findOne({ _id: orderId, userId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.status !== 'delivered') {
+      return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+    }
+
+    const item = order.orderItems[itemIndex];
+    if (!item || item.itemStatus === "returned" || item.itemStatus === "return requested") {
+      return res.status(400).json({ success: false, message: "Item not found or already returned" });
+    }
+
+    item.itemStatus = "return requested";
+    item.returnReason = reason;
+    
+    if (order.status === 'delivered') {
+      order.status = 'return requested';
+    }
+    
+    order.returnReason = reason;
+
+    await order.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Return request submitted successfully for this item' 
+    });
+
+  } catch (error) {
+    console.error('Error processing item return request:', error);
+    res.status(500).json({ success: false, message: 'Failed to process return request' });
+  }
+};
+
 
 module.exports = {
-  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,returnOrder,
+  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,returnOrder,returnOrderItem,
 }

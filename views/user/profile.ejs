@@ -746,14 +746,21 @@
                                                                     <%= order.orderId %>
                                                                 </td>
                                                                 <td rowspan="<%= order.orderItems.length %>">
-                                                                    <span class="badge 
-                                                                        <%= order.status === 'delivered' ? 'bg-success' : 
-                                                                        order.status === 'cancelled' ? 'bg-danger' : 
-                                                                        order.status === 'shipped' ? 'bg-info' : 
-                                                                        'bg-warning' %>">
-                                                                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                                                                    </span>
-                                                                </td>
+                                                                <span class="badge 
+                                                            <%= order.status === 'delivered' ? 'bg-success' : 
+                                                            order.status === 'cancelled' ? 'bg-danger' : 
+                                                            order.status === 'shipped' ? 'bg-info' : 
+                                                            order.status === 'return requested' ? 'bg-warning' : 
+                                                            order.status === 'return approved' || order.status === 'refunded' ? 'bg-success' :
+                                                            order.status === 'return rejected' ? 'bg-danger' :
+                                                            order.status === 'partially cancelled' ? 'bg-warning' :
+                                                            order.status === 'partially returned' ? 'bg-warning' :
+                                                            order.status === 'partially refunded' ? 'bg-info' :
+                                                            'bg-warning' %>">
+                                                            <%= order.status === 'return requested' && order.adminReturnStatus === 'Rejected' ? 'Delivered' : 
+                                                                order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                                            </span>
+                                                            </td>
                                                             <% } %>
                                                             <td>₹<%= item.price.toFixed(2) %></td>
                                                             <td><%= item.quantity %></td>

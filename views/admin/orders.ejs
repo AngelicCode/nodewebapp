@@ -608,23 +608,41 @@ body {
                         </span>
                       </td>
                       <td>
-                      <select class="status-select" data-order-id="<%= order.orderId %>" 
-                        <% if (['cancelled', 'Return rejected', 'delivered'].includes(order.status)) { %>disabled<% } %>>
+
+                    <select class="status-select" data-order-id="<%= order.orderId %>" 
+                        <% if (['cancelled', 'return rejected', 'delivered', 'refunded', 'partially refunded', 'shipped', 'out for delivery'].includes(order.status)) { %>disabled<% } %>>
                         <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                        <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
                         <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
                         <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
                         <option value="out for delivery" <%= order.status === 'out for delivery' ? 'selected' : '' %>>Out for Delivery</option>
                         <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-
-                        <option value="Return requested" <%= order.status === 'Return requested' ? 'selected' : '' %>>Return Requested</option>
-                        <option value="Return approved" <%= order.status === 'Return approved' ? 'selected' : '' %>>Return Approved</option>
-                        <option value="Return rejected" <%= order.status === 'Return rejected' ? 'selected' : '' %>>Return Rejected</option>
+                        
+                        <!-- Disable cancelled option if order is already shipped or beyond -->
+                        <option value="cancelled" 
+                            <%= order.status === 'cancelled' ? 'selected' : '' %>
+                            <% if (['shipped', 'out for delivery', 'delivered', 'return requested', 'return approved', 'refunded'].includes(order.status)) { %>disabled style="color: #ccc;"<% } %>>
+                            Cancelled
+                        </option>
+                        
+                        <option value="partially cancelled" <%= order.status === 'partially cancelled' ? 'selected' : '' %>>Partially Cancelled</option>
+                        <option value="return requested" <%= order.status === 'return requested' ? 'selected' : '' %>>Return Requested</option>
+                        <option value="return approved" <%= order.status === 'return approved' ? 'selected' : '' %>>Return Approved</option>
+                        <option value="return rejected" <%= order.status === 'return rejected' ? 'selected' : '' %>>Return Rejected</option>
+                        <option value="partially returned" <%= order.status === 'partially returned' ? 'selected' : '' %>>Partially Returned</option>
                         <option value="refunded" <%= order.status === 'refunded' ? 'selected' : '' %>>Refunded</option>
-                      </select>
-                      <% if (['cancelled', 'Return rejected', 'delivered'].includes(order.status)) { %>
-                        <div class="text-muted small mt-1">Status cannot be changed</div>
-                      <% } %>
+                        <option value="partially refunded" <%= order.status === 'partially refunded' ? 'selected' : '' %>>Partially Refunded</option>
+                    </select>
+
+                      <% if (['cancelled', 'return rejected', 'delivered', 'refunded', 'partially refunded', 'shipped', 'out for delivery'].includes(order.status)) { %>
+                      <div class="text-muted small mt-1">
+                          <% if (['shipped', 'out for delivery', 'delivered'].includes(order.status)) { %>
+                              Order cannot be cancelled after shipping
+                          <% } else { %>
+                              Status cannot be changed
+                          <% } %>
+                      </div>
+                  <% } %>
                     </td>
                       <td>
                         <div class="btn-group">
@@ -688,6 +706,7 @@ body {
       <div class="modal-body">
         <form id="rejectReturnForm">
           <input type="hidden" id="rejectOrderId" name="orderId">
+          <input type="hidden" id="rejectItemIndex" name="itemIndex">
           <div class="mb-3">
             <label for="rejectReason" class="form-label">Reason for Rejection</label>
             <textarea class="form-control" id="rejectReason" name="notes" rows="3" required></textarea>
@@ -773,11 +792,14 @@ body {
 }
 
   
-$(document).ready(function() {
+$(document).ready( function() {
   $('.status-select:not(:disabled)').on('change', function() {
     const orderId = $(this).data('order-id');
     const newStatus = $(this).val();
+    const $select = $(this);
     const originalValue = $(this).data('original-value') || $(this).val();
+    
+    console.log('Status change attempted:', { orderId, newStatus, originalValue });
     
     Swal.fire({
       title: 'Update Order Status',
@@ -788,30 +810,52 @@ $(document).ready(function() {
       cancelButtonText: 'Cancel'
     }).then((result) => {
       if (result.isConfirmed) {
+        // Show loading state
+        $select.prop('disabled', true);
+        $select.html('<option>Updating...</option>');
+        
         fetch('/admin/updateOrderStatus', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({orderId, status: newStatus})
         })
-        .then(response => response.json())
+        .then(response => {
+          console.log('Response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
+          console.log('Response data:', data);
           if (data.success) {
-            Swal.fire('Success!', 'Status updated successfully', 'success');
-            $(this).data('original-value', newStatus);
-          } else {
-            throw new Error(data.message);
+          Swal.fire({
+            title: 'Success!',
+            text: data.message,
+            icon: 'success',
+            timer: 1000,
+            showConfirmButton: false
+          }).then(() => {
+            window.location.href = window.location.href + '?t=' + new Date().getTime();
+          });
+        } else {
+            throw new Error(data.message || 'Update failed');
           }
         })
         .catch(error => {
+          console.error('Fetch error:', error);
           Swal.fire('Error!', error.message || 'Update failed', 'error');
-          $(this).val(originalValue);
+          // Reload to get fresh data even on error
+          window.location.reload(true);
         });
       } else {
-        $(this).val(originalValue);
+        // User cancelled - revert to original value
+        $select.val(originalValue);
       }
     });
   });
   
+  // Initialize original values
   $('.status-select').each(function() {
     $(this).data('original-value', $(this).val());
   });
@@ -965,40 +1009,44 @@ function loadReturnRequests() {
                 <tr>
                   <th>Order ID</th>
                   <th>Customer</th>
-                  <th>Return Date</th>
-                  <th>Reason</th>
-                  <th>Status</th>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Return Reason</th>
+                  <th>Request Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.returnRequests.map(request => {
-                  // Format the return date
                   const returnDate = request.returnRequestedAt ? 
                     new Date(request.returnRequestedAt).toLocaleDateString() : 
-                    new Date(request.createdAt).toLocaleDateString();
+                    'N/A';
                   
-                  // Get customer name
-                  const customerName = request.userId ? 
-                    request.userId.name : 
-                    (request.shippingAddress && request.shippingAddress.name ? 
-                     request.shippingAddress.name : 'N/A');
+                  const customerName = request.user ? 
+                    request.user.name : 
+                    'N/A';
                   
                   return `
                   <tr>
                     <td>#${request.orderId}</td>
                     <td>${customerName}</td>
-                    <td>${returnDate}</td>
+                    <td>${request.item.productName}</td>
+                    <td>${request.item.quantity}</td>
                     <td>${request.returnReason || 'No reason provided'}</td>
-                    <td><span class="badge bg-warning">${request.adminReturnStatus || request.status}</span></td>
+                    <td>${returnDate}</td>
                     <td>
                       <div class="btn-group btn-group-sm">
-                        <button class="btn btn-success approve-return" data-order-id="${request.orderId}">
+                        <button class="btn btn-success approve-return" 
+                                data-order-id="${request.orderId}" 
+                                data-item-index="${request.itemIndex}">
                           Approve
                         </button>
-                        <button class="btn btn-danger reject-return" data-order-id="${request.orderId}">
+                        <button class="btn btn-danger reject-return" 
+                                data-order-id="${request.orderId}" 
+                                data-item-index="${request.itemIndex}">
                           Reject
                         </button>
+                        
                       </div>
                     </td>
                   </tr>
@@ -1009,18 +1057,27 @@ function loadReturnRequests() {
           </div>
         `;
         
-        // Add event listeners to action buttons
         document.querySelectorAll('.approve-return').forEach(button => {
           button.addEventListener('click', function() {
             const orderId = this.getAttribute('data-order-id');
-            approveReturn(orderId);
+            const itemIndex = this.getAttribute('data-item-index');
+            approveReturn(orderId, itemIndex);
           });
         });
         
         document.querySelectorAll('.reject-return').forEach(button => {
           button.addEventListener('click', function() {
             const orderId = this.getAttribute('data-order-id');
-            showRejectModal(orderId);
+            const itemIndex = this.getAttribute('data-item-index');
+            showRejectModal(orderId, itemIndex);
+          });
+        });
+        
+        document.querySelectorAll('.view-item').forEach(button => {
+          button.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const itemIndex = this.getAttribute('data-item-index');
+            viewReturnItem(orderId, itemIndex);
           });
         });
       }
@@ -1035,11 +1092,10 @@ function loadReturnRequests() {
     });
 }
 
-// Approve return
-function approveReturn(orderId) {
+function approveReturn(orderId, itemIndex) {
   Swal.fire({
     title: 'Approve Return?',
-    text: `Are you sure you want to approve the return for order #${orderId}?`,
+    text: `Are you sure you want to approve the return for item in order #${orderId}?`,
     icon: 'question',
     showCancelButton: true,
     confirmButtonText: 'Yes, Approve',
@@ -1053,6 +1109,7 @@ function approveReturn(orderId) {
         },
         body: JSON.stringify({
           orderId: orderId,
+          itemIndex: itemIndex,
           action: 'approve'
         })
       })
@@ -1060,9 +1117,7 @@ function approveReturn(orderId) {
       .then(data => {
         if (data.success) {
           Swal.fire('Approved!', 'Return request has been approved.', 'success').then(() => {
-            loadReturnRequests();
-            // Reload the page to update order status in the main table
-            window.location.reload();
+            location.reload();
           });
         } else {
           Swal.fire('Error!', data.message, 'error');
@@ -1075,17 +1130,46 @@ function approveReturn(orderId) {
   });
 }
 
-// Show reject modal
-function showRejectModal(orderId) {
+function showRejectModal(orderId, itemIndex) {
   document.getElementById('rejectOrderId').value = orderId;
+  document.getElementById('rejectItemIndex').value = itemIndex;
   document.getElementById('rejectReason').value = '';
   const modal = new bootstrap.Modal(document.getElementById('rejectReturnModal'));
   modal.show();
 }
 
+// Add viewReturnItem function
+function viewReturnItem(orderId, itemIndex) {
+  fetch(`/admin/returnItemDetails/${orderId}/${itemIndex}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          title: `Return Item Details - Order #${data.order.orderId}`,
+          html: `
+            <div class="text-start">
+              <p><strong>Customer:</strong> ${data.order.user.name}</p>
+              <p><strong>Product:</strong> ${data.item.productName}</p>
+              <p><strong>Quantity:</strong> ${data.item.quantity}</p>
+              <p><strong>Price:</strong> ₹${data.item.price.toFixed(2)}</p>
+              <p><strong>Reason:</strong> ${data.item.returnReason}</p>
+            </div>
+          `,
+          icon: 'info'
+        });
+      } else {
+        Swal.fire('Error!', data.message, 'error');
+      }
+    })
+    .catch(error => {
+      Swal.fire('Error!', 'Failed to load item details.', 'error');
+    });
+}
+
 // Handle reject confirmation
 document.getElementById('confirmReject').addEventListener('click', function() {
   const orderId = document.getElementById('rejectOrderId').value;
+  const itemIndex = document.getElementById('rejectItemIndex').value;
   const notes = document.getElementById('rejectReason').value;
   
   if (!notes.trim()) {
@@ -1100,6 +1184,7 @@ document.getElementById('confirmReject').addEventListener('click', function() {
     },
     body: JSON.stringify({
       orderId: orderId,
+      itemIndex: itemIndex,
       action: 'reject',
       notes: notes
     })
@@ -1110,9 +1195,7 @@ document.getElementById('confirmReject').addEventListener('click', function() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('rejectReturnModal'));
       modal.hide();
       Swal.fire('Rejected!', 'Return request has been rejected.', 'success').then(() => {
-        loadReturnRequests();
-        // Reload the page to update order status in the main table
-        window.location.reload();
+        location.reload();
       });
     } else {
       Swal.fire('Error!', data.message, 'error');

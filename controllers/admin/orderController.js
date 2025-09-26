@@ -1,50 +1,46 @@
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Order =  require("../../models/orderSchema");
-const { customerInfo } = require("./customerController");
+// const { customerInfo } = require("./customerController");
 
-const orderList = async (req,res)=>{
+const orderList = async (req, res) => {
   try {
-    const page = parseInt(req.query.page)|| 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = 10;
-    const skip = (page - 1)*limit;
+    const skip = (page - 1) * limit;
 
     let filter = {};
-    if(req.query.status){
+    if (req.query.status) {
       filter.status = req.query.status;
     }
 
-    if(req.query.date){
+    if (req.query.date) {
       const today = new Date();
       let startDate;
 
-      if(req.query.date === "today"){
-        startDate = new Date(today.setHours(0,0,0,0));
-      }else if(req.query.date === "week"){
-        startDate = new Date(today.setDate(today.getDate()-7));
-      }else if(req.query.date === "month"){
-        startDate = new Date(today.setMonth(today.getMonth()-1));
+      if (req.query.date === "today") {
+        startDate = new Date(today.setHours(0, 0, 0, 0));
+      } else if (req.query.date === "week") {
+        startDate = new Date(today.setDate(today.getDate() - 7));
+      } else if (req.query.date === "month") {
+        startDate = new Date(today.setMonth(today.getMonth() - 1));
       }
-      filter.createdAt = {$gte: startDate};
+      filter.createdAt = { $gte: startDate };
     }
 
     const searchQuery = req.query.search || '';
-    if(searchQuery){
-      const isPhoneSearch = /^\d+$/.test(searchQuery);
-      filter.$or =[
-        {orderId: {$regex: searchQuery, $options: "i"}},
-        {"shippingAddress.name": {$regex: searchQuery, $options:"i"}}, 
-        {"user.email": {$regex: searchQuery, $options: "i"}},
-      ];
 
-      if (isPhoneSearch) {
-        filter.$or.push({"shippingAddress.phone": parseInt(searchQuery)});
-      }
+    if (searchQuery) {
+      filter.$or = [
+        { orderId: { $regex: searchQuery, $options: "i" } },
+        { "shippingAddress.name": { $regex: searchQuery, $options: "i" } },
+        { "user.email": { $regex: searchQuery, $options: "i" } },
+      ];
     }
 
-    let sortOption = {createdAt: -1};
-    if(req.query.sort){
-      switch (req.query.sort){
+    let sortOption = { createdAt: -1 };
+    if (req.query.sort) {
+      switch (req.query.sort) {
         case "date_asc":
           sortOption = { createdAt: 1 };
           break;
@@ -64,28 +60,21 @@ const orderList = async (req,res)=>{
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
-      .populate('userId', 'name email phone');
+      .populate('userId', 'name email phone')
+      .lean();
 
-      orders = orders.map(order => {
-    if (!order.totalAmount || isNaN(order.totalAmount)) {
-        order.totalAmount = 0;
-    }
-    return order;
+    const totalOrders = await Order.countDocuments(filter);
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.render("orders", {
+      orders,
+      search: searchQuery,
+      currentPage: page,
+      totalPages,
+      status: req.query.status || '',
+      date: req.query.date || '',
+      sort: req.query.sort || '',
     });
-
-      const totalOrders = await Order.countDocuments(filter);
-      const totalPages = Math.ceil(totalOrders/limit);
-
-      res.render("orders",{
-        orders,
-        search: searchQuery,
-        currentPage: page,
-        totalPages,
-        status: req.query.status || '',
-        date: req.query.date || '',
-        sort: req.query.sort || '',
-        title: "Order Management"
-      });
 
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -97,53 +86,79 @@ const updateOrderStatus = async (req, res) => {
   try {
     const { orderId, status } = req.body;
 
-    const currentOrder = await Order.findOne({ orderId });
-    if (!currentOrder) {
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    const immutableStatuses = ["cancelled", "Return rejected", "delivered"];
-    if (immutableStatuses.includes(currentOrder.status)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Cannot change status from "${currentOrder.status}"` 
+    if (status === "cancelled" || status === "partially cancelled") {
+      const nonCancellableStatuses = ["shipped", "out for delivery", "delivered", "return requested", "return approved", "refunded"];
+      
+      if (nonCancellableStatuses.includes(order.status)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Cannot cancel order after it has been ${order.status}. Order is already ${order.status}.` 
+        });
+      }
+
+      const hasShippedItems = order.orderItems.some(item => 
+        ["shipped", "out for delivery", "delivered"].includes(item.itemStatus)
+      );
+
+      if (hasShippedItems) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Cannot cancel order because some items have already been shipped or delivered.' 
+        });
+      }
+    }
+
+    let newPaymentStatus = order.paymentStatus;
+
+    
+    if (status === "delivered") {
+      order.orderItems.forEach(item => {
+        if (
+          item.itemStatus === "confirmed" ||
+          item.itemStatus === "processing" ||
+          item.itemStatus === "shipped" ||
+          item.itemStatus === "out for delivery"
+        ) {
+          item.itemStatus = "delivered";
+        }
+      });
+      newPaymentStatus = "paid";
+    } 
+    
+    else if (["processing", "shipped", "out for delivery"].includes(status)) {
+      order.orderItems.forEach(item => {
+        if (!["cancelled", "returned", "return rejected", "delivered"].includes(item.itemStatus)) {
+          item.itemStatus = status;
+        }
       });
     }
 
-    const validStatuses = ["pending", "processing", "shipped", "out for delivery", "delivered", "cancelled", "Return requested", "Return approved", "Return rejected", "refunded"];
+    order.status = status;
+    order.paymentStatus = newPaymentStatus;
 
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
-    }
+    const updatedOrder = await order.save();
 
-    const updateData = { status };
-    
-    if (status === "delivered") {
-      if (currentOrder && currentOrder.paymentStatus === "pending") {
-        updateData.paymentStatus = "paid";
-      }
-    }
-    
-    if (status === "refunded") {
-      updateData.paymentStatus = "refunded";
-    }
+    res.json({
+      success: true,
+      message: 'Order status updated successfully',
+      newStatus: updatedOrder.status,
+      newPaymentStatus: updatedOrder.paymentStatus
+    });
 
-    const updatedOrder = await Order.findOneAndUpdate(
-      { orderId },
-      updateData,
-      { new: true }
-    );
-
-    if (!updatedOrder) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-
-    res.json({ success: true, message: 'Order status updated successfully' });
   } catch (error) {
     console.error('Error updating order status:', error);
-    res.redirect('/pageerror');
+    res.status(500).json({
+      success: false,
+      message: 'Error updating order status: ' + error.message
+    });
   }
-}
+};
 
 const getOrderDetails = async (req,res)=>{
   try {
@@ -192,19 +207,34 @@ const getOrderDetails = async (req,res)=>{
   }
 }
 
-const getReturnRequests = async (req, res) => {
+const getReturnRequests = async (req,res) => {
   try {
-    const returnRequests = await Order.find({
-      $or: [
-        { adminReturnStatus: "pending" },
-        { adminReturnStatus: "Return Required" },
-        { status: "Return requested" }
-      ]
+    const ordersWithReturnRequests = await Order.find({
+      "orderItems.itemStatus": "return requested"
     })
-    .populate('userId', 'name email')
-    .sort({ returnRequestedAt: -1 });
-    
-    res.json({ success: true, returnRequests });
+      .populate('userId', 'name email')
+      .populate('orderItems.productId', 'name images')
+      .sort({ returnRequestedAt: -1 });
+
+    const formattedRequests = [];
+
+    for (const order of ordersWithReturnRequests) {
+      order.orderItems.forEach((item, index) => {
+        if (item.itemStatus === "return requested") {
+          formattedRequests.push({
+            orderId: order.orderId,
+            itemIndex: index,
+            user: order.userId,
+            item: item,
+            returnReason: item.returnReason || order.returnReason,
+            returnRequestedAt: order.returnRequestedAt || order.updatedAt,
+            adminReturnStatus: order.adminReturnStatus
+          });
+        }
+      });
+    }
+
+    res.json({ success: true, returnRequests: formattedRequests });
   } catch (error) {
     console.error('Error fetching return requests:', error);
     res.json({ success: false, message: error.message });
@@ -213,42 +243,65 @@ const getReturnRequests = async (req, res) => {
 
 const handleReturnAction = async (req, res) => {
   try {
-    const { orderId, action, notes } = req.body;
+    const { orderId, itemIndex, action, notes } = req.body;
     
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId })
+      .populate('orderItems.productId');
+    
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
     
-    const updateData = {
-      adminReturnStatus: action === 'approve' ? 'approved' : 'rejected',
-      returnActionDate: new Date(),
-      adminReturnNotes: notes || ''
-    };
-    
-    if (action === 'approve') {
-      for (const item of order.orderItems) {
+    if (itemIndex !== undefined && itemIndex !== null) {
+      const item = order.orderItems[itemIndex];
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+      
+      if (action === 'approve') {
+        item.itemStatus = "returned";
+        
         await Product.findByIdAndUpdate(
           item.productId,
           { $inc: { quantity: item.quantity } }
         );
+        
+      } else if (action === 'reject') {
+        item.itemStatus = "return rejected";
       }
       
-      updateData.status = 'refunded';
-      updateData.paymentStatus = 'refunded';
-    } else if (action === 'reject') {
-      updateData.status = 'Return rejected';
-    }
+    } else {
+      if (action === 'approve') {
+        for (const item of order.orderItems) {
+          if (item.itemStatus === "return requested") {
+            item.itemStatus = "returned";
+            await Product.findByIdAndUpdate(
+              item.productId,
+              { $inc: { quantity: item.quantity } }
+            );
+          }
+        }
+        
+      } else if (action === 'reject') {
+        for (const item of order.orderItems) {
+          if (item.itemStatus === "return requested") {
+            item.itemStatus = "return rejected";
+          }
+        }
+        
+      }
+      
+      order.adminReturnStatus = action === 'approve' ? 'approved' : 'rejected';
+      
+    } 
     
-    const updatedOrder = await Order.findOneAndUpdate(
-      { orderId },
-      updateData,
-      { new: true }
-    );
-    
-    if (!updatedOrder) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
+    const newStatus = order.calculateOrderStatus();
+    order.status = newStatus.status;
+    order.paymentStatus = newStatus.paymentStatus;
+
+    order.adminReturnNotes = notes || '';
+    order.returnActionDate = new Date();
+    await order.save();
     
     res.json({ 
       success: true, 
@@ -259,6 +312,28 @@ const handleReturnAction = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+function checkAllItemsProcessed(orderItems) {
+  const result = {
+    allReturnApproved: true,
+    allReturnRejected: true,
+    hasMixedStatus: false
+  };
+  
+  for (const item of orderItems) {
+    if (item.itemStatus === "return requested") {
+      result.allReturnApproved = false;
+      result.allReturnRejected = false;
+    } else if (item.itemStatus === "return approved") {
+      result.allReturnRejected = false;
+    } else if (item.itemStatus === "return rejected") {
+      result.allReturnApproved = false;
+    }
+  }
+  
+  result.hasMixedStatus = !result.allReturnApproved && !result.allReturnRejected;
+  return result;
+}
 
 module.exports = {
   orderList,updateOrderStatus,getOrderDetails,getReturnRequests,handleReturnAction,

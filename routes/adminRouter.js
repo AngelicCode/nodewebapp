@@ -56,9 +56,10 @@ router.post("/deleteBrand", adminAuth, brandController.deleteBrand);
 
 //Order Management
 router.get("/orderList",adminAuth,orderController.orderList);
-router.post('/updateOrderStatus',adminAuth,orderController.updateOrderStatus);
+router.post('/updateOrderStatus',orderController.updateOrderStatus);
 router.get('/getOrderDetails/:orderId',adminAuth,orderController.getOrderDetails);
 router.get('/returnRequests',adminAuth,orderController.getReturnRequests);
 router.post('/handleReturnAction',adminAuth,orderController.handleReturnAction);
+
 
 module.exports = router;
