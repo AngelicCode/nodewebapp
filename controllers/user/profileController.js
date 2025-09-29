@@ -3,6 +3,7 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
+const { getCartCount } = require('../../helpers/cartHelper');
 const session = require("express-session");
 
 // const { resendOtp } = require("./userController");
@@ -152,6 +153,7 @@ const verifyForgotPassOtp = async (req,res)=>{
      const userProfile = async(req,res)=>{
     try {
       const userId = req.session.user;
+      const cartCount = await getCartCount(userId);
       const userData = await User.findById(userId);
       const addressData = await Address.findOne({userId:userId});
 
@@ -182,6 +184,7 @@ const verifyForgotPassOtp = async (req,res)=>{
         totalOrders: totalOrders,
         baseUrl: '/userProfile?tab=orders&',
         query: req.query,
+        cartCount: cartCount,
 
       })
 
@@ -336,8 +339,11 @@ const verifyForgotPassOtp = async (req,res)=>{
   const addAddress = async (req,res)=>{
     try {
       const user = req.session.user;
+      const cartCount = await getCartCount(user);
       res.render("add-address",{
         user:user,
+        cartCount: cartCount,
+
       });
     } catch (error) {
       res.redirect("/pageNotFound")
@@ -377,6 +383,7 @@ const verifyForgotPassOtp = async (req,res)=>{
     try {
       const addressId = req.query.id;
       const user = req.session.user;
+      const cartCount = await getCartCount(user);
       const currAddress = await Address.findOne({"address._id":addressId,});
 
       if(!currAddress){
@@ -394,6 +401,8 @@ const verifyForgotPassOtp = async (req,res)=>{
       res.render("edit-address",{
         address:addressData,
         user:user,
+        cartCount: cartCount,
+
       })
 
     } catch (error) {

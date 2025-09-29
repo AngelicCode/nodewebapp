@@ -1066,6 +1066,7 @@ async function toggleWishlist(event, productId, btn) {
     });
 }
 
+// Replace the existing event listener with:
 document.addEventListener('DOMContentLoaded', function() {
   const addToCartBtn = document.querySelector('.add-to-cart-btn');
   if (!addToCartBtn) return;
@@ -1074,12 +1075,9 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     const productId = this.getAttribute('data-product-id');
     const quantity = parseInt(document.getElementById('quantity').textContent);
+    
     if (!productId) {
       alert('Product ID not found');
-      return;
-    }
-    if (quantity <= 0) {
-      alert('Please select a valid quantity');
       return;
     }
 
@@ -1093,21 +1091,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (data.redirect) {
         Swal.fire({
-            icon: 'error',
-            title: 'Unavailable',
-            text: data.message || 'This product is unavailable or blocked.',
-            timer: 3000,
-            showConfirmButton: false,
-            willClose: () => {
-            window.location.href = data.redirect;
-            },
-            showConfirmButton: true,
+          icon: 'error',
+          title: 'Unavailable',
+          text: data.message || 'This product is unavailable or blocked.',
+          timer: 3000,
+          showConfirmButton: true,
+        }).then(() => {
+          window.location.href = data.redirect;
         });
         return;
-        }
-
+      }
 
       if (data.status === true) {
+
+         if (typeof data.cartCount !== "undefined") {
+            updateCartCount(data.cartCount);
+        }
+
         Swal.fire({
           icon: 'success',
           title: 'Added to Cart',
@@ -1115,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', function() {
           timer: 2000,
           showConfirmButton: false,
         });
+        
         changeToGoToCart(this);
       } else {
         Swal.fire({
@@ -1131,6 +1132,8 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
+});
+  
 
   function changeToGoToCart(button) {
     const goToCartBtn = document.createElement('a');
@@ -1147,7 +1150,13 @@ document.addEventListener('DOMContentLoaded', function() {
     goToCartBtn.style.alignItems = 'center';
     button.parentNode.replaceChild(goToCartBtn, button);
   }
-});
 
+  function updateCartCount(count) {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = count;
+        cartCountElement.style.display = count > 0 ? 'block' : 'none';
+    }
+}
     
 </script>

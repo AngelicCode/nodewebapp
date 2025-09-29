@@ -3,11 +3,13 @@ const Category = require("../../models/categorySchema");
 const User = require("../../models/userSchema"); 
 const Wishlist = require("../../models/wishlistSchema");
 const Cart = require("../../models/cartSchema");
+const { getCartCount } = require('../../helpers/cartHelper');
 
 const productDetails = async (req, res) => { 
     try {    
-       const userId = req.session.user;  
-        const userData = await User.findById(userId);
+       const userId = req.session.user; 
+       const cartCount = await getCartCount(userId); 
+       const userData = await User.findById(userId);
 
             let wishlistProductIds = []; 
             let cartProductIds = []; 
@@ -65,6 +67,7 @@ const productDetails = async (req, res) => {
           relatedProducts:relatedProducts,
           wishlistProductIds,
           cartProductIds,
+          cartCount: cartCount,
 
         });
             
@@ -151,7 +154,9 @@ const detailspageAddToCart = async(req,res)=>{
       { $pull: { products: { productId: productId } } }
     );
 
-    res.json({ status: true, cartLength: cart.items.length });
+    res.json({ 
+       status: true,   
+       message: "Product added to cart" });
 
   } catch (error) {
     console.error("Add to Cart error:", error);

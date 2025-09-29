@@ -1126,6 +1126,7 @@ async function initiateRazorpayPayment(orderData, razorpayOrder) {
                 const result = await verifyResponse.json();
                 
                 if (result.status) {
+                    updateCartAfterCheckout();
                     window.location.href = `/order-success/${result.orderId}`;
                 } else {
                     
@@ -1219,6 +1220,7 @@ async function initiateRazorpayPayment(orderData, razorpayOrder) {
                 window.location.href = '/order-failure?reason=order_id_missing';
                 return;
             }
+            updateCartAfterCheckout();
             window.location.href = `/order-success/${result.orderId}`;
         }
 
@@ -1226,6 +1228,20 @@ async function initiateRazorpayPayment(orderData, razorpayOrder) {
         console.error('Order error:', error);
         window.location.href = '/order-failure?reason=network_error';
     }
+}
+
+function updateCartAfterCheckout() {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = '0';
+        cartCountElement.style.display = 'none'; 
+    }
+    
+    if (window.cartManager) {
+        window.cartManager.clearLocalCart();
+    }
+    
+    localStorage.removeItem('userCart');
 }
 
     </script>

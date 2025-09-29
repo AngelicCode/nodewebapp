@@ -7,6 +7,7 @@ const Cart = require("../../models/cartSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
+const { getCartCount } = require('../../helpers/cartHelper');
 
 const pageNotFound = async (req,res)=>{
 
@@ -23,6 +24,7 @@ const pageNotFound = async (req,res)=>{
 const loadHomepage = async (req, res) => {
   try {
     const userId = req.session.user;
+    const cartCount = await getCartCount(userId);
 
     const categories = await Category.find({ isListed: true });
 
@@ -39,13 +41,16 @@ const loadHomepage = async (req, res) => {
       const userData = await User.findById(userId).lean();
       return res.render("home", {
         user: userData,
-        products: productData
+        products: productData,
+        cartCount: cartCount,
+        
       });
     } else {
       return res.render("home", {
-        user: null,
-        products: productData
-      });
+                  user: null,
+                  products: productData,
+
+              });
     }
 
   } catch (error) {
@@ -300,6 +305,7 @@ const logout = async (req,res)=>{
 const loadShoppingPage = async (req, res) => {
   try {
     const user = req.session.user;
+    const cartCount = await getCartCount(user?._id);
 
     let cartProductIds = [];
     let wishlistProductIds = [];
@@ -448,7 +454,9 @@ const loadShoppingPage = async (req, res) => {
         ease: "power2.out"
       },
       wishlistProductIds, 
-      cartProductIds,  
+      cartProductIds,
+      cartCount: cartCount,
+        
     });
 
   } catch (error) {

@@ -48,21 +48,19 @@
         background-color: #fff;
         border: 1px solid rgba(0, 0, 0, 0.15);
         border-radius: 0.25rem;
-        display: none; /* Initially hide dropdown */
+        display: none; 
       }
 
       .dropdown-menu.show {
-        display: block; /* Show the dropdown when the 'show' class is added */
+        display: block; 
       }
 
-      /* Optional: Add styling for the dropdown toggle button */
       .dropdown-toggle::after {
-        content: "\f0d7"; /* FontAwesome caret-down icon */
+        content: "\f0d7"; 
         font-family: "FontAwesome";
       }
 
 
-    /* New Arrivals Section Styling */
     .new_product_area {
         padding: 80px 0;
     }
@@ -151,6 +149,33 @@
         object-fit: cover;
     }
 
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+  }
+
+  .cart-count {
+      position: absolute;
+      top: 24px;
+      right: -8px;
+      background: #ff0000;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 10px;
+      min-width: 18px;
+      height: 18px;
+      text-align: center;
+      line-height: 14px;
+      font-weight: bold;     
+      z-index: 1000;
+  }
+
+  .navbar-nav .nav-item .icons {
+      position: relative;
+      padding: 8px;
+  }
+
     </style>
   </head>
 
@@ -193,7 +218,7 @@
       <div class="main_menu">
         <div class="container">
           <nav class="navbar navbar-expand-lg navbar-light w-100">
-            <!-- Brand and toggle get grouped for better mobile display -->
+            
              <div class="logo">
             <a class="navbar-brand logo_h" href="index.html">
               <img src="/img/logo.png" alt="Logo" style="max-height: 95px" />
@@ -212,7 +237,7 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <!-- Collect the nav links, forms, and other content for toggling -->
+           
             <div
               class="collapse navbar-collapse offset w-100"
               id="navbarSupportedContent"
@@ -284,7 +309,6 @@
                     class="nav navbar-nav navbar-right right_nav pull-right align-items-center" style="display: flex;justify-content: end;margin-left: 20px;"
                   >
                     <% if (user) { %>
-                    <!-- Dropdown for logged-in user -->
                     <li class="nav-item dropdown">
                       <a
                         class="nav-link dropdown-toggle"
@@ -302,7 +326,7 @@
                       </div>
                     </li>
                     <% } else { %>
-                    <!-- Show Sign Up & Login when user is not logged in -->
+                    
                     <li class="nav-item">
                       <a
                         href="/signup"
@@ -319,19 +343,15 @@
                     </li>
                     <% } %>
 
-                    <!-- Search Icon -->
-                    <!-- <li class="nav-item">
-                      <a href="#" class="icons">
-                        <i class="ti-search" aria-hidden="true"></i>
-                      </a>
-                    </li> -->
-
                     <li class="nav-item">
-                      <a href="/cart" class="icons">
+                      <a href="/cart" class="icons cart-icon">
                         <i class="ti-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">
+                        <%= typeof cartCount !== 'undefined' ? cartCount : 0 %>
+                      </span>
                       </a>
                     </li>
-
+                                  
                     <li class="nav-item">
                       <a href="/wishlist" class="icons">
                         <i class="ti-heart" aria-hidden="true"></i>
@@ -346,26 +366,33 @@
       </div>
     </header>
 
-    <!-- jQuery (Must come first) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Popper.js (Bootstrap needs this for dropdowns/tooltips) -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 
-    <!-- Bootstrap 4 JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
-      // Toggle dropdown when clicked
-      document
-        .querySelectorAll(".dropdown-toggle")
-        .forEach(function (dropdown) {
-          dropdown.addEventListener("click", function (e) {
-            e.preventDefault();
-            var menu = this.nextElementSibling;
-            menu.classList.toggle("show"); // Toggle 'show' class on the dropdown menu
-          });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded - initializing cart manager');
+    
+      document.querySelectorAll(".dropdown-toggle").forEach(function(dropdown) {
+        dropdown.addEventListener("click", function(e) {
+          e.preventDefault();
+          var menu = this.nextElementSibling;
+          menu.classList.toggle("show");
         });
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!e.target.matches('.dropdown-toggle')) {
+          document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+            menu.classList.remove('show');
+          });
+        }
+      });
+    });
 
     </script>
   </body>

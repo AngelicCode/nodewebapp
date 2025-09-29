@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
+const { getCartCount } = require('../../helpers/cartHelper');
 const Razorpay = require('razorpay');
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -16,6 +17,8 @@ const loadCheckout = async(req,res)=>{
      return res.status(401).json({status:false,message:"User not authenticated"})
     }
 
+    const cartCount = await getCartCount(userId);
+
     const addressDoc = await Address.findOne({userId:userId});
     const addresses = addressDoc?addressDoc.address :[];
 
@@ -28,7 +31,7 @@ const loadCheckout = async(req,res)=>{
     res.render("checkout",{
       addresses,
       cartItems: cart.items,
-      
+      cartCount: cartCount,
     });
 
   } catch (error) {
@@ -261,7 +264,8 @@ const placeOrder = async(req,res)=>{
          return res.json({
             status: true,
             message: 'Order placed successfully',
-            orderId:  newOrder._id
+            orderId:  newOrder._id,
+      
         });        
 
   } catch (error) {
@@ -400,7 +404,7 @@ const verifyRazorpayPayment = async (req, res) => {
     return res.json({
       status: true,
       message: 'Order placed successfully',
-      orderId: newOrder._id
+      orderId: newOrder._id,
     });
 
   } catch (error) {

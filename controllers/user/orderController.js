@@ -3,11 +3,14 @@ const User = require("../../models/userSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Product = require("../../models/productSchema");
+const { getCartCount } = require('../../helpers/cartHelper');
+const { HTTP_STATUS, getMessage } = require('../../helpers/httpStatus');
 
 const orderSuccess = async (req, res) => {
     try {
         const orderId = req.params.id;
         const userId = req.session.user._id;
+        const cartCount = await getCartCount(userId);
 
         if (!orderId) {
             return res.redirect('/');
@@ -24,7 +27,8 @@ const orderSuccess = async (req, res) => {
         }
 
         res.render('order-success', {
-            order
+            order,
+            cartCount,
         });
 
     } catch (error) {
@@ -36,6 +40,7 @@ const orderSuccess = async (req, res) => {
 const getOrders = async(req,res)=>{
   try {
     const userId = req.session.user._id;
+    const cartCount = await getCartCount(userId);
     const orders = await Order.find({userId})
         .sort({createdAt:-1})
         .populate({
@@ -46,7 +51,8 @@ const getOrders = async(req,res)=>{
         res.render("profile",{
           orders,
           user:req.session.user,
-          userAddress:req.session.userAddress || {}
+          userAddress:req.session.userAddress || {},
+          cartCount: cartCount,
         });
 
   } catch (error) {
@@ -59,6 +65,7 @@ const getOrderDetails = async (req,res)=>{
   try {
     const orderId = req.params.id;
     const userId = req.session.user._id;
+    const cartCount = await getCartCount(userId);
 
     const order = await Order.findOne({
       _id:orderId,
@@ -90,7 +97,8 @@ const getOrderDetails = async (req,res)=>{
     res.render("order-details",{
       order,
       user:req.session.user,
-      statusSummary
+      statusSummary,
+      cartCount: cartCount,
     });
 
   } catch (error) {

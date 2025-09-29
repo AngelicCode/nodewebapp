@@ -2,22 +2,31 @@ const express = require("express");
 const path = require("path");
 const app = express();
 
-        app.use((req, res, next) => {
-          res.setHeader("Access-Control-Allow-Origin", "https://31177eb8c583.ngrok-free.app");
-          next();
-        });
-    
+const {
+  corsMiddleware,
+  nocacheMiddleware,
+  cacheControlMiddleware,
+  sessionMiddleware,
+  userSessionMiddleware,
+  uploadsMiddleware,
+  productImagesMiddleware,
+  imageErrorMiddleware,
+  setLocals
+} = require("./middlewares");
+
 const env = require("dotenv").config();
-const session = require("express-session");
+
 const passport = require("./config/passport");
 const db = require("./config/db");
 const userRouter = require("./routes/userRouter");
 const adminRouter = require("./routes/adminRouter");
 const { pageerror } = require("./controllers/admin/adminController");
-const nocache = require("nocache");
-const fs = require("fs");
-const {setLocals} = require('./middlewares/localsMiddleware');
 
+const fs = require("fs");
+
+
+// Use middlewares
+app.use(corsMiddleware);
 app.use(setLocals);
 
 
@@ -36,24 +45,11 @@ db();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    maxAge: 72 * 60 * 60 * 1000,
-  }
-}));
-
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(nocache());
-app.use((req, res, next) => {
-  res.set("cache-control", "no-store");
-  next();
-});
+app.use(nocacheMiddleware);
+app.use(cacheControlMiddleware);
 
 app.set("view engine", "ejs");
 app.set("views", [
@@ -62,34 +58,14 @@ app.set("views", [
 ]);
 
 app.use(express.static(path.join(__dirname, "public")));
-
-app.use((req, res, next) => {
-  res.locals.user = req.session.user || null;
-  next();
-});
+app.use(userSessionMiddleware);
 
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
-
-const uploadsDir = path.join(__dirname, 'public', 'uploads', 'product-images');
-
-app.use('/uploads/product-images', express.static(uploadsDir, {
-  fallthrough: false,
-  setHeaders: (res, filePath) => {
-    res.set('Cache-Control', 'public, max-age=31536000');
-  }
-}));
-
-app.use('/uploads/product-images', (err, req, res, next) => {
-  if (err.status === 404) {
-    console.log('Missing image requested:', req.path);
-    res.status(404).send();
-  } else {
-    next(err);
-  }
-});
+app.use("/uploads", uploadsMiddleware);
+app.use('/uploads/product-images', productImagesMiddleware);
+app.use('/uploads/product-images', imageErrorMiddleware);
 
 app.get("/pageerror", pageerror);
 

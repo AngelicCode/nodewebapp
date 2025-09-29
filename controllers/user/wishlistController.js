@@ -2,11 +2,13 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Wishlist = require("../../models/wishlistSchema");
 const Cart = require("../../models/cartSchema");
+const { getCartCount } = require('../../helpers/cartHelper');
 
 const loadWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
     if (!userId) return res.redirect('/login');
+    const cartCount = await getCartCount(userId);
 
     const page = parseInt(req.query.page) || 1;
     const limit = 3;
@@ -52,6 +54,8 @@ const loadWishlist = async (req, res) => {
       currentPage: page,
       totalPages,
       query: req.query || {},
+      cartCount: cartCount,
+      
     });
 
   } catch (error) {
