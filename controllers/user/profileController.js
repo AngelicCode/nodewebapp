@@ -473,6 +473,54 @@ const verifyForgotPassOtp = async (req,res)=>{
 
   }
 
+  const getEditProfilePage = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
+    res.render("edit-profile", {
+      user: userData
+    });
+  } catch (error) {
+    console.error("Error loading edit profile page:", error);
+    res.redirect("/pageNotFound");
+  }
+}
+
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { name, phone } = req.body;
+    
+    if (phone && !/^\d{10}$/.test(phone)) {
+      return res.render("edit-profile", {
+        user: { name, phone },
+        message: "Please enter a valid 10-digit phone number"
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        name: name,
+        phone: phone 
+      },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      res.redirect("/userProfile");
+    } else {
+      res.render("edit-profile", {
+        user: { name, phone },
+        message: "Failed to update profile"
+      });
+    }
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.redirect("/pageNotFound");
+  }
+}
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,getNewEmailPage,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,getNewEmailPage,updateProfile,getEditProfilePage,
 }
