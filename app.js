@@ -58,6 +58,7 @@ app.set("views", [
 ]);
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads/profile-photos", express.static(path.join(__dirname, "public/uploads/profile-photos")));
 app.use(userSessionMiddleware);
 
 app.use("/", userRouter);

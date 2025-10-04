@@ -20,6 +20,10 @@ const userSchema = new Schema({
     default: null
 
   },
+  profilePhoto: {
+    type: String,
+    default: null
+  },
   googleId: {
     type: String,
    // unique:true

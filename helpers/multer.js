@@ -16,6 +16,12 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === 'logo' || file.fieldname.includes('logo')) {
       cb(null, productImagesDir);
+    } else if (file.fieldname === 'profilePhoto') {
+      const profilePhotosDir = path.resolve(__dirname, '..', 'public', 'uploads', 'profile-photos');
+      if (!fs.existsSync(profilePhotosDir)) {
+        fs.mkdirSync(profilePhotosDir, { recursive: true });
+      }
+      cb(null, profilePhotosDir);
     } else {
       cb(null, tempUploadDir);
     }
@@ -25,11 +31,17 @@ const storage = multer.diskStorage({
     const mimeToExt = {
       'image/jpeg': '.jpg',
       'image/png': '.png',
-      'image/gif': '.gif'
+      'image/gif': '.gif',
+      'image/webp': '.webp'
     };
     const ext = mimeToExt[file.mimetype] || '.jpg';
     
-    const prefix = (file.fieldname === 'logo' || file.fieldname.includes('logo')) ? 'logo-' : 'temp-';
+    let prefix = 'temp-';
+    if (file.fieldname === 'logo' || file.fieldname.includes('logo')) {
+      prefix = 'logo-';
+    } else if (file.fieldname === 'profilePhoto') {
+      prefix = 'profile-';
+    }
     cb(null, `${prefix}${uniqueSuffix}${ext}`);
   }
 });
@@ -51,5 +63,6 @@ const upload = multer({
     files: 4
   }
 });
+
 
 module.exports = upload;

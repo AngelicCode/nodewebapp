@@ -5,6 +5,8 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const { getCartCount } = require('../../helpers/cartHelper');
 const session = require("express-session");
+const { HTTP_STATUS } = require("../../helpers/httpStatus");
+
 
 // const { resendOtp } = require("./userController");
 
@@ -521,6 +523,74 @@ const updateProfile = async (req, res) => {
   }
 }
 
+const updateProfilePhoto = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    
+    if (!req.file) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: "No file uploaded"
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePhoto: req.file.filename },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: "Profile photo updated successfully",
+        profilePhoto: req.file.filename
+      });
+    } else {
+      res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+  } catch (error) {
+    console.error("Error updating profile photo:", error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "An error occurred while updating profile photo"
+    });
+  }
+};
+
+const removeProfilePhoto = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePhoto: null },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: "Profile photo removed successfully"
+      });
+    } else {
+      res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+  } catch (error) {
+    console.error("Error removing profile photo:", error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "An error occurred while removing profile photo"
+    });
+  }
+};
+
 module.exports = {
-  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,getNewEmailPage,updateProfile,getEditProfilePage,
+  getForgotPassPage,forgotEmailValid,verifyForgotPassOtp,getResetPassPage,resendOtp,postNewPassword,userProfile,changeEmail,changeEmailValid,verifyEmailOtp,updateEmail,changePassword,changePasswordValid,verifyChangePasswordOtp,addAddress,postAddAddress,editAddress,postEditAddress,deleteAddress,getNewEmailPage,updateProfile,getEditProfilePage,updateProfilePhoto,removeProfilePhoto,
 }

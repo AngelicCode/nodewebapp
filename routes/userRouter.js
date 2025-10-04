@@ -10,6 +10,7 @@ const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
 const orderController = require("../controllers/user/orderController");
 const { validateCheckoutItems } = require("../middlewares/inventoryValidation");
+const upload = require("../helpers/multer");
 
 
 router.get("/pageNotFound",userController.pageNotFound);
@@ -45,7 +46,8 @@ router.post("/change-password",userAuth,profileController.changePasswordValid);
 router.post("/verify-changepassword-otp",userAuth,profileController.verifyChangePasswordOtp);
 router.get("/new-email", userAuth, profileController.getNewEmailPage);
 router.get("/edit-profile", userAuth, profileController.getEditProfilePage);
-router.post("/update-profile", userAuth, profileController.updateProfile);
+router.post("/update-profile-photo", userAuth, upload.single('profilePhoto'), profileController.updateProfilePhoto);
+router.post("/remove-profile-photo", userAuth, profileController.removeProfilePhoto);
 
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);
