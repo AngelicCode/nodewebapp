@@ -99,8 +99,6 @@ const addToCart = async (req, res) => {
       return res.status(401).json({ status: "User not authenticated" });
     }
 
-    const cartCount = await getCartCount(userId);
-
     const product = await Product.findById(productId)
       .populate('category')
       .populate('brand');
@@ -148,6 +146,7 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
+    const cartCount = await getCartCount(userId);
     await Wishlist.updateOne(
       { userId },
       { $pull: { products: { productId: productId } } }
@@ -155,6 +154,7 @@ const addToCart = async (req, res) => {
 
     res.json({ 
       status: true,
+      cartCount:cartCount,
     });
 
   } catch (error) {
@@ -170,8 +170,6 @@ const changeQuantity = async (req, res) => {
     const { productId, count } = req.body;
 
     if (!userId) return res.status(401).json({ status: false, message: "Unauthorized" });
-
-    const cartCount = await getCartCount(userId);
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ status: false, message: "Cart not found" });
@@ -218,6 +216,7 @@ const changeQuantity = async (req, res) => {
     cart.items[itemIndex].totalPrice = newQuantity * cart.items[itemIndex].price;
 
     await cart.save();
+    const cartCount = await getCartCount(userId);
 
     const productIds = cart.items.map(i => i.productId);
     const products = await Product.find({ _id: { $in: productIds } })
@@ -246,6 +245,7 @@ const changeQuantity = async (req, res) => {
       totalPrice: cart.items[itemIndex].totalPrice,
       grandTotal,
       stock: product.quantity,
+      cartCount: cartCount,
     });
   } catch (err) {
     console.error(err);
@@ -261,17 +261,18 @@ const deleteProduct = async(req,res)=>{
       res.redirect("/login");
     }
 
-    const cartCount = await getCartCount(userId);
     const cart = await Cart.findOne({userId});
     const itemIndex = cart.items.findIndex((item)=>item.productId.toString() === productId);
 
     cart.items.splice(itemIndex,1);
     await cart.save();
+    const cartCount = await getCartCount(userId);
 
     if (req.headers['content-type'] === 'application/json' || 
         req.headers.accept?.includes('application/json')) {
       return res.json({ 
         success: true, 
+        cartCount: cartCount,
       });
     } else {
     return res.redirect("/cart");

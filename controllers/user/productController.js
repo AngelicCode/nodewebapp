@@ -149,6 +149,7 @@ const detailspageAddToCart = async(req,res)=>{
     }
 
     await cart.save();
+    const cartCount = await getCartCount(userId);
     await Wishlist.updateOne(
       { userId },
       { $pull: { products: { productId: productId } } }
@@ -156,7 +157,8 @@ const detailspageAddToCart = async(req,res)=>{
 
     res.json({ 
        status: true,   
-       message: "Product added to cart" });
+       message: "Product added to cart",
+       cartCount:cartCount });
 
   } catch (error) {
     console.error("Add to Cart error:", error);

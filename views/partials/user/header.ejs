@@ -394,6 +394,18 @@
       });
     });
 
+    function updateCartCount(count) {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = count;
+        cartCountElement.style.display = count > 0 ? 'block' : 'none';
+    }
+}
+
+document.addEventListener('cartUpdated', function(e) {
+    updateCartCount(e.detail.count);
+});
+
     </script>
   </body>
 </html>

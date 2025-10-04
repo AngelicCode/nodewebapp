@@ -561,7 +561,7 @@
      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Add smooth animations
+
         window.addEventListener('load', function() {
             const rows = document.querySelectorAll('.table tbody tr');
             rows.forEach((row, index) => {
@@ -569,10 +569,8 @@
             });
         });
 
-        // Add button click effects
         document.querySelectorAll('.btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
-                // Create ripple effect
                 const ripple = document.createElement('span');
                 const rect = this.getBoundingClientRect();
                 const size = Math.max(rect.height, rect.width);
@@ -592,7 +590,6 @@
             });
         });
 
-        // Add CSS for ripple effect
         const style = document.createElement('style');
         style.textContent = `
             .btn {
@@ -634,6 +631,20 @@
 
         }
 
+        function updateCartCount(count) {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = count;
+        cartCountElement.style.display = count > 0 ? 'block' : 'none';
+    }
+    
+    const allCartCounts = document.querySelectorAll('.cart-count');
+    allCartCounts.forEach(element => {
+        element.textContent = count;
+        element.style.display = count > 0 ? 'block' : 'none';
+    });
+}
+
     document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.add-to-cart-btn').forEach(function(button) {
         button.addEventListener("click", async function(e) {
@@ -668,21 +679,26 @@
                 }
 
                 if (data.status === true) {
-                    Swal.fire({
-                        icon: "success",
-                        title: "Added to Cart",
-                        text: "Product moved to cart and removed from wishlist.",
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
-                    $(row).fadeOut(500, function() { row.remove(); });
-                } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: data.message || "Could not add product to cart."
-                    });
+
+                if (data.cartCount !== undefined) {
+                    updateCartCount(data.cartCount);
                 }
+                
+                Swal.fire({
+                    icon: "success",
+                    title: "Added to Cart",
+                    text: "Product moved to cart and removed from wishlist.",
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+                $(row).fadeOut(500, function() { row.remove(); });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.message || "Could not add product to cart."
+                });
+            }
             } catch (err) {
                 Swal.fire({
                     icon: "error",
