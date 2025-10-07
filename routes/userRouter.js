@@ -101,6 +101,7 @@ router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAd
 router.post("/place-order",userAuth,validateCheckoutItems, checkoutController.placeOrder);
 router.post("/verify-payment", userAuth, checkoutController.verifyRazorpayPayment);
 router.get("/order-failure", userAuth,checkoutController.orderFailure);
+router.post("/retry-payment", userAuth, checkoutController.handleFailedPayment);
 
 //Order Management
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);

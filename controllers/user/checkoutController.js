@@ -9,6 +9,7 @@ const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+const crypto = require('crypto');
 
 const loadCheckout = async(req,res)=>{
   try {
@@ -279,8 +280,18 @@ const placeOrder = async(req,res)=>{
 
 const createRazorpayOrder = async (amount, currency = 'INR') => {
     try {
+      if (!amount || isNaN(amount) || amount <= 0) {
+            throw new Error('Invalid amount provided');
+        }
+
+        const amountInPaise = Math.round(amount * 100);
+        
+        if (amountInPaise < 100) {
+            throw new Error('Amount must be at least 1 INR');
+        }
+
         const options = {
-            amount: amount * 100, 
+            amount: amountInPaise, 
             currency: currency,
             receipt: `receipt_${Date.now()}`
         };
@@ -304,19 +315,20 @@ const verifyRazorpayPayment = async (req, res) => {
 
     const userId = req.session.user._id;
     
-    const crypto = require('crypto');
     const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
     hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
     const generatedSignature = hmac.digest('hex');
     
     if (generatedSignature !== razorpay_signature) {
-      return res.status(400).json({
+
+      return res.json({
         status: false,
-        message: 'Payment verification failed'
+        message: 'Payment verification failed',
+        redirectUrl: `/order-failure?reason=verification_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`
       });
     }
     
-    const { addressId, paymentMethod, subtotal, shipping, tax, total } = orderData;
+    const { addressId, subtotal, shipping, tax, total } = orderData;
     
     const addressDoc = await Address.findOne({ 
       userId: userId,
@@ -362,7 +374,33 @@ const verifyRazorpayPayment = async (req, res) => {
       quantity: item.quantity
     }));
 
-    const newOrder = new Order({
+    let order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+
+    if (order) {
+      order.orderItems = orderItems;
+      order.shippingAddress = {
+        addressType: selectedAddress.addressType,
+        name: selectedAddress.name,
+        city: selectedAddress.city,
+        landMark: selectedAddress.landMark,
+        state: selectedAddress.state,
+        pincode: selectedAddress.pincode,
+        phone: selectedAddress.phone,
+        altPhone: selectedAddress.altPhone
+      };
+      order.total = parseFloat(subtotal);
+      order.shipping = parseFloat(shipping);
+      order.tax = parseFloat(tax);
+      order.finalAmount = parseFloat(total);
+      order.status = 'confirmed';
+      order.paymentStatus = 'paid';
+      order.razorpayPaymentId = razorpay_payment_id;
+      order.paidAt = new Date();
+      await order.save();
+
+    } else {
+
+    order = new Order({
       userId: userId,
       addressId: addressId,
       shippingAddress: {
@@ -378,16 +416,19 @@ const verifyRazorpayPayment = async (req, res) => {
       paymentMethod: 'razorpay',
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
       orderItems: orderItems,
       total: parseFloat(subtotal),
       shipping: parseFloat(shipping),
       tax: parseFloat(tax),
       finalAmount: parseFloat(total),
       status: 'confirmed',
-      paymentStatus: 'paid'
+      paymentStatus: 'paid',
+      paidAt: new Date()
     });
 
-    await newOrder.save();
+    await order.save();
+  }
 
     for (const item of validatedItems) {
       await Product.findByIdAndUpdate(
@@ -404,7 +445,7 @@ const verifyRazorpayPayment = async (req, res) => {
     return res.json({
       status: true,
       message: 'Order placed successfully',
-      orderId: newOrder._id,
+      orderId: order._id,
     });
 
   } catch (error) {
@@ -416,33 +457,97 @@ const verifyRazorpayPayment = async (req, res) => {
   }
 };
 
-const orderFailure = async(req,res)=>{
+const orderFailure = async (req, res) => {
   try {
     const reason = req.query.reason || 'unknown';    
+
     const reasonMessages = {
-        'payment_failed': 'Your payment could not be processed.',
-        'verification_failed': 'Payment verification failed.',
-        'server_error': 'A server error occurred during payment processing.',
-        'insufficient_funds': 'Insufficient funds in your account.',
-        'card_declined': 'Your card was declined by the bank.',
-        'unknown': 'An unknown error occurred during payment.'
+      'payment_failed': 'Your payment could not be processed.',
+      'verification_failed': 'Payment verification failed.',
+      'server_error': 'A server error occurred during payment processing.',
+      'insufficient_funds': 'Insufficient funds in your account.',
+      'card_declined': 'Your card was declined by the bank.',
+      'unknown': 'An unknown error occurred during payment.'
     };
-    
+
     const errorMessage = reasonMessages[reason] || reasonMessages['unknown'];
-    
+
+    const orderAmount = req.query.amount ? parseFloat(req.query.amount) : 0;
+
+    let orderData = null;
+    if (req.query.orderData) {
+      try {
+        orderData = JSON.parse(req.query.orderData);
+      } catch (err) {
+        console.warn('Invalid orderData JSON:', err);
+      }
+    }
+
+    console.log('Received orderData:', orderData);
+
     res.render("order-failure", {
-        errorMessage: errorMessage,
-        errorReason: reason
+      errorMessage,
+      errorReason: reason,
+      orderAmount,
+      orderData,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      user: req.session.user || {}
     });
 
   } catch (error) {
-    console.error('Error verifying payment:', error);
+    console.error('Error rendering order failure page:', error);
     res.redirect("/pageNotFound");
-
   }
-}
+};
 
+const handleFailedPayment = async (req, res) => {
+  try {
+    const { orderData } = req.body;
+    const userId = req.session.user._id;
+
+    if (!orderData) {
+      return res.status(400).json({
+        status: false,
+        message: 'Invalid order data'
+      });
+    }
+
+    const totalAmount = parseFloat(orderData.total);
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      return res.status(400).json({
+        status: false,
+        message: 'Invalid or missing total amount'
+      });
+    }
+
+    const options = {
+      amount: Math.round(totalAmount * 100),
+      currency: 'INR',
+      receipt: `receipt_order_retry_${Date.now()}`
+    };
+
+    const razorpayOrder = await razorpayInstance.orders.create(options);
+
+    return res.json({
+      status: true,
+      order: {
+        id: razorpayOrder.id,
+        amount: options.amount,
+        currency: options.currency
+      },
+      orderData: orderData,
+      key_id: process.env.RAZORPAY_KEY_ID
+    });
+
+  } catch (error) {
+    console.error('Failed payment retry error:', error);
+    return res.status(500).json({
+      status: false,
+      message: 'Failed to process retry payment'
+    });
+  }
+};
 
 module.exports = {
-  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,orderFailure,
+  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,orderFailure,handleFailedPayment ,
 }

@@ -169,11 +169,6 @@ const orderSchema = new Schema({
       default: null
    },
 
-   adminReturnStatus:{
-      type:String,
-      default:null
-   },
-
    invoiceDate: {
       type: Date,
       default: Date.now

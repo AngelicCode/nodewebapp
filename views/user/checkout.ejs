@@ -848,183 +848,328 @@
     </div>
 
     <script>
-        const addresses = <%- JSON.stringify(addresses) %>;
+    const addresses = <%- JSON.stringify(addresses) %>;
 
-        function openAddAddressModal() {
-            document.getElementById('addAddressModal').style.display = 'flex';
-            document.getElementById('addAddressForm').reset();
-        }
+    function openAddAddressModal() {
+        document.getElementById('addAddressModal').style.display = 'flex';
+        document.getElementById('addAddressForm').reset();
+    }
 
-        function openEditAddressModal(addressId) {
-            const address = addresses.find(addr => addr._id == addressId);
-            if (address) {
-                document.getElementById('edit-id').value = address._id;
-                document.getElementById('edit-name').value = address.name || '';
-                document.getElementById('edit-phone').value = address.phone || '';
-                document.getElementById('edit-alt-phone').value = address.altPhone || '';
-                document.getElementById('edit-address-type').value = address.addressType || 'Home';
-                document.getElementById('edit-landmark').value = address.landMark || '';
-                document.getElementById('edit-city').value = address.city || '';
-                document.getElementById('edit-state').value = address.state || '';
-                document.getElementById('edit-pincode').value = address.pincode || '';
-                document.getElementById('edit-country').value = address.country || 'United States';
-                
-                
-                document.getElementById('editAddressModal').style.display = 'flex';
-            } else {
-                console.error('Address not found:', addressId);
-                alert('Error: Address not found.');
-            }
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        document.getElementById('addAddressForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    function openEditAddressModal(addressId) {
+        const address = addresses.find(addr => addr._id == addressId);
+        if (address) {
+            document.getElementById('edit-id').value = address._id;
+            document.getElementById('edit-name').value = address.name || '';
+            document.getElementById('edit-phone').value = address.phone || '';
+            document.getElementById('edit-alt-phone').value = address.altPhone || '';
+            document.getElementById('edit-address-type').value = address.addressType || 'Home';
+            document.getElementById('edit-landmark').value = address.landMark || '';
+            document.getElementById('edit-city').value = address.city || '';
+            document.getElementById('edit-state').value = address.state || '';
+            document.getElementById('edit-pincode').value = address.pincode || '';
+            document.getElementById('edit-country').value = address.country || 'United States';
             
-            const form = e.target;
-            const formData = new FormData(form);
-            const submitBtn = form.querySelector('button[type="submit"]');
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Saving...';
-            
-            try {
-                const response = await fetch('/checkoutAddAddress', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(Object.fromEntries(formData))
-                });
-                
-                const result = await response.json();
-                
-                if (!result.status) {
-                    throw new Error(result.message);
+            document.getElementById('editAddressModal').style.display = 'flex';
+        } else {
+            console.error('Address not found:', addressId);
+            alert('Error: Address not found.');
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function renderAddresses() {
+        const addressList = document.getElementById('address-list');
+        
+        if (addresses.length > 0) {
+            let html = '';
+            addresses.forEach((addr, idx) => {
+                html += `
+                <div class="address-item">
+                    <input type="radio" name="selectedAddress" id="addr-${idx}" value="${addr._id}" ${idx === 0 ? "checked" : ""}>
+                    <label for="addr-${idx}">
+                        <strong>${addr.name}</strong>
+                        ${addr.addressType}, ${addr.landMark}
+                        ${addr.city}, ${addr.state} - ${addr.pincode}
+                        Phone: ${addr.phone} ${addr.altPhone ? `| Alt: ${addr.altPhone}` : ''}
+                        <div class="address-actions">
+                            <button class="edit-address-btn" onclick="openEditAddressModal('${addr._id}')">Edit</button>
+                        </div>
+                    </label>
+                </div>
+                `;
+            });
+            addressList.innerHTML = html;
+        } else {
+            addressList.innerHTML = '<p>No saved addresses found. Please add a new address.</p>';
+        }
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+
+    async function initiateRazorpayPayment(orderData, razorpayOrder) {
+        const options = {
+            key: '<%= process.env.RAZORPAY_KEY_ID %>', 
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "Quick Sip",
+            description: "Order Payment",
+            order_id: razorpayOrder.id,
+
+            handler: async function(response) {
+                try {
+                    const verifyResponse = await fetch('/verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            orderData: orderData
+                        })
+                    });
+
+                    const result = await verifyResponse.json();
+
+                    if (result.status) {
+                        updateCartAfterCheckout();
+                        window.location.href = `/order-success/${result.orderId}`;
+                    } else {
+                        window.location.href = `/order-failure?reason=verification_failed&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                    }
+
+                } catch (error) {
+                    console.error('Payment verification error:', error);
+                    window.location.href = `/order-failure?reason=server_error&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
                 }
-                
-                closeModal('addAddressModal');
-                window.location.href = '/checkout'; 
-                
-            } catch (error) {
-                alert(error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Save Address';
-            }
-        });
+            },
 
-        document.getElementById('editAddressForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const form = e.target;
-        const formData = new FormData(form);
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Updating...';
-        
+            prefill: {
+                name: "<%= req.session.user.name %>",
+                email: "<%= req.session.user.email %>",
+                contact: "" 
+            },
+
+            theme: { color: "#71cd14" }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+        rzp.on('payment.failed', function(response) {
+            const errorReason = response.error.description || 'payment_failed';
+            
+            window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+        });
+    }
+
+    async function processPayment() {
+        const btn = document.querySelector('.btn-primary');
+        btn.innerHTML = '⏳ Processing...';
+        btn.disabled = true;
+
         try {
-            const name = formData.get('name').trim();
-            const phone = formData.get('phone').trim();
-            const altPhone = formData.get('altPhone')?.trim();
-            const city = formData.get('city').trim();
-            const state = formData.get('state').trim();
-            const pincode = formData.get('pincode').trim();
-            const landMark = formData.get('landMark').trim();
-            const addressType = formData.get('addressType').trim();
-            
-            if (!name || !phone || !city || !state || !pincode || !landMark || !addressType) {
-                throw new Error('Please fill all required fields');
+            const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
+            const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
+
+            if (!addressId) {
+                throw new Error('Please select a shipping address');
             }
-            
-            if (!/^[A-Za-z ]{2,}$/.test(name)) {
-                throw new Error('Name should contain only letters and spaces (min 2 characters)');
-            }
-            
-            if (!/^\d{10}$/.test(phone)) {
-                throw new Error('Phone number must be 10 digits');
-            }
-            
-            if (altPhone && !/^\d{10}$/.test(altPhone)) {
-                throw new Error('Alternate phone must be 10 digits');
-            }
-            
-            if (!/^\d{6}$/.test(pincode)) {
-                throw new Error('Pincode must be 6 digits');
-            }
-            
-            const response = await fetch(`/checkoutEditAddress/${formData.get('id')}`, {
-                method: 'PUT',
+
+            const orderData = {
+                addressId: addressId,
+                paymentMethod: paymentMethod,
+                cartItems: <%- JSON.stringify(cartItems) %>,
+                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
+                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
+                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
+                total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
+            };
+
+            // // Handle card payment (from first function)
+            // if (paymentMethod === 'card') {
+            //     const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            //     const expiry = document.getElementById('expiry').value;
+            //     const cvv = document.getElementById('cvv').value;
+
+            //     if (!cardNumber || !expiry || !cvv) {
+            //         throw new Error('Please enter complete card details');
+            //     }
+
+            //     orderData.paymentDetails = {
+            //         cardNumber: cardNumber,
+            //         expiry: expiry,
+            //         cvv: cvv
+            //     };
+            // }
+
+            const response = await fetch('/place-order', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(Object.fromEntries(formData))
+                body: JSON.stringify(orderData)
             });
-            
+
             const result = await response.json();
-            
+
             if (!result.status) {
-                throw new Error(result.message || 'Failed to update address');
+                window.location.href = '/order-failure?reason=order_creation_failed';
+                return;
             }
-            
-            closeModal('editAddressModal');
-            window.location.reload(); 
-            
-        } catch (error) {
-            alert(error.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Update Address';
-        }
-    });
 
-        function renderAddresses() {
-            const addressList = document.getElementById('address-list');
-            
-            if (addresses.length > 0) {
-                let html = '';
-                addresses.forEach((addr, idx) => {
-                    html += `
-                    <div class="address-item">
-                        <input type="radio" name="selectedAddress" id="addr-${idx}" value="${addr._id}" ${idx === 0 ? "checked" : ""}>
-                        <label for="addr-${idx}">
-                            <strong>${addr.name}</strong>
-                            ${addr.addressType}, ${addr.landMark}
-                            ${addr.city}, ${addr.state} - ${addr.pincode}
-                            Phone: ${addr.phone} ${addr.altPhone ? `| Alt: ${addr.altPhone}` : ''}
-                            <div class="address-actions">
-                                <button class="edit-address-btn" onclick="openEditAddressModal('${addr._id}')">Edit</button>
-                            </div>
-                        </label>
-                    </div>
-                    `;
-                });
-                addressList.innerHTML = html;
+            if (paymentMethod === 'razorpay') {
+                await initiateRazorpayPayment(orderData, result.razorpayOrder);
             } else {
-                addressList.innerHTML = '<p>No saved addresses found. Please add a new address.</p>';
+                if (!result.orderId) {
+                    window.location.href = '/order-failure?reason=order_id_missing';
+                    return;
+                }
+                updateCartAfterCheckout();
+                window.location.href = `/order-success/${result.orderId}`;
             }
+
+        } catch (error) {
+            console.error('Order error:', error);
+            window.location.href = '/order-failure?reason=network_error';
+        }
+    }
+
+    function updateCartAfterCheckout() {
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+            cartCountElement.textContent = '0';
+            cartCountElement.style.display = 'none'; 
+        }
+        
+        if (window.cartManager) {
+            window.cartManager.clearLocalCart();
+        }
+        
+        localStorage.removeItem('userCart');
+    }
+
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.animate-in');
+        elements.forEach((el, index) => {
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+
+        const addAddressForm = document.getElementById('addAddressForm');
+        const editAddressForm = document.getElementById('editAddressForm');
+
+        if (addAddressForm) {
+            addAddressForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Saving...';
+                
+                try {
+                    const response = await fetch('/checkoutAddAddress', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Object.fromEntries(formData))
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!result.status) {
+                        throw new Error(result.message);
+                    }
+                    
+                    closeModal('addAddressModal');
+                    window.location.href = '/checkout'; 
+                    
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Address';
+                }
+            });
         }
 
-        document.addEventListener('change', function(e) {
-            if (e.target.name === 'selectedAddress') {
-                console.log('Selected address:', e.target.value);
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.animate-in');
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 200);
+        if (editAddressForm) {
+            editAddressForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Updating...';
+                
+                try {
+                    const name = formData.get('name').trim();
+                    const phone = formData.get('phone').trim();
+                    const altPhone = formData.get('altPhone')?.trim();
+                    const city = formData.get('city').trim();
+                    const state = formData.get('state').trim();
+                    const pincode = formData.get('pincode').trim();
+                    const landMark = formData.get('landMark').trim();
+                    const addressType = formData.get('addressType').trim();
+                    
+                    if (!name || !phone || !city || !state || !pincode || !landMark || !addressType) {
+                        throw new Error('Please fill all required fields');
+                    }
+                    
+                    if (!/^[A-Za-z ]{2,}$/.test(name)) {
+                        throw new Error('Name should contain only letters and spaces (min 2 characters)');
+                    }
+                    
+                    if (!/^\d{10}$/.test(phone)) {
+                        throw new Error('Phone number must be 10 digits');
+                    }
+                    
+                    if (altPhone && !/^\d{10}$/.test(altPhone)) {
+                        throw new Error('Alternate phone must be 10 digits');
+                    }
+                    
+                    if (!/^\d{6}$/.test(pincode)) {
+                        throw new Error('Pincode must be 6 digits');
+                    }
+                    
+                    const response = await fetch(`/checkoutEditAddress/${formData.get('id')}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Object.fromEntries(formData))
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!result.status) {
+                        throw new Error(result.message || 'Failed to update address');
+                    }
+                    
+                    closeModal('editAddressModal');
+                    window.location.reload(); 
+                    
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Update Address';
+                }
             });
-            
-        });
+        }
 
         document.querySelectorAll('.payment-method').forEach(method => {
             method.addEventListener('click', function() {
@@ -1054,197 +1199,29 @@
             });
         });
 
-        // function applyDiscount() {
-        //     const discountInput = document.querySelector('.discount-input');
-        //     const discountCode = discountInput.value.trim();
-            
-        //     if (!discountCode) {
-        //         Swal.fire({
-        //             icon: 'warning',
-        //             title: 'Missing Discount Code',
-        //             text: 'Please enter a discount code',
-        //             confirmButtonText: 'OK',
-        //             confirmButtonColor: '#71cd14'
-        //         });
-        //         return;
-        //     }
-            
-        //     // In a real app, you would validate the discount code with your backend
-        //     const discountRow = document.getElementById('discount-row');
-        //     const discountAmount = document.getElementById('discount');
-        //     discountRow.style.display = 'flex';
-        //     discountAmount.textContent = '-₹10.00';
-            
-        //     const currentTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
-        //     document.getElementById('total').textContent = '₹' + (currentTotal - 10).toFixed(2);
-            
-        //     discountInput.value = '';
-        // }
-
-
-        function goBack() {
-            window.history.back();
-        }
-
-        document.getElementById('cardNumber').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'selectedAddress') {
+                console.log('Selected address:', e.target.value);
+            }
         });
 
-        document.getElementById('expiry').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
-        });
+        // Card input formatting (commented out but kept for reference)
+        // document.getElementById('cardNumber').addEventListener('input', function(e) {
+        //     e.target.value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+        // });
 
+        // document.getElementById('expiry').addEventListener('input', function(e) {
+        //     e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
+        // });
+
+        // Modal close on background click
         window.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
         });
-
-async function initiateRazorpayPayment(orderData, razorpayOrder) {
-    const options = {
-        key: '<%= process.env.RAZORPAY_KEY_ID %>', 
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: "Quick Sip",
-        description: "Order Payment",
-        order_id: razorpayOrder.id,
-        handler: async function(response) {
-            try {
-                const verifyResponse = await fetch('/verify-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature,
-                        orderData: orderData
-                    })
-                });
-                
-                const result = await verifyResponse.json();
-                
-                if (result.status) {
-                    updateCartAfterCheckout();
-                    window.location.href = `/order-success/${result.orderId}`;
-                } else {
-                    
-                    window.location.href = '/order-failure?reason=verification_failed';
-                }
-            } catch (error) {
-                console.error('Payment verification error:', error);
-                window.location.href = '/order-failure?reason=server_error';
-            }
-        },
-        prefill: {
-            name: "<%= req.session.user.name %>",
-            email: "<%= req.session.user.email %>",
-            contact: "" 
-        },
-        theme: {
-            color: "#71cd14"
-        }
-    };
-    
-    const rzp = new Razorpay(options);
-    rzp.open();
-    
-    rzp.on('payment.failed', function(response) {
-        
-        const errorReason = response.error.description || 'payment_failed';
-        window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}`;
     });
-}
-
-    async function processPayment() {
-    const btn = document.querySelector('.btn-primary');
-    btn.innerHTML = '⏳ Processing...';
-    btn.disabled = true;
-
-    try {
-        const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
-        const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
-
-        if (!addressId) {
-            throw new Error('Please select a shipping address');
-        }
-
-        const orderData = {
-            addressId: addressId,
-            paymentMethod: paymentMethod,
-            cartItems: <%- JSON.stringify(cartItems) %>,
-            subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-            shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-            tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-            total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
-        };
-
-        // // Handle card payment (from first function)
-        // if (paymentMethod === 'card') {
-        //     const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-        //     const expiry = document.getElementById('expiry').value;
-        //     const cvv = document.getElementById('cvv').value;
-
-        //     if (!cardNumber || !expiry || !cvv) {
-        //         throw new Error('Please enter complete card details');
-        //     }
-
-        //     orderData.paymentDetails = {
-        //         cardNumber: cardNumber,
-        //         expiry: expiry,
-        //         cvv: cvv
-        //     };
-        // }
-
-        const response = await fetch('/place-order', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData)
-        });
-
-        const result = await response.json();
-
-        if (!result.status) {
-            window.location.href = '/order-failure?reason=order_creation_failed';
-            return;
-        }
-
-        // Handle Razorpay payment (from second function)
-        if (paymentMethod === 'razorpay') {
-            await initiateRazorpayPayment(orderData, result.razorpayOrder);
-        } else {
-            if (!result.orderId) {
-                window.location.href = '/order-failure?reason=order_id_missing';
-                return;
-            }
-            updateCartAfterCheckout();
-            window.location.href = `/order-success/${result.orderId}`;
-        }
-
-    } catch (error) {
-        console.error('Order error:', error);
-        window.location.href = '/order-failure?reason=network_error';
-    }
-}
-
-function updateCartAfterCheckout() {
-    const cartCountElement = document.getElementById('cartCount');
-    if (cartCountElement) {
-        cartCountElement.textContent = '0';
-        cartCountElement.style.display = 'none'; 
-    }
-    
-    if (window.cartManager) {
-        window.cartManager.clearLocalCart();
-    }
-    
-    localStorage.removeItem('userCart');
-}
-
-    </script>
+</script>
 </body>
 </html>
 <%- include("../../views/partials/user/footer") %>
