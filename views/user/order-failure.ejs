@@ -198,14 +198,13 @@
 
           if (data.status) {
             const options = {
-              key: data.key_id, // ✅ use dynamic key from backend
+              key: data.key_id, 
               amount: data.order.amount,
               currency: "INR",
               name: "QuickSip",
               description: "Order Payment Retry",
               order_id: data.order.id,
               handler: async function (response) {
-                // ✅ verify payment after Razorpay success
                 await verifyPayment(response, orderData);
               },
               prefill: {

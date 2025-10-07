@@ -8,9 +8,11 @@ const categoryController = require("../controllers/admin/categoryController");
 const productController = require("../controllers/admin/productController");
 const brandController = require("../controllers/admin/brandController");
 const orderController = require("../controllers/admin/orderController");
+const couponController = require("../controllers/admin/couponController");
 
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { storage, fileFilter } = require("../helpers/multer");
+const couponSchema = require("../models/couponSchema");
 
 const upload = multer({
   storage: storage,
@@ -60,6 +62,11 @@ router.post('/updateOrderStatus',orderController.updateOrderStatus);
 router.get('/getOrderDetails/:orderId',adminAuth,orderController.getOrderDetails);
 router.get('/returnRequests',adminAuth,orderController.getReturnRequests);
 router.post('/handleReturnAction',adminAuth,orderController.handleReturnAction);
+
+//Coupon Management
+router.get("/coupon",adminAuth,couponController.couponList);
+router.post("/coupon/add",adminAuth,couponController.addCoupon);
+router.post('/coupon/toggle-status/:id',adminAuth,couponController.toggleCouponStatus);
 
 
 module.exports = router;
