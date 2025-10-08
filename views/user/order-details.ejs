@@ -449,90 +449,131 @@
 
                             <!-- Order Summary Section -->
                             <div class="row mt-4">
-                                <div class="col-md-6 offset-md-6">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h6><i class="fas fa-receipt"></i> Order Summary</h6>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Subtotal:</span>
-                                                <span>₹<%= order.total.toFixed(2) %></span>
-                                            </div>
-                                            <% if (order.discount > 0) { %>
-                                                <div class="d-flex justify-content-between mb-2 text-success">
-                                                    <span>Discount:</span>
-                                                    <span>-₹<%= order.discount.toFixed(2) %></span>
-                                                </div>
-                                            <% } %>
-                                            
-                                            
-                                            <% if (order.status !== 'cancelled') { %>
-                                                <% if (order.paymentMethod === 'cod') { %>
-                                                    <div class="d-flex justify-content-between mb-2">
-                                                        <span>COD Fee:</span>
-                                                        <span>₹5.00</span>
-                                                    </div>
-                                                <% } %>
-                                                <div class="d-flex justify-content-between mb-2">
-                                                    <span>Shipping:</span>
-                                                    <span>₹50.00</span>
-                                                </div>
-                                            <% } %>
-                                            
-                                            <!-- Display adjustment for cancelled items -->
-                                            <% 
-                                            let cancelledItemsTotal = 0;
-                                            let activeItemsCount = 0;
-                                            
-                                            order.orderItems.forEach(item => {
-                                                if (item.itemStatus === 'cancelled') {
-                                                    cancelledItemsTotal += item.price * item.quantity;
-                                                } else {
-                                                    activeItemsCount++;
-                                                }
-                                            });
-                                            %>
-                                            
-                                            <% if (cancelledItemsTotal > 0) { %>
-                                                <div class="d-flex justify-content-between mb-2 text-danger">
-                                                    <span><%= order.paymentMethod === 'cod' ? 'Amount Reduced' : 'Refunded' %>:</span>
-                                                    <span>-₹<%= cancelledItemsTotal.toFixed(2) %></span>
-                                                </div>
-                                            <% } %>
-                                            
-                                            <hr>
-                                            <div class="d-flex justify-content-between mb-2 fw-bold">
-                                                <span>
-                                                    <% if (order.status === 'cancelled') { %>
-                                                        Order Cancelled
-                                                    <% } else { %>
-                                                        Total <%= order.paymentMethod === 'cod' ? 'Payable' : '' %>:
-                                                    <% } %>
-                                                </span>
-                                                <span>
-                                                    <% if (order.status === 'cancelled') { %>
-                                                        ₹0.00
-                                                    <% } else { %>
-                                                        ₹<%= order.finalAmount.toFixed(2) %>
-                                                    <% } %>
-                                                </span>
-                                            </div>
-                                            
-                                            <!-- Information messages -->
-                                            <% if (order.status === 'cancelled') { %>
-                                                <div class="alert alert-info mt-3">
-                                                    <i class="fas fa-info-circle"></i> 
-                                                    This order has been completely cancelled. No payment is required.
-                                                </div>
-                                            <% } else if (order.paymentMethod === 'cod' && cancelledItemsTotal > 0) { %>
-                                                <div class="alert alert-info mt-3">
-                                                    <i class="fas fa-info-circle"></i> 
-                                                    Since this is a COD order, your payable amount has been adjusted. 
-                                                    You'll pay ₹<%= order.finalAmount.toFixed(2) %> upon delivery.
-                                                </div>
-                                            <% } %>
-                                        </div>
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-receipt"></i> Order Summary</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal:</span>
+                                    <span>₹<%= order.total.toFixed(2) %></span>
                                     </div>
+                                    
+                                    <!-- Shipping -->
+                                    <% if (order.status !== 'cancelled') { %>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping:</span>
+                                        <span>₹50.00</span>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <!-- Coupon Discount -->
+                                    <% if (order.couponDetails && order.couponDetails.discountAmount > 0) { %>
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>
+                                        <i class="fas fa-tag me-1"></i>
+                                        Coupon Discount 
+                                        <% if (order.couponDetails.couponCode) { %>
+                                            (<%= order.couponDetails.couponCode %>)
+                                        <% } %>
+                                        </span>
+                                        <span>-₹<%= order.couponDetails.discountAmount.toFixed(2) %></span>
+                                    </div>
+                                    
+                                    <!-- Coupon Details Tooltip -->
+                                    <div class="alert alert-info py-2 mb-2" style="font-size: 0.85rem;">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <% if (order.couponDetails.couponType === 'percentage') { %>
+                                        <%= order.couponDetails.couponDiscount %>% off applied
+                                        <% } else { %>
+                                        Flat ₹<%= order.couponDetails.couponDiscount %> off applied
+                                        <% } %>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <!-- Other Discounts (if any) -->
+                                    <% if (order.discount > 0 && (!order.couponDetails || order.discount !== order.couponDetails.discountAmount)) { %>
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>Other Discount:</span>
+                                        <span>-₹<%= order.discount.toFixed(2) %></span>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <!-- COD Fee -->
+                                    <% if (order.status !== 'cancelled') { %>
+                                    <% if (order.paymentMethod === 'cod') { %>
+                                        <div class="d-flex justify-content-between mb-2">
+                                        <span>COD Fee:</span>
+                                        <span>₹5.00</span>
+                                        </div>
+                                    <% } %>
+                                    <% } %>
+                                    
+                                    <!-- Display adjustment for cancelled items -->
+                                    <% 
+                                    let cancelledItemsTotal = 0;
+                                    let activeItemsCount = 0;
+                                    
+                                    order.orderItems.forEach(item => {
+                                    if (item.itemStatus === 'cancelled') {
+                                        cancelledItemsTotal += item.price * item.quantity;
+                                    } else {
+                                        activeItemsCount++;
+                                    }
+                                    });
+                                    %>
+                                    
+                                    <% if (cancelledItemsTotal > 0) { %>
+                                    <div class="d-flex justify-content-between mb-2 text-danger">
+                                        <span><%= order.paymentMethod === 'cod' ? 'Amount Reduced' : 'Refunded' %>:</span>
+                                        <span>-₹<%= cancelledItemsTotal.toFixed(2) %></span>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-2 fw-bold">
+                                    <span>
+                                        <% if (order.status === 'cancelled') { %>
+                                        Order Cancelled
+                                        <% } else { %>
+                                        Total <%= order.paymentMethod === 'cod' ? 'Payable' : '' %>:
+                                        <% } %>
+                                    </span>
+                                    <span>
+                                        <% if (order.status === 'cancelled') { %>
+                                        ₹0.00
+                                        <% } else { %>
+                                        ₹<%= order.finalAmount.toFixed(2) %>
+                                        <% } %>
+                                    </span>
+                                    </div>
+                                    
+                                    <!-- Information messages -->
+                                    <% if (order.status === 'cancelled') { %>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle"></i> 
+                                        This order has been completely cancelled. No payment is required.
+                                    </div>
+                                    <% } else if (order.paymentMethod === 'cod' && cancelledItemsTotal > 0) { %>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Since this is a COD order, your payable amount has been adjusted. 
+                                        You'll pay ₹<%= order.finalAmount.toFixed(2) %> upon delivery.
+                                    </div>
+                                    <% } %>
+                                    
+                                    <!-- Coupon Savings Summary -->
+                                    <% if (order.couponDetails && order.couponDetails.discountAmount > 0) { %>
+                                    <div class="alert alert-success mt-3">
+                                        <i class="fas fa-piggy-bank me-2"></i>
+                                        <strong>You saved ₹<%= order.couponDetails.discountAmount.toFixed(2) %> with coupon!</strong>
+                                        <% if (order.couponDetails.couponCode) { %>
+                                        <br><small>Coupon code: <strong><%= order.couponDetails.couponCode %></strong></small>
+                                        <% } %>
+                                    </div>
+                                    <% } %>
                                 </div>
+                                </div>
+                            </div>
                             </div>
 
                             <!-- Order Timeline Section -->

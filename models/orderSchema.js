@@ -178,7 +178,27 @@ const orderSchema = new Schema({
       type: Boolean,
       default: false
    },
-   
+
+   couponDetails: {
+   couponCode: {
+      type: String,
+      default: null
+   },
+   couponType: {
+      type: String,
+      enum: ["percentage", "fixed", null],
+      default: null
+   },
+   couponDiscount: {
+      type: Number,
+      default: 0
+   },
+   discountAmount: {
+      type: Number,
+      default: 0
+   }
+   },
+     
    razorpayOrderId: {
       type: String,
       default: null

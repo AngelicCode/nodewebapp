@@ -161,7 +161,7 @@ const placeOrder = async(req,res)=>{
         return res.status(401).json({ status: false, message: 'User not authenticated' });
     }
 
-     const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total } = req.body;
+     const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total, coupon } = req.body;
 
      const validatedItems = req.validatedCartItems;
     
@@ -246,7 +246,14 @@ const placeOrder = async(req,res)=>{
             tax: parseFloat(tax),
             finalAmount: parseFloat(total),
             status: paymentMethod === 'cod' ? 'pending' : 'processing',
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'processing'
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'processing',
+            couponDetails: coupon ? {
+              couponCode: coupon.code,
+              couponType: coupon.type,
+              couponDiscount: coupon.discount,
+              discountAmount: coupon.discountAmount
+            } : null,
+            discount: coupon ? coupon.discountAmount : 0
         });
 
         await newOrder.save();
@@ -321,7 +328,6 @@ const verifyRazorpayPayment = async (req, res) => {
     const generatedSignature = hmac.digest('hex');
     
     if (generatedSignature !== razorpay_signature) {
-
       return res.json({
         status: false,
         message: 'Payment verification failed',
@@ -329,7 +335,7 @@ const verifyRazorpayPayment = async (req, res) => {
       });
     }
     
-    const { addressId, subtotal, shipping, tax, total } = orderData;
+    const { addressId, subtotal, shipping, tax, total, coupon } = orderData;
     
     const addressDoc = await Address.findOne({ 
       userId: userId,
@@ -397,39 +403,55 @@ const verifyRazorpayPayment = async (req, res) => {
       order.paymentStatus = 'paid';
       order.razorpayPaymentId = razorpay_payment_id;
       order.paidAt = new Date();
+      
+      order.couponDetails = coupon ? {
+        couponCode: coupon.code,
+        couponType: coupon.type,
+        couponDiscount: coupon.discount,
+        discountAmount: coupon.discountAmount
+      } : null;
+      order.discount = coupon ? coupon.discountAmount : 0;
+      
       await order.save();
 
     } else {
+      order = new Order({
+        userId: userId,
+        addressId: addressId,
+        shippingAddress: {
+          addressType: selectedAddress.addressType,
+          name: selectedAddress.name,
+          city: selectedAddress.city,
+          landMark: selectedAddress.landMark,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode,
+          phone: selectedAddress.phone,
+          altPhone: selectedAddress.altPhone
+        },
+        paymentMethod: 'razorpay',
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        orderItems: orderItems,
+        total: parseFloat(subtotal),
+        shipping: parseFloat(shipping),
+        tax: parseFloat(tax),
+        finalAmount: parseFloat(total),
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paidAt: new Date(),
 
-    order = new Order({
-      userId: userId,
-      addressId: addressId,
-      shippingAddress: {
-        addressType: selectedAddress.addressType,
-        name: selectedAddress.name,
-        city: selectedAddress.city,
-        landMark: selectedAddress.landMark,
-        state: selectedAddress.state,
-        pincode: selectedAddress.pincode,
-        phone: selectedAddress.phone,
-        altPhone: selectedAddress.altPhone
-      },
-      paymentMethod: 'razorpay',
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      razorpaySignature: razorpay_signature,
-      orderItems: orderItems,
-      total: parseFloat(subtotal),
-      shipping: parseFloat(shipping),
-      tax: parseFloat(tax),
-      finalAmount: parseFloat(total),
-      status: 'confirmed',
-      paymentStatus: 'paid',
-      paidAt: new Date()
-    });
+        couponDetails: coupon ? {
+          couponCode: coupon.code,
+          couponType: coupon.type,
+          couponDiscount: coupon.discount,
+          discountAmount: coupon.discountAmount
+        } : null,
+        discount: coupon ? coupon.discountAmount : 0
+      });
 
-    await order.save();
-  }
+      await order.save();
+    }
 
     for (const item of validatedItems) {
       await Product.findByIdAndUpdate(
