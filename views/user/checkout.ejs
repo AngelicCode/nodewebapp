@@ -510,7 +510,6 @@
             color: white;
         }
 
-        /* Breadcrumb Styles */
         .breadcrumb {
             margin-bottom: 20px;
             font-size: 0.95rem;
@@ -662,6 +661,47 @@
                         </div>
                         <% }); %>
 
+                        
+                        <div class="coupon-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <div class="coupon-input-group" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" 
+                                id="couponCode" 
+                                placeholder="Enter coupon code" 
+                                style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            <button onclick="applyCoupon()" 
+                                    class="apply-coupon-btn"
+                                    style="padding: 12px 20px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Apply
+                            </button>
+                        </div>
+
+                        <div id="available-coupons" style="margin: 15px 0; display: none;">
+                        <div style="font-size: 14px; color: #2c3e50; margin-bottom: 8px; font-weight: 600;">
+                            💡 Available Coupons:
+                        </div>
+                        <div id="coupon-list" style="display: flex; flex-direction: column; gap: 8px;">
+                            
+                        </div>
+                        </div>
+
+                        
+                        <div id="coupon-message" style="font-size: 14px; margin-top: 8px;"></div>
+                        
+                        <div id="applied-coupon" style="display: none; margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 6px; border: 1px solid #4caf50;">
+                            <div style="display: flex; justify-content: between; align-items: center;">
+                            <span style="color: #2e7d32; font-weight: 600;">
+                                Coupon Applied: <span id="applied-coupon-code"></span>
+                            </span>
+                            <button onclick="removeCoupon()" 
+                                    style="background: none; border: none; color: #d32f2f; cursor: pointer; font-size: 12px; text-decoration: underline;">
+                                Remove
+                            </button>
+                            </div>
+                        </div>
+                        </div>
+
+
+
                         <!-- <div class="discount-code">
                             <input type="text" class="discount-input" placeholder="Discount code">
                             <button class="apply-btn" onclick="applyDiscount()">Apply</button>
@@ -670,30 +710,34 @@
 
 
                         <div style="margin-top: 25px;">
-                            <div class="summary-row">
-                                <span>Subtotal:</span>
-                                <span id="subtotal">₹<%= cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0).toFixed(2) %></span>
-                            </div>
-                            <div class="summary-row">
-                                <span>Shipping:</span>
-                                <span id="shipping">₹50</span>
-                            </div>
-                            <div class="summary-row">
-                                <span>Tax:</span>
-                                <span id="tax">₹0.00</span>
-                            </div>
-                            <div class="summary-row" id="cod-charge-row" style="display: none;">
-                                <span>COD Charge:</span>
-                                <span id="cod-charge">₹5</span>
-                            </div>
-                            <div class="summary-row" id="discount-row" style="display: none; color: #71cd14;">
-                                <span>Discount:</span>
-                                <span id="discount">-₹0.00</span>
-                            </div>
-                            <div class="summary-row total">
-                                <span>Total:</span>
-                                <span id="total">₹<%= (cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) + 50).toFixed(2) %></span>
-                            </div>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">₹<%= cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0).toFixed(2) %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span id="shipping">₹50</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax:</span>
+                            <span id="tax">₹0.00</span>
+                        </div>
+                        
+                        <!-- Coupon Discount Row -->
+                        <div class="summary-row" id="coupon-discount-row" style="display: none; color: #71cd14;">
+                            <span>Coupon Discount:</span>
+                            <span id="coupon-discount">-₹0.00</span>
+                        </div>
+                        
+                        <div class="summary-row" id="cod-charge-row" style="display: none;">
+                            <span>COD Charge:</span>
+                            <span id="cod-charge">₹5</span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="total">₹<%= (cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) + 50).toFixed(2) %></span>
+                        </div>
                         </div>
 
                         <div style="margin-top: 30px;">
@@ -703,8 +747,8 @@
                             </button>
                         </div>
                     </div>
+            </div>
         </div>
-    </div>
 
     <!-- Add Address Modal -->
     <div id="addAddressModal" class="modal">
@@ -980,16 +1024,23 @@
                 throw new Error('Please select a shipping address');
             }
 
+
             const orderData = {
-                addressId: addressId,
-                paymentMethod: paymentMethod,
-                cartItems: <%- JSON.stringify(cartItems) %>,
-                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-                total: parseFloat(document.getElementById('total').textContent.replace('₹', ''))
+            addressId: addressId,
+            paymentMethod: paymentMethod,
+            cartItems: <%- JSON.stringify(cartItems) %>,
+            subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
+            shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
+            tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
+            total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
+
+            coupon: appliedCoupon ? {
+                code: appliedCoupon.code,
+                discountAmount: appliedCoupon.discountAmount
+            } : null
             };
 
+    
             // // Handle card payment (from first function)
             // if (paymentMethod === 'card') {
             //     const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
@@ -1222,6 +1273,237 @@
             }
         });
     });
+
+    let appliedCoupon = null;
+
+async function applyCoupon() {
+  const couponCode = document.getElementById('couponCode').value.trim();
+  const messageDiv = document.getElementById('coupon-message');
+  const applyBtn = document.querySelector('.apply-coupon-btn');
+  
+  if (!couponCode) {
+    showCouponMessage('Please enter a coupon code', 'error');
+    return;
+  }
+  
+  applyBtn.disabled = true;
+  applyBtn.innerHTML = 'Applying...';
+  
+  try {
+    const response = await fetch('/apply-coupon', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ couponCode })
+    });
+    
+    const result = await response.json();
+    
+    if (result.status) {
+      appliedCoupon = result.coupon;
+      showAppliedCoupon(result.coupon.code);
+      updateOrderSummary(result.coupon.discountAmount, result.coupon.finalAmount);
+      showCouponMessage(result.message, 'success');
+      
+      hideCouponFromList(result.coupon.code);
+    } else {
+      showCouponMessage(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Error applying coupon:', error);
+    showCouponMessage('Failed to apply coupon', 'error');
+  } finally {
+    applyBtn.disabled = false;
+    applyBtn.innerHTML = 'Apply';
+  }
+}
+
+async function removeCoupon() {
+  try {
+    const response = await fetch('/remove-coupon', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.status) {
+      if (appliedCoupon) {
+        showCouponInList(appliedCoupon.code);
+      }
+      
+      appliedCoupon = null;
+      hideAppliedCoupon();
+      resetOrderSummary(result.cartTotal);
+      showCouponMessage(result.message, 'success');
+    }
+  } catch (error) {
+    console.error('Error removing coupon:', error);
+    showCouponMessage('Failed to remove coupon', 'error');
+  }
+}
+
+function hideCouponFromList(couponCode) {
+  const couponElements = document.querySelectorAll('#coupon-list > div');
+  couponElements.forEach(element => {
+    const couponText = element.querySelector('strong').textContent;
+    if (couponText === couponCode) {
+      element.style.display = 'none';
+    }
+  });
+}
+
+function showCouponInList(couponCode) {
+  const couponElements = document.querySelectorAll('#coupon-list > div');
+  couponElements.forEach(element => {
+    const couponText = element.querySelector('strong').textContent;
+    if (couponText === couponCode) {
+      element.style.display = 'block';
+    }
+  });
+}
+
+function showAppliedCoupon(couponCode) {
+  document.getElementById('applied-coupon-code').textContent = couponCode;
+  document.getElementById('applied-coupon').style.display = 'block';
+  document.getElementById('couponCode').disabled = true;
+}
+
+function hideAppliedCoupon() {
+  document.getElementById('applied-coupon').style.display = 'none';
+  document.getElementById('couponCode').value = '';
+  document.getElementById('couponCode').disabled = false;
+}
+
+function updateOrderSummary(discountAmount, finalAmount) {
+  const shipping = 50;
+  const codCharge = 5;
+  const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
+  
+  document.getElementById('coupon-discount-row').style.display = 'flex';
+  document.getElementById('coupon-discount').textContent = `-₹${discountAmount.toFixed(2)}`;
+  
+  let total = finalAmount + shipping;
+  if (paymentMethod === 'cod') {
+    total += codCharge;
+    document.getElementById('cod-charge-row').style.display = 'flex';
+  }
+  
+  document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+}
+
+function resetOrderSummary(cartTotal) {
+  const shipping = 50;
+  const codCharge = 5;
+  const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
+  
+  document.getElementById('coupon-discount-row').style.display = 'none';
+  
+  let total = cartTotal + shipping;
+  if (paymentMethod === 'cod') {
+    total += codCharge;
+    document.getElementById('cod-charge-row').style.display = 'flex';
+  }
+  
+  document.getElementById('subtotal').textContent = `₹${cartTotal.toFixed(2)}`;
+  document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+}
+
+function showCouponMessage(message, type) {
+  const messageDiv = document.getElementById('coupon-message');
+  messageDiv.textContent = message;
+  messageDiv.style.color = type === 'success' ? '#4caf50' : '#f44336';
+  messageDiv.style.fontWeight = '500';
+  
+  setTimeout(() => {
+    messageDiv.textContent = '';
+  }, 3000);
+}
+
+document.getElementById('couponCode').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    applyCoupon();
+  }
+});
+
+async function loadAvailableCoupons() {
+  try {
+    const cartTotal = <%= cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) %>;
+    
+    const response = await fetch('/get-available-coupons?cartTotal=' + cartTotal);
+    const result = await response.json();
+    
+    if (result.status && result.coupons.length > 0) {
+      displayAvailableCoupons(result.coupons);
+    }
+  } catch (error) {
+    console.error('Error loading coupons:', error);
+  }
+}
+
+function displayAvailableCoupons(coupons) {
+  const container = document.getElementById('available-coupons');
+  const couponList = document.getElementById('coupon-list');
+  
+  couponList.innerHTML = '';
+  
+  coupons.forEach(coupon => {
+    const couponElement = document.createElement('div');
+    couponElement.style.cssText = `
+      padding: 10px 12px;
+      background: #e3f2fd;
+      border: 1px dashed #2196f3;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 13px;
+    `;
+    couponElement.onmouseover = () => {
+      couponElement.style.background = '#bbdefb';
+    };
+    couponElement.onmouseout = () => {
+      couponElement.style.background = '#e3f2fd';
+    };
+    couponElement.onclick = () => {
+      document.getElementById('couponCode').value = coupon.couponCode;
+      applyCoupon();
+    };
+    
+    let discountText = '';
+    if (coupon.couponType === 'percentage') {
+      discountText = `${coupon.couponDiscount}% OFF (Max ₹${coupon.couponMaxAmount})`;
+    } else {
+      discountText = `₹${coupon.couponDiscount} OFF`;
+    }
+    
+    couponElement.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: #1976d2;">${coupon.couponCode}</strong>
+          <div style="color: #2c3e50; font-size: 12px; margin-top: 2px;">
+            ${discountText} • Min. order: ₹${coupon.couponMinAmount}
+          </div>
+        </div>
+        <div style="color: #4caf50; font-size: 12px; font-weight: 600;">
+          APPLY
+        </div>
+      </div>
+    `;
+    
+    couponList.appendChild(couponElement);
+  });
+  
+  container.style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadAvailableCoupons();
+});
+
+
 </script>
 </body>
 </html>

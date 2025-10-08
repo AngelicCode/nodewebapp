@@ -10,6 +10,7 @@ const razorpayInstance = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 const crypto = require('crypto');
+const Coupon = require("../../models/couponSchema");
 
 const loadCheckout = async(req,res)=>{
   try {
@@ -548,6 +549,156 @@ const handleFailedPayment = async (req, res) => {
   }
 };
 
+const applyCoupon = async (req, res) => {
+  try {
+    const { couponCode } = req.body;
+    const userId = req.session.user._id;
+    
+    if (!couponCode) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Coupon code is required' 
+      });
+    }
+
+    const cart = await Cart.findOne({ userId: userId }).populate('items.productId');
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Cart is empty' 
+      });
+    }
+
+    const cartTotal = cart.items.reduce((total, item) => {
+      return total + (item.productId.salePrice * item.quantity);
+    }, 0);
+
+    const coupon = await Coupon.findOne({ 
+      couponCode: couponCode.toUpperCase(),
+      isActive: true 
+    });
+
+    if (!coupon) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Invalid coupon code' 
+      });
+    }
+
+    if (new Date() > coupon.couponValidity) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Coupon has expired' 
+      });
+    }
+
+    if (cartTotal < coupon.couponMinAmount) {
+      return res.status(400).json({ 
+        status: false, 
+        message: `Minimum cart amount of ₹${coupon.couponMinAmount} required` 
+      });
+    }
+
+    if (coupon.usageCount >= coupon.limit) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Coupon usage limit reached' 
+      });
+    }
+
+    let discountAmount = 0;
+    let finalAmount = cartTotal;
+
+    if (coupon.couponType === 'percentage') {
+      discountAmount = (cartTotal * coupon.couponDiscount) / 100;
+
+      if (coupon.couponMaxAmount > 0 && discountAmount > coupon.couponMaxAmount) {
+        discountAmount = coupon.couponMaxAmount;
+      }
+    } else {
+      discountAmount = coupon.couponDiscount;
+    }
+
+    finalAmount = cartTotal - discountAmount;
+
+    res.json({
+      status: true,
+      message: 'Coupon applied successfully!',
+      coupon: {
+        code: coupon.couponCode,
+        type: coupon.couponType,
+        discount: coupon.couponDiscount,
+        discountAmount: discountAmount,
+        finalAmount: finalAmount
+      }
+    });
+
+  } catch (error) {
+    console.error('Error applying coupon:', error);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Failed to apply coupon' 
+    });
+  }
+};
+
+const removeCoupon = async (req, res) => {
+  try {
+    const userId = req.session.user._id;
+    
+    const cart = await Cart.findOne({ userId: userId }).populate('items.productId');
+    if (!cart) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Cart not found' 
+      });
+    }
+
+    const cartTotal = cart.items.reduce((total, item) => {
+      return total + (item.productId.salePrice * item.quantity);
+    }, 0);
+
+    res.json({
+      status: true,
+      message: 'Coupon removed successfully',
+      cartTotal: cartTotal
+    });
+
+  } catch (error) {
+    console.error('Error removing coupon:', error);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Failed to remove coupon' 
+    });
+  }
+};
+
+const getAvailableCoupons = async (req, res) => {
+  try {
+    const cartTotal = parseFloat(req.query.cartTotal) || 0;
+    
+    const coupons = await Coupon.find({
+      isActive: true,
+      couponValidity: { $gte: new Date() },
+      couponMinAmount: { $lte: cartTotal },
+      $expr: { $lt: ['$usageCount', '$limit'] }
+    }).sort({ couponDiscount: -1 });
+
+    res.json({
+      status: true,
+      coupons: coupons
+    });
+
+  } catch (error) {
+    console.error('Error fetching coupons:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to load coupons'
+    });
+  }
+};
+
+
 module.exports = {
-  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,orderFailure,handleFailedPayment ,
+  loadCheckout,checkoutAddAddress,checkoutEditAddress,placeOrder,verifyRazorpayPayment,createRazorpayOrder,orderFailure,handleFailedPayment ,applyCoupon,removeCoupon,getAvailableCoupons,
 }

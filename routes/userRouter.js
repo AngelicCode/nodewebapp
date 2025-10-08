@@ -102,6 +102,9 @@ router.post("/place-order",userAuth,validateCheckoutItems, checkoutController.pl
 router.post("/verify-payment", userAuth, checkoutController.verifyRazorpayPayment);
 router.get("/order-failure", userAuth,checkoutController.orderFailure);
 router.post("/retry-payment", userAuth, checkoutController.handleFailedPayment);
+router.post("/apply-coupon", userAuth, checkoutController.applyCoupon);
+router.post("/remove-coupon", userAuth, checkoutController.removeCoupon);
+router.get("/get-available-coupons", userAuth, checkoutController.getAvailableCoupons);
 
 //Order Management
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);
