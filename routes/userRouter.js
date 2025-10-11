@@ -48,6 +48,7 @@ router.get("/new-email", userAuth, profileController.getNewEmailPage);
 router.get("/edit-profile", userAuth, profileController.getEditProfilePage);
 router.post("/update-profile-photo", userAuth, upload.single('profilePhoto'), profileController.updateProfilePhoto);
 router.post("/remove-profile-photo", userAuth, profileController.removeProfilePhoto);
+router.post("/update-profile",userAuth,profileController.updateProfile);
 
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);

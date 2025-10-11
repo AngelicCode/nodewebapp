@@ -523,6 +523,7 @@ const updateProfile = async (req, res) => {
   }
 }
 
+
 const updateProfilePhoto = async (req, res) => {
   try {
     const userId = req.session.user;

@@ -9,6 +9,7 @@ const productController = require("../controllers/admin/productController");
 const brandController = require("../controllers/admin/brandController");
 const orderController = require("../controllers/admin/orderController");
 const couponController = require("../controllers/admin/couponController");
+const salesreportController = require("../controllers/admin/salesreportController");
 
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { storage, fileFilter } = require("../helpers/multer");
@@ -67,6 +68,12 @@ router.post('/handleReturnAction',adminAuth,orderController.handleReturnAction);
 router.get("/coupon",adminAuth,couponController.couponList);
 router.post("/coupon/add",adminAuth,couponController.addCoupon);
 router.post('/coupon/toggle-status/:id',adminAuth,couponController.toggleCouponStatus);
+
+//Sales report Management
+router.get("/sales-report",adminAuth,salesreportController.salesreportPage);
+router.get("/sales-report/download/pdf",adminAuth,salesreportController.downloadSalesReportPDF);
+router.get('/sales-report/download/excel',adminAuth,salesreportController.downloadSalesReportExcel);
+
 
 
 module.exports = router;
