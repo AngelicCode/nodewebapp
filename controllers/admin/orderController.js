@@ -1,6 +1,7 @@
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Order =  require("../../models/orderSchema");
+const { refundToWallet } = require("../../helpers/walletHelper"); 
 // const { customerInfo } = require("./customerController");
 
 const orderList = async (req, res) => {
@@ -246,11 +247,14 @@ const handleReturnAction = async (req, res) => {
     const { orderId, itemIndex, action, notes } = req.body;
     
     const order = await Order.findOne({ orderId })
-      .populate('orderItems.productId');
+      .populate('orderItems.productId')
+      .populate('userId');
     
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
+    
+    let refundAmount = 0;
     
     if (itemIndex !== undefined && itemIndex !== null) {
       const item = order.orderItems[itemIndex];
@@ -260,6 +264,9 @@ const handleReturnAction = async (req, res) => {
       
       if (action === 'approve') {
         item.itemStatus = "returned";
+        refundAmount = item.price * item.quantity;
+
+        order.finalAmount -= refundAmount;
         
         await Product.findByIdAndUpdate(
           item.productId,
@@ -275,12 +282,16 @@ const handleReturnAction = async (req, res) => {
         for (const item of order.orderItems) {
           if (item.itemStatus === "return requested") {
             item.itemStatus = "returned";
+            refundAmount += item.price * item.quantity;
+            
             await Product.findByIdAndUpdate(
               item.productId,
               { $inc: { quantity: item.quantity } }
             );
           }
         }
+
+        order.finalAmount -= refundAmount;
         
       } else if (action === 'reject') {
         for (const item of order.orderItems) {
@@ -288,12 +299,12 @@ const handleReturnAction = async (req, res) => {
             item.itemStatus = "return rejected";
           }
         }
-        
       }
-      
-      order.adminReturnStatus = action === 'approve' ? 'approved' : 'rejected';
-      
-    } 
+    }
+    
+    if (action === 'approve' && refundAmount > 0) {
+      await refundToWallet(order._id, refundAmount, `Refund for returned order ${order.orderId}`);
+    }
     
     const newStatus = order.calculateOrderStatus();
     order.status = newStatus.status;
@@ -305,7 +316,9 @@ const handleReturnAction = async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully` 
+      message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+      refundAmount: action === 'approve' ? refundAmount : 0,
+      
     });
   } catch (error) {
     console.error('Error handling return action:', error);

@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
+const Wallet = require("../../models/walletSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
 const Razorpay = require('razorpay');
 const razorpayInstance = new Razorpay({
@@ -179,6 +180,16 @@ const placeOrder = async(req,res)=>{
         });
     }
 
+     if (paymentMethod === 'wallet') {
+        const user = await User.findById(userId);
+        if (user.wallet < total) {
+            return res.status(400).json({
+                status: false,
+                message: 'Insufficient wallet balance'
+            });
+        }
+    }
+
     if (paymentMethod === 'razorpay') {
             try {
                 const razorpayOrder = await createRazorpayOrder(total);
@@ -245,8 +256,8 @@ const placeOrder = async(req,res)=>{
             shipping: parseFloat(shipping),
             tax: parseFloat(tax),
             finalAmount: parseFloat(total),
-            status: paymentMethod === 'cod' ? 'pending' : 'processing',
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'processing',
+            status: paymentMethod === 'cod' ? 'pending' : 'confirmed',
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
             couponDetails: coupon ? {
               couponCode: coupon.code,
               couponType: coupon.type,
@@ -257,6 +268,20 @@ const placeOrder = async(req,res)=>{
         });
 
         await newOrder.save();
+
+        if (paymentMethod === 'wallet') {
+        const user = await User.findById(userId);
+        
+        user.wallet -= parseFloat(total);
+        await user.save();
+
+        await Wallet.create({
+            userId,
+            type: "debit",
+            amount: parseFloat(total),
+            description: `Payment for order ${newOrder.orderId}`
+        });
+    }
       
         for (const item of validatedItems) {
           await Product.findByIdAndUpdate(

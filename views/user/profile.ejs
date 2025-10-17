@@ -540,7 +540,153 @@
             align-items: center;
             justify-content: center;
         }
+        /* ===================== WALLET SECTION ===================== */
+        .wallet-card {
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-heavy);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            text-align: center;
+            padding: 30px;
+        }
 
+        .wallet-card .card-header {
+            background: var(--button-green);
+            color: #fff;
+            font-weight: 600;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+
+        .wallet-card .card-body {
+            padding: 30px;
+        }
+
+        .wallet-icon {
+            font-size: 4rem;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+        }
+
+        .wallet-amount {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .wallet-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .wallet-input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            margin-top: 14px;
+        }
+
+        .wallet-input-group .input-group {
+            max-width: 380px;
+            width: 100%;
+        }
+
+        .wallet-input-group .input-group-text {
+            background: #f8f9fa;
+            border: 1px solid #ced4da;
+            font-weight: 600;
+        }
+
+        .wallet-input-group input {
+            text-align: center;
+            border: 1px solid #ced4da;
+            border-left: none;
+            border-right: none;
+        }
+
+        .wallet-input-group .btn-success {
+            background: var(--button-green);
+            border: none;
+            padding: 8px 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .wallet-input-group .btn-success:hover {
+            background: var(--button-green-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(113, 205, 20, 0.35);
+        }
+
+        @media (max-width: 576px) {
+            .wallet-card {
+                padding: 20px;
+            }
+
+            .wallet-amount {
+                font-size: 1.8rem;
+            }
+
+            .wallet-input-group .input-group {
+                max-width: 100%;
+            }
+
+            .wallet-input-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .wallet-input-group .btn-success {
+                width: 100%;
+                border-radius: 6px;
+            }
+        }
+
+  .pagination-glass {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination-glass a {
+    padding: 14px 20px;
+    text-decoration: none;
+    color: #333;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 50px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .pagination-glass a:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .pagination-glass a.active {
+    background: rgba(53, 55, 56, 0.332);
+    color: black;
+    border-color: rgba(4, 4, 4, 0.8);
+    pointer-events: none;
+  }
 
     </style>
 </head>
@@ -771,7 +917,6 @@
                                             <tbody>
                                                 <% orders.forEach(order => { %>
                                                     <% 
-                                                    // Calculate cancelled items total
                                                     let cancelledItemsTotal = 0;
                                                     order.orderItems.forEach(item => {
                                                         if (item.itemStatus === 'cancelled') {
@@ -779,7 +924,6 @@
                                                         }
                                                     });
                                                     
-                                                    // Check if all items are cancelled
                                                     const allItemsCancelled = order.orderItems.every(item => item.itemStatus === 'cancelled');
                                                     %>
                                                     
@@ -869,68 +1013,60 @@
                     </div>
 
                         <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-wallet"></i> Wallet Status</h5>
+                        <div class="card wallet-card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-wallet me-2"></i> Wallet Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="wallet-icon"><i class="fas fa-wallet"></i></div>
+
+                                <label class="wallet-label">Current Balance</label>
+                                <div class="wallet-amount" id="walletBalance">₹0.00</div>
+
+                                <label class="wallet-label mt-4">Add Money to Wallet</label>
+                                <div class="wallet-input-group">
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" id="addAmount" class="form-control" placeholder="Enter amount" min="1">
+                                    <button type="button" class="btn btn-success" onclick="addMoneyToWallet()" style=" height: 33px; margin-top: 1px;">
+                                    <i class="fas fa-plus"></i> Add Money 
+                                    </button>
                                 </div>
-                                <div class="card-body contact-from-area">
-                                    <div class="row">
-                                        <div class="col-lg-8 mx-auto text-center">
-                                            <div class="mb-5">
-                                                <i class="fas fa-wallet" style="font-size: 4rem; color: var(--primary-blue);"></i>
-                                            </div>
-                                            <form>
-                                                <div class="form-group">
-                                                    <label for="walletAmount" class="h4">Current Balance</label>
-                                                    <div class="wallet-amount">₹125.50</div>
-                                                </div>
-                                                <button type="button" class="btn btn-success" onclick="">
-                                                    <i class="fas fa-plus"></i> Add Money
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
+                            </div>
+
                         </div>
 
                         <div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
-                                        <div class="card">
-                                            <div class="card-header">
-                                                <h5 class="mb-0"><i class="fas fa-history"></i> Wallet History</h5>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="table-responsive">
-                                                    <table class="table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th><i class="fas fa-calendar"></i> Date</th>
-                                                                <th><i class="fas fa-info-circle"></i> Status</th>
-                                                                <th><i class="fas fa-dollar-sign"></i> Amount</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <!-- <tbody>
-                                                            <tr>
-                                                                <td>2024-01-15</td>
-                                                                <td><span class="badge bg-success">Credit</span></td>
-                                                                <td>+$50.00</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>2024-01-14</td>
-                                                                <td><span class="badge bg-danger">Debit</span></td>
-                                                                <td>-$29.99</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>2024-01-10</td>
-                                                                <td><span class="badge bg-success">Credit</span></td>
-                                                                <td>+$100.00</td>
-                                                            </tr>
-                                                        </tbody> -->
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                        <div class="card">
+                            <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-history"></i> Wallet History</h5>
+                            </div>
+                            <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                <thead>
+                                    <tr>
+                                    <th><i class="fas fa-calendar"></i> Date</th>
+                                    <th><i class="fas fa-info-circle"></i> Description</th>
+                                    <th><i class="fas fa-dollar-sign"></i> Amount</th>
+                                    <th><i class="fas fa-exchange-alt"></i> Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="walletHistoryTable">
+                                    <!-- Wallet history will be loaded here -->
+                                </tbody>
+                                </table>
+                            </div>
+
+                            <nav aria-label="Wallet history pagination">
+                                <div id="walletHistoryPagination"></div>
+                                </nav>
+
+                            </div>
+                        </div>
+                        </div>
 
                                     <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="referal-tab">
                                         <div class="card">
@@ -971,16 +1107,18 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 
         <script>
-            var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
-            triggerTabList.forEach(function (triggerEl) {
-                var tabTrigger = new bootstrap.Tab(triggerEl);
-                triggerEl.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    tabTrigger.show();
-                });
+        // ---------------- TAB INITIALIZATION ----------------
+        var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
             });
+        });
 
-            document.addEventListener('DOMContentLoaded', function() {
+        // ---------------- DELETE ADDRESS CONFIRMATION ----------------
+        document.addEventListener('DOMContentLoaded', function() {
             const deleteButtons = document.querySelectorAll('.delete-address-btn');
             
             deleteButtons.forEach(button => {
@@ -996,7 +1134,6 @@
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#d33',
                         confirmButtonText: 'Yes, delete it!',
-                        
                     }).then((result) => {
                         if (result.isConfirmed) {
                             window.location.href = deleteUrl;
@@ -1006,119 +1143,217 @@
             });
         });
 
-        
-           document.addEventListener('DOMContentLoaded', function() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const tab = urlParams.get('tab');
-                const page = urlParams.get('page');
-                
-                if (tab === 'orders') {
-                    const tabEl = document.getElementById('orders-tab');
-                    new bootstrap.Tab(tabEl).show();
-                }
+        // ---------------- TAB HANDLING & URL UPDATES ----------------
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            const page = urlParams.get('page');
+            
+            if (tab === 'orders') {
+                const tabEl = document.getElementById('orders-tab');
+                new bootstrap.Tab(tabEl).show();
+            }
 
-                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-                    tab.addEventListener('click', function(e) {
-                        const tabName = e.target.getAttribute('aria-controls').replace('-tab', '');
-                        const url = new URL(window.location);
-                        
-                        // Remove page parameter when switching tabs
-                        url.searchParams.delete('page');
-                        url.searchParams.set('tab', tabName);
-                        
-                        window.history.pushState({}, '', url);
-                    });
-                });
-
-                // Handle pagination clicks
-                document.addEventListener('click', function(e) {
-                    if (e.target.closest('.pagination a')) {
-                        e.preventDefault();
-                        const url = new URL(e.target.href);
-                        url.searchParams.set('tab', 'orders'); 
-                        window.location.href = url.toString();
-                    }
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    const tabName = e.target.getAttribute('aria-controls').replace('-tab', '');
+                    const url = new URL(window.location);
+                    url.searchParams.delete('page'); // remove old pagination param
+                    url.searchParams.set('tab', tabName);
+                    window.history.pushState({}, '', url);
                 });
             });
 
-            async function uploadProfilePhoto() {
+            // Handle pagination clicks in orders tab
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.pagination a')) {
+                    e.preventDefault();
+                    const url = new URL(e.target.href);
+                    url.searchParams.set('tab', 'orders'); 
+                    window.location.href = url.toString();
+                }
+            });
+        });
+
+        // ---------------- PROFILE PHOTO UPLOAD ----------------
+        async function uploadProfilePhoto() {
             const fileInput = document.getElementById('profilePhotoInput');
             const formData = new FormData();
             formData.append('profilePhoto', fileInput.files[0]);
 
             try {
-                const response = await fetch('/update-profile-photo', {
-                method: 'POST',
-                body: formData
-                });
-
+                const response = await fetch('/update-profile-photo', { method: 'POST', body: formData });
                 const result = await response.json();
 
                 if (result.success) {
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: result.message
-                }).then(() => {
-                location.reload();
-                });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: result.message
+                    }).then(() => location.reload());
                 } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.message
-                });
+                    Swal.fire({ icon: 'error', title: 'Error', text: result.message });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'An error occurred while uploading the photo'
-                });
+                Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while uploading the photo' });
             }
-            }
+        }
 
-            async function removeProfilePhoto() {
+        // ---------------- REMOVE PROFILE PHOTO ----------------
+        async function removeProfilePhoto() {
             try {
-                const response = await fetch('/remove-profile-photo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-                });
-
+                const response = await fetch('/remove-profile-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const result = await response.json();
 
                 if (result.success) {
-                document.getElementById('profileImage').src = '/images/default-avatar.png';
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: result.message
-                }).then(() => {
-                location.reload();
-                });
+                    document.getElementById('profileImage').src = '/images/default-avatar.png';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: result.message
+                    }).then(() => location.reload());
                 } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.message
-                });
+                    Swal.fire({ icon: 'error', title: 'Error', text: result.message });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'An error occurred while removing the photo'
-                });
+                Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while removing the photo' });
             }
+        }
+
+        // ---------------- WALLET TAB EVENTS ----------------
+        document.addEventListener('DOMContentLoaded', function() {
+            const walletTab = document.getElementById('track-orders-tab');
+            const walletHistoryTab = document.getElementById('wallet-history-tab');
+            
+            walletTab.addEventListener('shown.bs.tab', loadWalletBalance);
+            walletHistoryTab.addEventListener('shown.bs.tab', loadWalletHistory);
+        });
+
+        // ---------------- LOAD WALLET BALANCE ----------------
+        async function loadWalletBalance() {
+            try {
+                const response = await fetch('/wallet-history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('walletBalance').textContent = `₹${data.walletBalance.toFixed(2)}`;
+                }
+            } catch (error) {
+                console.error('Error loading wallet balance:', error);
+            }
+        }
+
+        // ---------------- LOAD WALLET HISTORY + PAGINATION ----------------
+        async function loadWalletHistory(page = 1) {
+        try {
+            const response = await fetch(`/wallet-history-data?page=${page}`);
+            const data = await response.json();
+            
+            if (data.success) {
+            const tableBody = document.getElementById('walletHistoryTable');
+            tableBody.innerHTML = '';
+
+            if (data.transactions.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No transactions found</td></tr>';
+                return;
             }
 
-        </script>
+            data.transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                const date = new Date(transaction.createdAt).toLocaleDateString();
+                const amountClass = transaction.type === 'credit' ? 'text-success' : 'text-danger';
+                const typeBadge = transaction.type === 'credit'
+                ? '<span class="badge bg-success">Credit</span>'
+                : '<span class="badge bg-danger">Debit</span>';
+
+                row.innerHTML = `
+                <td>${date}</td>
+                <td>${transaction.description}</td>
+                <td class="${amountClass}">${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount.toFixed(2)}</td>
+                <td>${typeBadge}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            renderWalletPagination(data.totalPages, data.currentPage);
+            }
+        } catch (error) {
+            console.error('Error loading wallet history:', error);
+        }
+        }
+
+        // ---------------- RENDER PAGINATION (GLASS STYLE) ----------------
+        function renderWalletPagination(totalPages, currentPage) {
+        const paginationContainer = document.getElementById('walletHistoryPagination');
+        paginationContainer.innerHTML = '';
+
+        const createPageLink = (page, text = null, active = false, disabled = false) => {
+            const a = document.createElement('a');
+            a.className = active ? 'active' : '';
+            a.href = "#";
+            a.textContent = text || page;
+            if (disabled) a.style.pointerEvents = 'none';
+            a.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadWalletHistory(page);
+            });
+            return a;
+        };
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pagination-glass';
+
+        if (currentPage > 1) {
+            wrapper.appendChild(createPageLink(currentPage - 1, 'Prev'));
+        }
+
+        for (let i = 1; i <= totalPages; i++) {
+            wrapper.appendChild(createPageLink(i, i, i === currentPage));
+        }
+
+        if (currentPage < totalPages) {
+            wrapper.appendChild(createPageLink(currentPage + 1, 'Next'));
+        }
+
+        paginationContainer.appendChild(wrapper);
+        }
+
+        // ---------------- ADD MONEY TO WALLET ----------------
+        async function addMoneyToWallet() {
+            const amountInput = document.getElementById('addAmount');
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount <= 0) {
+                Swal.fire('Error', 'Please enter a valid amount', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/add-to-wallet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire('Success', data.message, 'success');
+                    amountInput.value = '';
+                    loadWalletBalance();
+                    loadWalletHistory();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding money:', error);
+                Swal.fire('Error', 'Failed to add money to wallet', 'error');
+            }
+        }
+    </script>
+
     </body>
 </html>
 <%- include("../../views/partials/user/footer") %>

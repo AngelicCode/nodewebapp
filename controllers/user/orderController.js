@@ -4,6 +4,7 @@ const Cart = require("../../models/cartSchema");
 const Address = require("../../models/addressSchema");
 const Product = require("../../models/productSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
+const { refundToWallet } = require("../../helpers/walletHelper");
 const { HTTP_STATUS, getMessage } = require('../../helpers/httpStatus');
 
 const orderSuccess = async (req, res) => {
@@ -184,13 +185,19 @@ const cancelOrder = async (req, res) => {
     if (cancelType === 'entire') {
       order.status = 'cancelled';
 
+      const refundAmount = order.finalAmount;
+
       if (order.paymentMethod === 'cod') {
         order.paymentStatus = 'cancelled';
-      } else if (order.paymentMethod === 'razorpay') {
-        order.paymentStatus = 'refunded'; 
+      } else if (order.paymentMethod === 'razorpay' || order.paymentMethod === 'wallet') {
+        order.paymentStatus = 'refunded';
+        
+        await refundToWallet(orderId, refundAmount, `Refund for cancelled order ${order.orderId}`);
       }
+
       order.cancellationReason = reason;
       order.cancelledBy = 'user';
+
       order.finalAmount = 0;
 
       for (const item of order.orderItems) {
@@ -212,7 +219,8 @@ const cancelOrder = async (req, res) => {
       success: true, 
       message: 'Order cancelled successfully',
       finalAmount: order.finalAmount,
-      paymentStatus: order.paymentStatus
+      paymentStatus: order.paymentStatus,
+      newFinalAmount: order.finalAmount
     });
 
   } catch (error) {
@@ -256,6 +264,10 @@ const cancelOrderItem = async(req,res)=>{
 
     await Product.findByIdAndUpdate(productId, { $inc: { quantity: quantity } });
 
+    if (order.paymentMethod !== 'cod') {
+      await refundToWallet(orderId, itemTotal, `Refund for cancelled item in order ${order.orderId}`);
+    }
+
     const newStatus = order.calculateOrderStatus();
     order.status = newStatus.status;
     order.paymentStatus = newStatus.paymentStatus;
@@ -270,7 +282,8 @@ const cancelOrderItem = async(req,res)=>{
       success: true,
       message: refundMessage,
       refundAmount: itemTotal,
-      paymentMethod: order.paymentMethod
+      paymentMethod: order.paymentMethod,
+      newFinalAmount: order.finalAmount
     });
 
   } catch (error) {
@@ -295,7 +308,7 @@ const returnOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
         }
 
-        order.status = 'Return requested';
+        order.status = 'return requested';
         order.returnReason = reason;
         
         await order.save();

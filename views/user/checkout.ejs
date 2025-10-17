@@ -601,6 +601,9 @@
                     <div class="payment-method" data-method="razorpay">
                         🪙<br>Razorpay
                     </div>
+                    <div class="payment-method" data-method="wallet">
+                        💳<br>Wallet
+                    </div>
                 </div>
 
                 <!-- <div id="cardDetails" style="margin-top: 25px;">
@@ -1245,6 +1248,14 @@
                     codDetails.style.display = 'block';
                     codChargeRow.style.display = 'flex';
                     total += 5;
+                }else if (this.dataset.method === 'wallet') {
+                    cardDetails.style.display = 'none';
+                    codDetails.style.display = 'none';
+                    codChargeRow.style.display = 'none';
+                } else {
+                    cardDetails.style.display = 'none';
+                    codDetails.style.display = 'none';
+                    codChargeRow.style.display = 'none';
                 }
                 totalSpan.textContent = `₹${total.toFixed(2)}`;
             });
