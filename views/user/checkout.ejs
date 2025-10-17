@@ -896,6 +896,8 @@
 
     <script>
     const addresses = <%- JSON.stringify(addresses) %>;
+    // Get wallet balance from server-side rendering
+    const userWalletBalance = <%- walletBalance || 0 %>;
 
     function openAddAddressModal() {
         document.getElementById('addAddressModal').style.display = 'flex';
@@ -1014,6 +1016,70 @@
         });
     }
 
+    // Function to show insufficient balance alert
+    function showInsufficientBalanceAlert(currentBalance, orderTotal) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Insufficient Wallet Balance',
+            html: `
+                <div>
+                    <p >Your current wallet balance: <strong>₹${currentBalance.toFixed(2)}</strong></p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Choose Another Method',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#71cd14',
+            cancelButtonColor: '#95a5a6'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Select Razorpay as default alternative
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+                document.querySelector('.payment-method[data-method="razorpay"]').classList.add('active');
+                
+                // Update payment method display
+                updatePaymentMethodDisplay('razorpay');
+            } else {
+                // Keep wallet selected but show the alert again if they try to proceed
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+                document.querySelector('.payment-method[data-method="wallet"]').classList.add('active');
+            }
+        });
+    }
+
+    // Function to update payment method display
+    function updatePaymentMethodDisplay(methodType) {
+        const cardDetails = document.getElementById('cardDetails');
+        const codDetails = document.getElementById('codDetails');
+        const codChargeRow = document.getElementById('cod-charge-row');
+        const totalSpan = document.getElementById('total');
+        const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('₹', ''));
+        const shipping = parseFloat(document.getElementById('shipping').textContent.replace('₹', ''));
+        
+        let total = subtotal + shipping;
+        
+        if (methodType === 'card') {
+            cardDetails.style.display = 'block';
+            codDetails.style.display = 'none';
+            codChargeRow.style.display = 'none';
+        } else if (methodType === 'cod') {
+            cardDetails.style.display = 'none';
+            codDetails.style.display = 'block';
+            codChargeRow.style.display = 'flex';
+            total += 5;
+        } else if (methodType === 'wallet') {
+            cardDetails.style.display = 'none';
+            codDetails.style.display = 'none';
+            codChargeRow.style.display = 'none';
+        } else {
+            cardDetails.style.display = 'none';
+            codDetails.style.display = 'none';
+            codChargeRow.style.display = 'none';
+        }
+        
+        totalSpan.textContent = `₹${total.toFixed(2)}`;
+    }
+
     async function processPayment() {
         const btn = document.querySelector('.btn-primary');
         btn.innerHTML = '⏳ Processing...';
@@ -1027,39 +1093,32 @@
                 throw new Error('Please select a shipping address');
             }
 
+            // Additional wallet balance check before processing
+            if (paymentMethod === 'wallet') {
+                const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+                
+                if (userWalletBalance < orderTotal) {
+                    btn.innerHTML = 'Complete Order';
+                    btn.disabled = false;
+                    showInsufficientBalanceAlert(userWalletBalance, orderTotal);
+                    return;
+                }
+            }
 
             const orderData = {
-            addressId: addressId,
-            paymentMethod: paymentMethod,
-            cartItems: <%- JSON.stringify(cartItems) %>,
-            subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-            shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-            tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-            total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
+                addressId: addressId,
+                paymentMethod: paymentMethod,
+                cartItems: <%- JSON.stringify(cartItems) %>,
+                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
+                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
+                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
+                total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
 
-            coupon: appliedCoupon ? {
-                code: appliedCoupon.code,
-                discountAmount: appliedCoupon.discountAmount
-            } : null
+                coupon: appliedCoupon ? {
+                    code: appliedCoupon.code,
+                    discountAmount: appliedCoupon.discountAmount
+                } : null
             };
-
-    
-            // // Handle card payment (from first function)
-            // if (paymentMethod === 'card') {
-            //     const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-            //     const expiry = document.getElementById('expiry').value;
-            //     const cvv = document.getElementById('cvv').value;
-
-            //     if (!cardNumber || !expiry || !cvv) {
-            //         throw new Error('Please enter complete card details');
-            //     }
-
-            //     orderData.paymentDetails = {
-            //         cardNumber: cardNumber,
-            //         expiry: expiry,
-            //         cvv: cvv
-            //     };
-            // }
 
             const response = await fetch('/place-order', {
                 method: 'POST',
@@ -1225,39 +1284,26 @@
             });
         }
 
+        // Enhanced payment method selection with wallet balance check
         document.querySelectorAll('.payment-method').forEach(method => {
             method.addEventListener('click', function() {
+                const methodType = this.dataset.method;
+                
+                if (methodType === 'wallet') {
+                    // Check wallet balance before selecting wallet
+                    const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+                    
+                    if (userWalletBalance < orderTotal) {
+                        showInsufficientBalanceAlert(userWalletBalance, orderTotal);
+                        return; // Don't select wallet if insufficient balance
+                    }
+                }
+                
+                // Proceed with normal selection if balance is sufficient or not wallet method
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 this.classList.add('active');
                 
-                const cardDetails = document.getElementById('cardDetails');
-                const codDetails = document.getElementById('codDetails');
-                const codChargeRow = document.getElementById('cod-charge-row');
-                const totalSpan = document.getElementById('total');
-                const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('₹', ''));
-                const shipping = parseFloat(document.getElementById('shipping').textContent.replace('₹', ''));
-                
-                let total = subtotal + shipping;
-                
-                if (this.dataset.method === 'card') {
-                    cardDetails.style.display = 'block';
-                    codDetails.style.display = 'none';
-                    codChargeRow.style.display = 'none';
-                } else if (this.dataset.method === 'cod') {
-                    cardDetails.style.display = 'none';
-                    codDetails.style.display = 'block';
-                    codChargeRow.style.display = 'flex';
-                    total += 5;
-                }else if (this.dataset.method === 'wallet') {
-                    cardDetails.style.display = 'none';
-                    codDetails.style.display = 'none';
-                    codChargeRow.style.display = 'none';
-                } else {
-                    cardDetails.style.display = 'none';
-                    codDetails.style.display = 'none';
-                    codChargeRow.style.display = 'none';
-                }
-                totalSpan.textContent = `₹${total.toFixed(2)}`;
+                updatePaymentMethodDisplay(methodType);
             });
         });
 

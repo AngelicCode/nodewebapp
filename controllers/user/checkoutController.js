@@ -31,10 +31,15 @@ const loadCheckout = async(req,res)=>{
       return res.redirect("/cart");
     }
 
+    const user = await User.findById(userId);
+    const walletBalance = user.wallet || 0;
+
     res.render("checkout",{
       addresses,
       cartItems: cart.items,
       cartCount: cartCount,
+      walletBalance:walletBalance,
+      
     });
 
   } catch (error) {
