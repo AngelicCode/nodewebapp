@@ -500,14 +500,6 @@
                                     </div>
                                     <% } %>
 
-                                    <!-- COD Fee -->
-                                    <% if (order.status !== 'cancelled' && order.paymentMethod === 'cod') { %>
-                                    <div class="d-flex justify-content-between mb-2">
-                                    <span>COD Fee:</span>
-                                    <span>₹5.00</span>
-                                    </div>
-                                    <% } %>
-
                                     <!-- Deduction for Cancelled or Returned Items -->
                                     <%
                                     let adjustmentTotal = 0;
@@ -721,10 +713,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> 
-                    If you cancel the entire order, shipping and COD charges will be removed.
-                </div>
                 <p>Are you sure you want to cancel this entire order?</p>
                 <form id="cancelOrderForm">
                     <div class="mb-3">
@@ -963,7 +951,7 @@
 
                             Swal.fire({
                                 title: 'Success', 
-                                html: 'Order cancelled successfully. <br><br>Shipping and COD charges have been removed.',
+                                html: 'Order cancelled successfully.',
                                 icon: 'success'
                             }).then(() => {
                                 location.reload();
