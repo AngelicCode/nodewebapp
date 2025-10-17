@@ -40,6 +40,16 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  usedBy: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    usedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model("Coupon", couponSchema);

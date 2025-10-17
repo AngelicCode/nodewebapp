@@ -12,6 +12,7 @@ const razorpayInstance = new Razorpay({
 });
 const crypto = require('crypto');
 const Coupon = require("../../models/couponSchema");
+const { updateCouponUsage  } = require('../../helpers/couponUsageUpdate');
 
 const loadCheckout = async(req,res)=>{
   try {
@@ -287,6 +288,10 @@ const placeOrder = async(req,res)=>{
             description: `Payment for order ${newOrder.orderId}`
         });
     }
+
+          if (coupon) {
+        await updateCouponUsage(coupon.code, userId);
+      }
       
         for (const item of validatedItems) {
           await Product.findByIdAndUpdate(
@@ -483,6 +488,10 @@ const verifyRazorpayPayment = async (req, res) => {
       await order.save();
     }
 
+    if (coupon) {
+      await updateCouponUsage(coupon.code, userId);
+    }
+
     for (const item of validatedItems) {
       await Product.findByIdAndUpdate(
         item.productId._id,
@@ -658,6 +667,17 @@ const applyCoupon = async (req, res) => {
       });
     }
 
+     const hasUserUsedCoupon = coupon.usedBy.some(usage => 
+      usage.userId.toString() === userId.toString()
+    );
+
+    if (hasUserUsedCoupon) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'You have already used this coupon' 
+      });
+    }
+
     let discountAmount = 0;
     let finalAmount = cartTotal;
 
@@ -728,12 +748,15 @@ const removeCoupon = async (req, res) => {
 const getAvailableCoupons = async (req, res) => {
   try {
     const cartTotal = parseFloat(req.query.cartTotal) || 0;
+    const userId = req.session.user._id;
     
     const coupons = await Coupon.find({
       isActive: true,
       couponValidity: { $gte: new Date() },
       couponMinAmount: { $lte: cartTotal },
-      $expr: { $lt: ['$usageCount', '$limit'] }
+      $expr: { $lt: ['$usageCount', '$limit'] },
+      'usedBy.userId': { $ne: userId }
+
     }).sort({ couponDiscount: -1 });
 
     res.json({
