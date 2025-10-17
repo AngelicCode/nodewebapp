@@ -896,7 +896,6 @@
 
     <script>
     const addresses = <%- JSON.stringify(addresses) %>;
-    // Get wallet balance from server-side rendering
     const userWalletBalance = <%- walletBalance || 0 %>;
 
     function openAddAddressModal() {
@@ -1016,7 +1015,6 @@
         });
     }
 
-    // Function to show insufficient balance alert
     function showInsufficientBalanceAlert(currentBalance, orderTotal) {
         Swal.fire({
             icon: 'warning',
@@ -1033,21 +1031,18 @@
             cancelButtonColor: '#95a5a6'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Select Razorpay as default alternative
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 document.querySelector('.payment-method[data-method="razorpay"]').classList.add('active');
                 
-                // Update payment method display
                 updatePaymentMethodDisplay('razorpay');
             } else {
-                // Keep wallet selected but show the alert again if they try to proceed
+                
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 document.querySelector('.payment-method[data-method="wallet"]').classList.add('active');
             }
         });
     }
 
-    // Function to update payment method display
     function updatePaymentMethodDisplay(methodType) {
         const cardDetails = document.getElementById('cardDetails');
         const codDetails = document.getElementById('codDetails');
@@ -1093,7 +1088,7 @@
                 throw new Error('Please select a shipping address');
             }
 
-            // Additional wallet balance check before processing
+            
             if (paymentMethod === 'wallet') {
                 const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
                 
@@ -1295,11 +1290,11 @@
                     
                     if (userWalletBalance < orderTotal) {
                         showInsufficientBalanceAlert(userWalletBalance, orderTotal);
-                        return; // Don't select wallet if insufficient balance
+                        return; 
                     }
                 }
                 
-                // Proceed with normal selection if balance is sufficient or not wallet method
+                
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 this.classList.add('active');
                 
@@ -1312,17 +1307,6 @@
                 console.log('Selected address:', e.target.value);
             }
         });
-
-        // Card input formatting (commented out but kept for reference)
-        // document.getElementById('cardNumber').addEventListener('input', function(e) {
-        //     e.target.value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-        // });
-
-        // document.getElementById('expiry').addEventListener('input', function(e) {
-        //     e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
-        // });
-
-        // Modal close on background click
         
         window.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {

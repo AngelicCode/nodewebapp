@@ -645,8 +645,8 @@
                                 </div>
                                 <% } %>
                                 
-                                <% if (['Return requested', 'Return approved', 'Return rejected', 'refunded'].includes(order.status)) { %>
-                                <div class="timeline-step <%= ['Return approved', 'Return rejected', 'refunded'].includes(order.status) ? 'completed' : 'active' %>">
+                                <% if (['return requested', 'return approved', 'return rejected', 'refunded'].includes(order.status)) { %>
+                                <div class="timeline-step <%= ['return approved', 'return rejected', 'refunded'].includes(order.status) ? 'completed' : 'active' %>">
                                     <h6 class="mb-1">Return Requested</h6>
                                     <p class="text-muted mb-0">You have requested a return</p>
                                     <% if (order.returnReason) { %>
@@ -655,7 +655,7 @@
                                 </div>
                                 <% } %>
                                 
-                                <% if (['Return approved', 'refunded'].includes(order.status)) { %>
+                                <% if (['return approved', 'refunded'].includes(order.status)) { %>
                                 <div class="timeline-step <%= order.status === 'refunded' ? 'completed' : 'active' %>">
                                     <h6 class="mb-1">Return Approved</h6>
                                     <p class="text-muted mb-0">Your return has been approved</p>
@@ -669,7 +669,7 @@
                                 </div>
                                 <% } %>
                                 
-                                <% if (order.status === 'Return rejected') { %>
+                                <% if (order.status === 'return rejected') { %>
                                 <div class="timeline-step">
                                     <h6 class="mb-1 text-danger">Return Rejected</h6>
                                     <p class="text-muted mb-0">Your return request has been rejected</p>
@@ -692,7 +692,7 @@
                                 <% } %>
                                 
                                 <% if (order.status === 'delivered') { %>
-                                <% if (order.status !== 'Return requested') { %>
+                                <% if (order.status !== 'return requested') { %>
                                     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
                                         <i class="fas fa-undo"></i> Return Order
                                     </button>

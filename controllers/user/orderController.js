@@ -310,6 +310,13 @@ const returnOrder = async (req, res) => {
 
         order.status = 'return requested';
         order.returnReason = reason;
+
+        order.orderItems.forEach(item=>{
+          if(item.itemStatus === "delivered"){
+            item.itemStatus = "return requested";
+             item.returnReason = reason;
+          }
+        });
         
         await order.save();
 
