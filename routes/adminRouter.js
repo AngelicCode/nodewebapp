@@ -13,7 +13,7 @@ const salesreportController = require("../controllers/admin/salesreportControlle
 
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { storage, fileFilter } = require("../helpers/multer");
-const couponSchema = require("../models/couponSchema");
+const offerController = require("../controllers/admin/offerController");
 
 const upload = multer({
   storage: storage,
@@ -73,6 +73,13 @@ router.post('/coupon/toggle-status/:id',adminAuth,couponController.toggleCouponS
 router.get("/sales-report",adminAuth,salesreportController.salesreportPage);
 router.get("/sales-report/download/pdf",adminAuth,salesreportController.downloadSalesReportPDF);
 router.get('/sales-report/download/excel',adminAuth,salesreportController.downloadSalesReportExcel);
+
+//Offer Management
+router.post("/add-product-offer", adminAuth, offerController.addProductOffer);
+router.post("/remove-product-offer/:productId", adminAuth, offerController.removeProductOffer);
+router.post("/add-category-offer", adminAuth, offerController.addCategoryOffer);
+router.post("/remove-category-offer/:categoryId", adminAuth, offerController.removeCategoryOffer);
+router.get("/offer-details/:productId", adminAuth, offerController.getProductOfferDetails);
 
 
 

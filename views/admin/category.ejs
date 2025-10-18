@@ -444,19 +444,21 @@
                       <td><%= index + 1 %></td>
                       <td><strong><%= category.name %></strong></td>
                       <td><%= category.description %></td>
+
                       <td>
-                        <% if (category.categoryOffer && category.categoryOffer > 0) { %>
-                          <span class="badge bg-success">₹<%= category.categoryOffer %></span>
-                        <% } else { %>
-                          <span class="badge bg-light">—</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <div class="action-buttons">
-                          <a href="/admin/add-offer/<%= category._id %>" class="btn btn-success btn-sm">Add</a>
-                          <a href="/admin/remove-offer/<%= category._id %>" class="btn btn-warning btn-sm">Remove</a>
-                        </div>
-                      </td>
+                      <% if (category.categoryOffer && category.categoryOffer.percentage > 0) { %>
+                        <span class="badge bg-success"><%= category.categoryOffer.percentage %>%</span>
+                      <% } else { %>
+                        <span class="badge bg-light">—</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="action-buttons">
+                        <button class="btn btn-success btn-sm" onclick="openCategoryOfferModal('<%= category._id %>', '<%= category.name %>')">Add</button>
+                        <button class="btn btn-warning btn-sm" onclick="removeCategoryOffer('<%= category._id %>')">Remove</button>
+                      </div>
+                    </td>
+
                       <td>
                         <select style="padding: 10px 3px;" data-id="<%= category._id %>" class="form-control form-control-sm status-dropdown" disabled>
                           <option value="Listed" <%= category.isListed ? 'selected' : '' %>>Listed</option>
@@ -487,6 +489,42 @@
     <%-include("../partials/admin/pagination")%>
 
   </section>
+
+  <!-- Category Offer Modal -->
+<div class="modal fade" id="categoryOfferModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Category Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryOfferForm">
+          <input type="hidden" id="categoryId" name="categoryId">
+          <div class="mb-3">
+            <label class="form-label">Category: <span id="categoryNameDisplay"></span></label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Discount Percentage</label>
+            <input type="number" class="form-control" id="categoryPercentage" name="percentage" min="1" max="100" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="datetime-local" class="form-control" id="categoryStartDate" name="startDate" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <input type="datetime-local" class="form-control" id="categoryEndDate" name="endDate" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="submitCategoryOffer()">Add Offer</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -617,6 +655,71 @@
       });
     });
 }
+
+// Category Offer Functions
+function openCategoryOfferModal(categoryId, categoryName) {
+  document.getElementById('categoryId').value = categoryId;
+  document.getElementById('categoryNameDisplay').textContent = categoryName;
+  
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  document.getElementById('categoryStartDate').value = now.toISOString().slice(0, 16);
+  document.getElementById('categoryEndDate').value = tomorrow.toISOString().slice(0, 16);
+  
+  new bootstrap.Modal(document.getElementById('categoryOfferModal')).show();
+}
+
+function submitCategoryOffer() {
+  const formData = {
+    categoryId: document.getElementById('categoryId').value,
+    percentage: document.getElementById('categoryPercentage').value,
+    startDate: document.getElementById('categoryStartDate').value,
+    endDate: document.getElementById('categoryEndDate').value
+  };
+
+  fetch('/admin/add-category-offer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    Swal.fire('Success!', data.message, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('categoryOfferModal')).hide();
+    setTimeout(() => location.reload(), 1500);
+  })
+  .catch(error => {
+    Swal.fire('Error!', error.message, 'error');
+  });
+}
+
+function removeCategoryOffer(categoryId) {
+  Swal.fire({
+    title: 'Remove Offer?',
+    text: 'Are you sure you want to remove this category offer?',
+    icon: 'warning',
+    showCancelButton: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/admin/remove-category-offer/${categoryId}`, {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        Swal.fire('Success!', data.message, 'success');
+        location.reload();
+      })
+      .catch(error => {
+        Swal.fire('Error!', error.message, 'error');
+      });
+    }
+  });
+}
+
   </script>
 
   <%- include("../../views/partials/admin/footer") %>

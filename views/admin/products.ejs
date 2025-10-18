@@ -334,15 +334,18 @@
 
                 <td><%=data[i].category.name%></td>
                 <td><%=data[i].salePrice%></td>
+
                 <td>
-                  <span class="badge bg-success">₹999</span>
+                  <% const productOffer = data[i].productOffer && data[i].productOffer.percentage > 0 ? data[i].productOffer.percentage : 0; %>
+                  <span class="badge bg-success"><%= productOffer %>%</span>
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <a href="#" class="btn btn-success btn-sm">Add Offer</a>
-                    <a href="#" class="btn btn-info btn-sm">Remove</a>
+                    <button class="btn btn-success btn-sm" onclick="openProductOfferModal('<%= data[i]._id %>', '<%= data[i].productName %>')">Add Offer</button>
+                    <button class="btn btn-info btn-sm" onclick="removeProductOffer('<%= data[i]._id %>')">Remove</button>
                   </div>
                 </td>
+
                 <td><%= data[i].quantity %></td>
                 <td>
 
@@ -372,6 +375,42 @@
     <%-include("../partials/admin/pagination")%>
 
    </section>
+
+   <!-- Product Offer Modal -->
+<div class="modal fade" id="productOfferModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Product Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="productOfferForm">
+          <input type="hidden" id="productId" name="productId">
+          <div class="mb-3">
+            <label class="form-label">Product: <span id="productNameDisplay"></span></label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Discount Percentage</label>
+            <input type="number" class="form-control" id="productPercentage" name="percentage" min="1" max="100" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="datetime-local" class="form-control" id="productStartDate" name="startDate" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <input type="datetime-local" class="form-control" id="productEndDate" name="endDate" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="submitProductOffer()">Add Offer</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -528,6 +567,70 @@
         });
       }
     }
+
+// Product Offer Functions
+function openProductOfferModal(productId, productName) {
+  document.getElementById('productId').value = productId;
+  document.getElementById('productNameDisplay').textContent = productName;
+  
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  document.getElementById('productStartDate').value = now.toISOString().slice(0, 16);
+  document.getElementById('productEndDate').value = tomorrow.toISOString().slice(0, 16);
+  
+  new bootstrap.Modal(document.getElementById('productOfferModal')).show();
+}
+
+function submitProductOffer() {
+  const formData = {
+    productId: document.getElementById('productId').value,
+    percentage: document.getElementById('productPercentage').value,
+    startDate: document.getElementById('productStartDate').value,
+    endDate: document.getElementById('productEndDate').value
+  };
+
+  fetch('/admin/add-product-offer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    Swal.fire('Success!', data.message, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('productOfferModal')).hide();
+    setTimeout(() => location.reload(), 1500);
+  })
+  .catch(error => {
+    Swal.fire('Error!', error.message, 'error');
+  });
+}
+
+function removeProductOffer(productId) {
+  Swal.fire({
+    title: 'Remove Offer?',
+    text: 'Are you sure you want to remove this product offer?',
+    icon: 'warning',
+    showCancelButton: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/admin/remove-product-offer/${productId}`, {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        Swal.fire('Success!', data.message, 'success');
+        location.reload();
+      })
+      .catch(error => {
+        Swal.fire('Error!', error.message, 'error');
+      });
+    }
+  });
+}
   </script>
   
 

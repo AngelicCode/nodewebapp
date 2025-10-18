@@ -35,9 +35,20 @@ const productSchema = new Schema({
 
   },
   productOffer: {
-    type: Number,
-    default: 0
-
+    percentage: {
+      type: Number,
+      default: 0
+    },
+    startDate: {
+      type: Date
+    },
+    endDate: {
+      type: Date
+    },
+    isActive: {
+      type: Boolean,
+      default: false
+    }
   },
   quantity: {
     type: Number,
