@@ -50,7 +50,7 @@ const salesreportPage = async (req, res) => {
     }
 
     const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped"] },
+      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -66,40 +66,42 @@ const salesreportPage = async (req, res) => {
     const totalCouponDeduction = orders.reduce((sum, order) => sum + (order.couponDetails?.discountAmount || 0), 0);
 
     const totalOfferSavings = orders.reduce((sum, order) => {
-      if (order.discountedTotal && order.totalSavings) {
-        return sum + order.totalSavings;
-      }
-      return sum;
+      const offerSavings = (order.total || 0) - (order.discountedTotal || order.total);
+      return sum + Math.max(0, offerSavings); 
     }, 0);
 
     const totalOriginalRevenue = orders.reduce((sum, order) => {
       return sum + (order.total || 0);
     }, 0);
 
-    const salesData = orders.map(order => ({
-      orderId: order.orderId,
-      orderDate: order.createdAt,
-      customerName: order.userId?.name || 'Guest',
-      customerEmail: order.userId?.email || 'N/A',
-      paymentMethod: order.paymentMethod,
-      totalAmount: order.total,
-      discountedTotal: order.discountedTotal || order.total,
-      totalSavings: order.totalSavings || 0,
-      discount: order.discount || 0,
-      couponCode: order.couponDetails?.couponCode || 'None',
-      couponAmount: order.couponDetails?.discountAmount || 0,
-      finalAmount: order.finalAmount,
-      offerSavings: order.totalSavings || 0
-    }));
+    const salesData = orders.map(order => {
+      const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
+      
+      return {
+        orderId: order.orderId,
+        orderDate: order.createdAt,
+        customerName: order.userId?.name || 'Guest',
+        customerEmail: order.userId?.email || 'N/A',
+        paymentMethod: order.paymentMethod,
+        totalAmount: order.total || 0,
+        discountedTotal: order.discountedTotal || order.total || 0,
+        totalSavings: order.totalSavings || 0,
+        discount: order.discount || 0,
+        couponCode: order.couponDetails?.couponCode || 'None',
+        couponAmount: order.couponDetails?.discountAmount || 0,
+        finalAmount: order.finalAmount || 0,
+        offerSavings: orderOfferSavings 
+      };
+    });
 
     res.render('sales-report', {
       salesData,
       totalOrders,
-      totalSalesAmount,
-      totalDiscount,
-      totalCouponDeduction,
-      totalOfferSavings,
-      totalOriginalRevenue,
+      totalSalesAmount: totalSalesAmount.toFixed(2),
+      totalDiscount: totalDiscount.toFixed(2),
+      totalCouponDeduction: totalCouponDeduction.toFixed(2),
+      totalOfferSavings: totalOfferSavings.toFixed(2),
+      totalOriginalRevenue: totalOriginalRevenue.toFixed(2),
       currentFilters: { 
         reportType: reportType || 'daily', 
         startDate: startDate || '', 
@@ -116,6 +118,8 @@ const salesreportPage = async (req, res) => {
       totalSalesAmount: 0,
       totalDiscount: 0,
       totalCouponDeduction: 0,
+      totalOfferSavings: 0,
+      totalOriginalRevenue: 0,
       currentFilters: { 
         reportType: 'daily', 
         startDate: '', 
@@ -170,7 +174,7 @@ const downloadSalesReportPDF = async (req, res) => {
     }
 
     const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped"] },
+      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -186,10 +190,8 @@ const downloadSalesReportPDF = async (req, res) => {
     const totalCouponDeduction = orders.reduce((sum, order) => sum + (order.couponDetails?.discountAmount || 0), 0);
 
     const totalOfferSavings = orders.reduce((sum, order) => {
-      if (order.discountedTotal && order.totalSavings) {
-        return sum + order.totalSavings;
-      }
-      return sum;
+      const orderOfferSavings = (order.total || 0) - (order.discountedTotal || order.total);
+      return sum + Math.max(0, orderOfferSavings);
     }, 0);
 
     const totalOriginalRevenue = orders.reduce((sum, order) => {
@@ -221,9 +223,8 @@ const downloadSalesReportPDF = async (req, res) => {
     doc.fontSize(10).font('Helvetica');
     doc.text(`Total Orders: ${totalOrders}`);
     doc.text(`Total Sales: ₹${totalSalesAmount.toFixed(2)}`);
-    doc.text(`Total Discount: ₹${totalDiscount.toFixed(2)}`);
-    doc.text(`Coupon Deductions: ₹${totalCouponDeduction.toFixed(2)}`);
-    doc.text(`Offer Savings: ₹${totalOfferSavings.toFixed(2)}`); 
+    doc.text(`Coupon Deduction: ₹${totalCouponDeduction.toFixed(2)}`); 
+    doc.text(`Offer Deduction: ₹${totalOfferSavings.toFixed(2)}`);
     doc.text(`Original Revenue: ₹${totalOriginalRevenue.toFixed(2)}`);
     doc.moveDown();
 
@@ -236,8 +237,9 @@ const downloadSalesReportPDF = async (req, res) => {
       { name: 'Date', width: 70, x: 140 },
       { name: 'Customer', width: 80, x: 210 },
       { name: 'Amount', width: 70, x: 290 },
-      { name: 'Discount', width: 70, x: 360 },
-      { name: 'Final Amt', width: 70, x: 430 }
+      { name: 'Offer Deduction', width: 70, x: 360 },
+      { name: 'Coupon Deduction', width: 70, x: 430 }, 
+      { name: 'Final Amt', width: 70, x: 500 }
     ];
 
     doc.font('Helvetica-Bold');
@@ -245,7 +247,7 @@ const downloadSalesReportPDF = async (req, res) => {
       doc.text(col.name, col.x, tableTop, { width: col.width, align: 'left' });
     });
 
-    doc.moveTo(50, tableTop + 15).lineTo(500, tableTop + 15).stroke();
+    doc.moveTo(50, tableTop + 15).lineTo(570, tableTop + 15).stroke(); 
     
     let currentY = tableTop + rowHeight;
 
@@ -256,12 +258,15 @@ const downloadSalesReportPDF = async (req, res) => {
         currentY = 50;
       }
 
+      const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
+      
       const rowData = [
         order.orderId,
         order.createdAt.toLocaleDateString(),
         (order.userId?.name || 'Guest').substring(0, 10),
         `₹${order.total}`,
-        `₹${order.discount || 0}`,
+        `₹${orderOfferSavings}`,
+        `₹${order.couponDetails?.discountAmount || 0}`, 
         `₹${order.finalAmount}`
       ];
 
@@ -272,8 +277,7 @@ const downloadSalesReportPDF = async (req, res) => {
         });
       });
 
-      doc.moveTo(50, currentY + 15).lineTo(500, currentY + 15).stroke();
-      
+      doc.moveTo(50, currentY + 15).lineTo(570, currentY + 15).stroke(); 
       currentY += rowHeight;
     });
 
@@ -330,7 +334,7 @@ const downloadSalesReportExcel = async (req, res) => {
     }
 
     const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped"] },
+      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -340,11 +344,14 @@ const downloadSalesReportExcel = async (req, res) => {
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
 
+    const totalOrders = orders.length;
+    const totalSalesAmount = orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
+    const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0);
+    const totalCouponDeduction = orders.reduce((sum, order) => sum + (order.couponDetails?.discountAmount || 0), 0);
+
     const totalOfferSavings = orders.reduce((sum, order) => {
-      if (order.discountedTotal && order.totalSavings) {
-        return sum + order.totalSavings;
-      }
-      return sum;
+      const orderOfferSavings = (order.total || 0) - (order.discountedTotal || order.total);
+      return sum + Math.max(0, orderOfferSavings);
     }, 0);
 
     const totalOriginalRevenue = orders.reduce((sum, order) => {
@@ -361,7 +368,8 @@ const downloadSalesReportExcel = async (req, res) => {
       { header: 'Customer', key: 'customer', width: 20 },
       { header: 'Payment Method', key: 'payment', width: 15 },
       { header: 'Total Amount', key: 'total', width: 15 },
-      { header: 'Discount', key: 'discount', width: 12 },
+      { header: 'Offer Deduction', key: 'offerDeduction', width: 15 },
+      { header: 'Coupon Deduction', key: 'couponDeduction', width: 15 },
       { header: 'Final Amount', key: 'final', width: 15 }
     ];
 
@@ -373,16 +381,56 @@ const downloadSalesReportExcel = async (req, res) => {
     };
 
     orders.forEach(order => {
+      const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
+      
       worksheet.addRow({
         orderId: order.orderId,
         date: order.createdAt.toLocaleDateString(),
         customer: order.userId?.name || 'Guest',
         payment: order.paymentMethod,
         total: order.total,
-        discount: order.discount || 0,
+        offerDeduction: orderOfferSavings,
+        couponDeduction: order.couponDetails?.discountAmount || 0,
         final: order.finalAmount
       });
     });
+
+    const summaryRow = worksheet.rowCount + 2;
+    
+    worksheet.getCell(`A${summaryRow}`).value = 'Summary';
+    worksheet.getCell(`A${summaryRow}`).font = { bold: true, size: 14 };
+    
+    worksheet.getCell(`A${summaryRow + 1}`).value = 'Total Orders:';
+    worksheet.getCell(`B${summaryRow + 1}`).value = totalOrders;
+    
+    worksheet.getCell(`A${summaryRow + 2}`).value = 'Total Sales:';
+    worksheet.getCell(`B${summaryRow + 2}`).value = totalSalesAmount;
+    worksheet.getCell(`B${summaryRow + 2}`).numFmt = '₹#,##0.00';
+    
+    worksheet.getCell(`A${summaryRow + 3}`).value = 'Coupon Deduction:';
+    worksheet.getCell(`B${summaryRow + 3}`).value = totalCouponDeduction;
+    worksheet.getCell(`B${summaryRow + 3}`).numFmt = '₹#,##0.00';
+    
+    worksheet.getCell(`A${summaryRow + 4}`).value = 'Offer Deduction:';
+    worksheet.getCell(`B${summaryRow + 4}`).value = totalOfferSavings;
+    worksheet.getCell(`B${summaryRow + 4}`).numFmt = '₹#,##0.00';
+    
+    worksheet.getCell(`A${summaryRow + 5}`).value = 'Original Revenue:';
+    worksheet.getCell(`B${summaryRow + 5}`).value = totalOriginalRevenue;
+    worksheet.getCell(`B${summaryRow + 5}`).numFmt = '₹#,##0.00';
+
+    for (let i = summaryRow; i <= summaryRow + 5; i++) {
+      worksheet.getCell(`A${i}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0F8FF' }
+      };
+      worksheet.getCell(`B${i}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0F8FF' }
+      };
+    }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=sales-report-${Date.now()}.xlsx`);
@@ -395,6 +443,7 @@ const downloadSalesReportExcel = async (req, res) => {
     res.status(500).send('Failed to generate Excel report');
   }
 };
+
 
 module.exports = {
   salesreportPage,downloadSalesReportPDF,downloadSalesReportExcel,
