@@ -4,6 +4,7 @@ const User = require("../../models/userSchema");
 const Wishlist = require("../../models/wishlistSchema");
 const Cart = require("../../models/cartSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
+const { getLargestOffer } = require('../../helpers/offerHelper');
 
 const productDetails = async (req, res) => { 
     try {    
@@ -45,9 +46,11 @@ const productDetails = async (req, res) => {
             return res.redirect('/shop');
           }
 
+         const bestOffer = await getLargestOffer(productId);
+
          const findCategory = product.category;     
-         const categoryOffer = findCategory?.categoryOffer || 0;     const productOffer = product.productOffer || 0;     
-         const totalOffer = categoryOffer + productOffer;      
+        //  const categoryOffer = findCategory?.categoryOffer || 0;     const productOffer = product.productOffer || 0;     
+        //  const totalOffer = categoryOffer + productOffer;      
          const brand = product.brand ? {...product.brand.toObject(),name: product.brand.brandName} : null;  
 
          const relatedProducts = await Product.find({category:product.category._id,
@@ -56,15 +59,26 @@ const productDetails = async (req, res) => {
              status:"Available",
              quantity: { $gt: 0 }
           }).limit(4).populate("brand");
+
+        const relatedProductsWithOffers = await Promise.all(
+         relatedProducts.map(async (relatedProduct) => {
+           const offer = await getLargestOffer(relatedProduct._id);
+           return {
+             ...relatedProduct.toObject(),
+             bestOffer: offer
+           };
+         })
+       );
          
          res.render("product-details", {
           user: userData,
           product: product,       
-          quantity: product.quantity,       
-          totalOffer: totalOffer,       
+          quantity: product.quantity,
+          bestOffer: bestOffer,       
+          // totalOffer: totalOffer,       
           category: findCategory,       
           brand: brand,
-          relatedProducts:relatedProducts,
+          relatedProducts:relatedProductsWithOffers,
           wishlistProductIds,
           cartProductIds,
           cartCount: cartCount,
@@ -111,6 +125,9 @@ const detailspageAddToCart = async(req,res)=>{
       return res.json({ status: "Insufficient stock available" });
     }
 
+    const currentOffer = await getLargestOffer(productId);
+    const finalPrice = currentOffer.percentage > 0 ? currentOffer.finalPrice : product.salePrice;
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -119,8 +136,10 @@ const detailspageAddToCart = async(req,res)=>{
         items: [{
           productId,
           quantity: quantityToAdd,
-          price: product.salePrice,
-          totalPrice: product.salePrice*quantityToAdd,
+          price: finalPrice,
+          originalPrice: product.salePrice, 
+          totalPrice: finalPrice * quantityToAdd,
+          addedAt: new Date()
           
         }]
       });
@@ -133,7 +152,11 @@ const detailspageAddToCart = async(req,res)=>{
           quantity: quantityToAdd,
           price: product.salePrice,
           totalPrice: product.salePrice*quantityToAdd,
-          
+          price: finalPrice, 
+          originalPrice: product.salePrice, 
+          totalPrice: finalPrice * quantityToAdd,
+          addedAt: new Date()
+
         });
        }else {
         const existingItem = cart.items[existingItemIndex];
@@ -143,8 +166,10 @@ const detailspageAddToCart = async(req,res)=>{
           return res.json({ status: "Insufficient stock available" });
         }
 
+        existingItem.price = finalPrice;
+        existingItem.originalPrice = product.salePrice; 
         existingItem.quantity = newQuantity;
-        existingItem.totalPrice = newQuantity * existingItem.price;
+        existingItem.totalPrice = newQuantity * finalPrice;
       }
     }
 

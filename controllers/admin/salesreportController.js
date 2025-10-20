@@ -65,6 +65,17 @@ const salesreportPage = async (req, res) => {
     const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0);
     const totalCouponDeduction = orders.reduce((sum, order) => sum + (order.couponDetails?.discountAmount || 0), 0);
 
+    const totalOfferSavings = orders.reduce((sum, order) => {
+      if (order.discountedTotal && order.totalSavings) {
+        return sum + order.totalSavings;
+      }
+      return sum;
+    }, 0);
+
+    const totalOriginalRevenue = orders.reduce((sum, order) => {
+      return sum + (order.total || 0);
+    }, 0);
+
     const salesData = orders.map(order => ({
       orderId: order.orderId,
       orderDate: order.createdAt,
@@ -72,10 +83,13 @@ const salesreportPage = async (req, res) => {
       customerEmail: order.userId?.email || 'N/A',
       paymentMethod: order.paymentMethod,
       totalAmount: order.total,
+      discountedTotal: order.discountedTotal || order.total,
+      totalSavings: order.totalSavings || 0,
       discount: order.discount || 0,
       couponCode: order.couponDetails?.couponCode || 'None',
       couponAmount: order.couponDetails?.discountAmount || 0,
-      finalAmount: order.finalAmount
+      finalAmount: order.finalAmount,
+      offerSavings: order.totalSavings || 0
     }));
 
     res.render('sales-report', {
@@ -84,6 +98,8 @@ const salesreportPage = async (req, res) => {
       totalSalesAmount,
       totalDiscount,
       totalCouponDeduction,
+      totalOfferSavings,
+      totalOriginalRevenue,
       currentFilters: { 
         reportType: reportType || 'daily', 
         startDate: startDate || '', 
@@ -169,6 +185,17 @@ const downloadSalesReportPDF = async (req, res) => {
     const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0);
     const totalCouponDeduction = orders.reduce((sum, order) => sum + (order.couponDetails?.discountAmount || 0), 0);
 
+    const totalOfferSavings = orders.reduce((sum, order) => {
+      if (order.discountedTotal && order.totalSavings) {
+        return sum + order.totalSavings;
+      }
+      return sum;
+    }, 0);
+
+    const totalOriginalRevenue = orders.reduce((sum, order) => {
+      return sum + (order.total || 0);
+    }, 0);
+
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ margin: 50 });
 
@@ -196,6 +223,8 @@ const downloadSalesReportPDF = async (req, res) => {
     doc.text(`Total Sales: ₹${totalSalesAmount.toFixed(2)}`);
     doc.text(`Total Discount: ₹${totalDiscount.toFixed(2)}`);
     doc.text(`Coupon Deductions: ₹${totalCouponDeduction.toFixed(2)}`);
+    doc.text(`Offer Savings: ₹${totalOfferSavings.toFixed(2)}`); 
+    doc.text(`Original Revenue: ₹${totalOriginalRevenue.toFixed(2)}`);
     doc.moveDown();
 
     doc.fontSize(10);
@@ -310,6 +339,17 @@ const downloadSalesReportExcel = async (req, res) => {
     const orders = await Order.find(filter)
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
+
+    const totalOfferSavings = orders.reduce((sum, order) => {
+      if (order.discountedTotal && order.totalSavings) {
+        return sum + order.totalSavings;
+      }
+      return sum;
+    }, 0);
+
+    const totalOriginalRevenue = orders.reduce((sum, order) => {
+      return sum + (order.total || 0);
+    }, 0);
 
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();

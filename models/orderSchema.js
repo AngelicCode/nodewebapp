@@ -85,6 +85,10 @@ const orderSchema = new Schema({
          type: Number,
          required: true
       },
+      originalPrice: {  
+         type: Number,
+         required: true
+      },
       quantity: {
          type: Number,
          required: true
@@ -93,6 +97,17 @@ const orderSchema = new Schema({
          type: String,
          enum: ["confirmed","processing", "shipped", "out for delivery", "delivered", "cancelled", "return requested", "returned", "return rejected"],
          default: "confirmed"
+      },
+      offerApplied: {  
+         percentage: {
+            type: Number,
+            default: 0
+         },
+         type: {
+            type: String,
+            enum: ["product", "category", null],
+            default: null
+         }
       },
       returnReason: { 
          type: String, 
@@ -116,6 +131,18 @@ const orderSchema = new Schema({
    total: {
       type: Number,
       required: true
+   },
+   discountedTotal: {  
+      type: Number,
+      required: true
+   },
+   totalSavings: {  
+      type: Number,
+      default: 0
+   },
+   shipping: {  
+      type: Number,
+      default: 0
    },
    createdAt: {
       type: Date,

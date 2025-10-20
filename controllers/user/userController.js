@@ -8,6 +8,7 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
 const { getCartCount } = require('../../helpers/cartHelper');
+const { getLargestOffer } = require('../../helpers/offerHelper');
 
 const pageNotFound = async (req,res)=>{
 
@@ -37,18 +38,28 @@ const loadHomepage = async (req, res) => {
       .limit(4)                
       .lean();
 
+      const productsWithOffers = await Promise.all(
+      productData.map(async (product) => {
+        const offer = await getLargestOffer(product._id);
+        return {
+          ...product,
+          bestOffer: offer
+        };
+      })
+    );
+
     if (userId) {
       const userData = await User.findById(userId).lean();
       return res.render("home", {
         user: userData,
-        products: productData,
+        products: productsWithOffers,
         cartCount: cartCount,
         
       });
     } else {
       return res.render("home", {
                   user: null,
-                  products: productData,
+                  products: productsWithOffers,
 
               });
     }
@@ -316,7 +327,6 @@ const loadShoppingPage = async (req, res) => {
       }
 
       const cartDoc = await Cart.findOne({ userId: user._id }).lean();
-      // console.log(cartDoc)
       if (cartDoc && Array.isArray(cartDoc.items)) {
         cartProductIds = cartDoc.items.map(p => p.productId.toString()); 
       }
@@ -413,6 +423,16 @@ const loadShoppingPage = async (req, res) => {
         product.isBlocked === false;
     });
 
+    const productsWithOffers = await Promise.all(
+      products.map(async (product) => {
+        const offer = await getLargestOffer(product._id);
+        return {
+          ...product,
+          bestOffer: offer
+        };
+      })
+    );
+
     const totalFilteredCount = await Product.countDocuments({
       ...query,
     });
@@ -420,7 +440,7 @@ const loadShoppingPage = async (req, res) => {
     const totalPages = Math.ceil(totalFilteredCount / limit);
 
 
-    products.forEach((product, index) => {
+    productsWithOffers.forEach((product, index) => {
       product.animationClass = "product-item";
       product.delay = index * 0.1;
     });
@@ -438,7 +458,7 @@ const loadShoppingPage = async (req, res) => {
 
     res.render("shop", {
       user,
-      products,
+      products: productsWithOffers,
       category: categories,
       brand: brands,
       totalProducts: totalFilteredCount,

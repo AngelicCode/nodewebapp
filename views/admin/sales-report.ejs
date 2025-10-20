@@ -299,19 +299,19 @@
       <div class="col-md-3">
         <div class="summary-card">
           <h3>₹<%= totalSalesAmount %></h3>
-          <p>Total Sales</p>
+          <p>Total Revenue</p>
         </div>
       </div>
       <div class="col-md-3">
         <div class="summary-card">
-          <h3>₹<%= totalDiscount %></h3>
-          <p>Total Discount</p>
+          <h3>₹<%= totalOfferSavings %></h3>
+          <p>Offer Savings</p>
         </div>
       </div>
       <div class="col-md-3">
         <div class="summary-card">
           <h3>₹<%= totalCouponDeduction %></h3>
-          <p>Coupon Deductions</p>
+          <p>Coupon Savings</p>
         </div>
       </div>
     </div>
@@ -342,32 +342,34 @@
                 <th>Customer</th>
                 <th>Payment Method</th>
                 <th>Total Amount</th>
-                <th>Discount</th>
+                <th>Offer Savings</th>
+                <th>Coupon Savings</th>
                 <th>Final Amount</th>
               </tr>
             </thead>
             <tbody>
-              <% if (salesData && salesData.length > 0) { %>
-                <% salesData.forEach(order => { %>
-                  <tr>
-                    <td><%= order.orderId %></td>
-                    <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
-                    <td><%= order.customerName %></td>
-                    <td><%= order.paymentMethod %></td>
-                    <td>₹<%= order.totalAmount %></td>
-                    <td>₹<%= order.discount %></td>
-                    <td>₹<%= order.finalAmount %></td>
-                  </tr>
-                <% }) %>
-              <% } else { %>
+            <% if (salesData && salesData.length > 0) { %>
+              <% salesData.forEach(order => { %>
                 <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <i class="fas fa-chart-line fa-2x mb-3 text-muted"></i>
-                    <p class="text-muted mb-0">No sales data found for the selected filters</p>
-                  </td>
+                  <td><%= order.orderId %></td>
+                  <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                  <td><%= order.customerName %></td>
+                  <td><%= order.paymentMethod %></td>
+                  <td>₹<%= order.totalAmount %></td>
+                  <td>₹<%= order.offerSavings %></td>
+                  <td>₹<%= order.couponAmount %></td>
+                  <td>₹<%= order.finalAmount %></td>
                 </tr>
-              <% } %>
-            </tbody>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center py-4">
+                  <i class="fas fa-chart-line fa-2x mb-3 text-muted"></i>
+                  <p class="text-muted mb-0">No sales data found for the selected filters</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
           </table>
         </div>
       </div>

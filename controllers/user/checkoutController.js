@@ -13,6 +13,7 @@ const razorpayInstance = new Razorpay({
 const crypto = require('crypto');
 const Coupon = require("../../models/couponSchema");
 const { updateCouponUsage  } = require('../../helpers/couponUsageUpdate');
+const { getLargestOffer } = require('../../helpers/offerHelper');
 
 const loadCheckout = async(req,res)=>{
   try {
@@ -32,15 +33,50 @@ const loadCheckout = async(req,res)=>{
       return res.redirect("/cart");
     }
 
+    let subtotal = 0;
+    let discountedSubtotal = 0;
+    
+    const cartItemsWithOffers = await Promise.all(
+      cart.items.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const originalPrice = item.productId.salePrice;
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : originalPrice;
+        const itemTotal = originalPrice * item.quantity;
+        const discountedTotal = finalPrice * item.quantity;
+        
+        subtotal += itemTotal;
+        discountedSubtotal += discountedTotal;
+        
+        return {
+          ...item.toObject(),
+          offer: offer,
+          finalPrice: finalPrice,
+          originalPrice: originalPrice,
+          itemTotal: itemTotal,
+          discountedTotal: discountedTotal
+        };
+      })
+    );
+
+    const totalSavings = subtotal - discountedSubtotal;
+    const shipping = 50; 
+    const tax = 0; 
+    const finalAmount = discountedSubtotal + shipping + tax;
+
     const user = await User.findById(userId);
     const walletBalance = user.wallet || 0;
 
     res.render("checkout",{
       addresses,
-      cartItems: cart.items,
+      cartItems: cartItemsWithOffers,
       cartCount: cartCount,
-      walletBalance:walletBalance,
-      
+      walletBalance: walletBalance,
+      subtotal: subtotal,
+      discountedSubtotal: discountedSubtotal,
+      totalSavings: totalSavings,
+      shipping: shipping,
+      tax: tax,
+      finalAmount: finalAmount
     });
 
   } catch (error) {
@@ -168,7 +204,7 @@ const placeOrder = async(req,res)=>{
         return res.status(401).json({ status: false, message: 'User not authenticated' });
     }
 
-     const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total, coupon } = req.body;
+     const { addressId, paymentMethod, cartItems, subtotal, shipping, tax, total, coupon, discountedSubtotal, totalSavings } = req.body;
 
      const validatedItems = req.validatedCartItems;
     
@@ -186,7 +222,7 @@ const placeOrder = async(req,res)=>{
         });
     }
 
-     if (paymentMethod === 'wallet') {
+    if (paymentMethod === 'wallet') {
         const user = await User.findById(userId);
         if (user.wallet < total) {
             return res.status(400).json({
@@ -236,12 +272,24 @@ const placeOrder = async(req,res)=>{
 
     const selectedAddress = addressDoc.address.find(addr => addr._id.toString() === addressId);
 
-     const orderItems = validatedItems.map(item => ({
-      productId: item.productId._id,
-      productName: item.productId.productName,
-      price: item.productId.salePrice,
-      quantity: item.quantity
-    }));
+     const orderItems = await Promise.all(
+      validatedItems.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.productId.salePrice;
+        
+        return {
+          productId: item.productId._id,
+          productName: item.productId.productName,
+          price: finalPrice, 
+          originalPrice: item.productId.salePrice, 
+          quantity: item.quantity,
+          offerApplied: offer.percentage > 0 ? {
+            percentage: offer.percentage,
+            type: offer.type
+          } : null
+        };
+      })
+    );
 
     const newOrder = new Order({
             userId: userId,
@@ -259,6 +307,8 @@ const placeOrder = async(req,res)=>{
             paymentMethod: paymentMethod,
             orderItems: orderItems,
             total: parseFloat(subtotal),
+            discountedTotal: parseFloat(discountedSubtotal), 
+            totalSavings: parseFloat(totalSavings),
             shipping: parseFloat(shipping),
             tax: parseFloat(tax),
             finalAmount: parseFloat(total),
@@ -370,7 +420,7 @@ const verifyRazorpayPayment = async (req, res) => {
       });
     }
     
-    const { addressId, subtotal, shipping, tax, total, coupon } = orderData;
+    const { addressId, subtotal, shipping, tax, total, coupon, discountedSubtotal, totalSavings } = orderData;
     
     const addressDoc = await Address.findOne({ 
       userId: userId,
@@ -409,12 +459,24 @@ const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    const orderItems = validatedItems.map(item => ({
-      productId: item.productId._id,
-      productName: item.productId.productName,
-      price: item.productId.salePrice,
-      quantity: item.quantity
-    }));
+    const orderItems = await Promise.all(
+      validatedItems.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.productId.salePrice;
+        
+        return {
+          productId: item.productId._id,
+          productName: item.productId.productName,
+          price: finalPrice, 
+          originalPrice: item.productId.salePrice, 
+          quantity: item.quantity,
+          offerApplied: offer.percentage > 0 ? {
+            percentage: offer.percentage,
+            type: offer.type
+          } : null
+        };
+      })
+    );
 
     let order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
 
@@ -431,6 +493,8 @@ const verifyRazorpayPayment = async (req, res) => {
         altPhone: selectedAddress.altPhone
       };
       order.total = parseFloat(subtotal);
+      order.discountedTotal = parseFloat(discountedSubtotal);
+      order.totalSavings = parseFloat(totalSavings);
       order.shipping = parseFloat(shipping);
       order.tax = parseFloat(tax);
       order.finalAmount = parseFloat(total);
@@ -469,6 +533,8 @@ const verifyRazorpayPayment = async (req, res) => {
         razorpaySignature: razorpay_signature,
         orderItems: orderItems,
         total: parseFloat(subtotal),
+        discountedTotal: parseFloat(discountedSubtotal),
+        totalSavings: parseFloat(totalSavings),
         shipping: parseFloat(shipping),
         tax: parseFloat(tax),
         finalAmount: parseFloat(total),
@@ -630,7 +696,25 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    const cartTotal = cart.items.reduce((total, item) => {
+    let discountedSubtotal = 0;
+    const cartItemsWithOffers = await Promise.all(
+      cart.items.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.productId.salePrice;
+        const itemTotal = finalPrice * item.quantity;
+        
+        discountedSubtotal += itemTotal;
+        
+        return {
+          ...item.toObject(),
+          offer: offer,
+          finalPrice: finalPrice,
+          itemTotal: itemTotal
+        };
+      })
+    );
+
+    const originalSubtotal = cart.items.reduce((total, item) => {
       return total + (item.productId.salePrice * item.quantity);
     }, 0);
 
@@ -653,7 +737,7 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    if (cartTotal < coupon.couponMinAmount) {
+    if (discountedSubtotal  < coupon.couponMinAmount) {
       return res.status(400).json({ 
         status: false, 
         message: `Minimum cart amount of ₹${coupon.couponMinAmount} required` 
@@ -679,10 +763,10 @@ const applyCoupon = async (req, res) => {
     }
 
     let discountAmount = 0;
-    let finalAmount = cartTotal;
+    let finalAmount = discountedSubtotal;
 
     if (coupon.couponType === 'percentage') {
-      discountAmount = (cartTotal * coupon.couponDiscount) / 100;
+      discountAmount = (discountedSubtotal * coupon.couponDiscount) / 100;
 
       if (coupon.couponMaxAmount > 0 && discountAmount > coupon.couponMaxAmount) {
         discountAmount = coupon.couponMaxAmount;
@@ -691,7 +775,7 @@ const applyCoupon = async (req, res) => {
       discountAmount = coupon.couponDiscount;
     }
 
-    finalAmount = cartTotal - discountAmount;
+    finalAmount = discountedSubtotal - discountAmount;
 
     res.json({
       status: true,
@@ -701,7 +785,9 @@ const applyCoupon = async (req, res) => {
         type: coupon.couponType,
         discount: coupon.couponDiscount,
         discountAmount: discountAmount,
-        finalAmount: finalAmount
+        finalAmount: finalAmount,
+        originalSubtotal: originalSubtotal, 
+        discountedSubtotal: discountedSubtotal
       }
     });
 
@@ -726,14 +812,19 @@ const removeCoupon = async (req, res) => {
       });
     }
 
-    const cartTotal = cart.items.reduce((total, item) => {
-      return total + (item.productId.salePrice * item.quantity);
-    }, 0);
+    let discountedSubtotal = 0;
+    await Promise.all(
+      cart.items.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.productId.salePrice;
+        discountedSubtotal += finalPrice * item.quantity;
+      })
+    );
 
     res.json({
       status: true,
       message: 'Coupon removed successfully',
-      cartTotal: cartTotal
+      cartTotal: discountedSubtotal 
     });
 
   } catch (error) {

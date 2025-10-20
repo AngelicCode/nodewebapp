@@ -196,11 +196,19 @@
                         <div class="product-btm p-3 d-flex flex-column">
                             <h4 class="product-title"><%= product.productName %></h4>
                             <div class="price-section mt-auto">
+                            <% if (product.bestOffer && product.bestOffer.percentage > 0) { %>
+                                <span class="current-price">₹<%= product.bestOffer.finalPrice.toFixed(2) %></span>
+                                <del class="original-price ml-2">₹<%= product.salePrice %></del>
+                                <span class="discount-badge" style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 5px;">
+                                    <%= product.bestOffer.percentage %>% OFF
+                                </span>
+                            <% } else { %>
                                 <span class="current-price">₹<%= product.salePrice %></span>
                                 <% if (product.regularPrice && product.regularPrice > product.salePrice) { %>
                                     <del class="original-price ml-2">₹<%= product.regularPrice %></del>
                                 <% } %>
-                            </div>
+                            <% } %>
+                        </div>
                         </div>
                     </div>
                 </div>

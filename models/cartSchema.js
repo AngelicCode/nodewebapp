@@ -24,6 +24,10 @@ const cartSchema = new Schema({
       required: true
 
     },
+    originalPrice: {  
+      type: Number,
+      required: true  
+    },
     totalPrice: {
       type: Number,
       required: true

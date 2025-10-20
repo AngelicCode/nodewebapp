@@ -4,6 +4,7 @@ const mongodb = require("mongodb");
 const Cart = require("../../models/cartSchema");
 const Wishlist = require("../../models/wishlistSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
+const { getLargestOffer } = require('../../helpers/offerHelper');
 
 
 const getCartPage = async (req, res) => {
@@ -35,6 +36,8 @@ const getCartPage = async (req, res) => {
         data: [],
         quantity: 0,
         grandTotal: 0,
+        discountedTotal: 0,
+        totalSavings: 0,
         currentPage: page,
         totalPages: 1,
         query: {}
@@ -49,34 +52,71 @@ const getCartPage = async (req, res) => {
         product.brand && !product.brand.isBlocked;
     });
 
-    const validItems = filteredItems.filter(item=> item.productId.quantity > 0);
-    const outOfStockItems = filteredItems.filter(item => item.productId.quantity <= 0);
+    const itemsWithOffers = await Promise.all(
+      filteredItems.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        return {
+          ...item,
+          offer: offer
+        };
+      })
+    );
 
-    const totalItems = filteredItems.length;
+    const validItems = itemsWithOffers.filter(item=> item.productId.quantity > 0);
+    const outOfStockItems = itemsWithOffers.filter(item => item.productId.quantity <= 0);
+
+    const totalItems = itemsWithOffers.length;
     const totalPages = Math.ceil(totalItems / limit);
 
-    const paginatedItems = filteredItems
+    const paginatedItems = itemsWithOffers
     .sort((a, b) => b.addedAt - a.addedAt)
     .slice(skip, skip + limit);
 
-    const data = paginatedItems.map(item => ({
-      ...item.productId,
-      cartQuantity: item.quantity,
-      cartTotal: item.totalPrice,
-      itemId: item._id,
-      inStock: item.productId.quantity > 0,
-    }));
+    const data = await Promise.all(
+      paginatedItems.map(async (item) => {
+        const offer = await getLargestOffer(item.productId._id);
+        const originalPrice = item.price;
+        const finalPrice = offer.percentage > 0 ? offer.finalPrice : originalPrice;
+        const itemTotal = finalPrice * item.quantity;
+        const originalTotal = originalPrice * item.quantity;
+        const savings = originalTotal - itemTotal;
+
+        return {
+          ...item.productId,
+          cartQuantity: item.quantity,
+          cartTotal: itemTotal,
+          originalTotal: originalTotal,
+          finalPrice: finalPrice,
+          savings: savings,
+          offer: offer,
+          itemId: item._id,
+          inStock: item.productId.quantity > 0,
+        };
+      })
+    );
 
     const quantity = validItems.reduce((sum, i) => sum + i.quantity, 0);
-    const grandTotal = validItems.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
+    const grandTotal = validItems.reduce((sum, item) => {
+      const originalTotal = item.price * item.quantity;
+      return sum + originalTotal;
+    }, 0);
+    const discountedTotal = validItems.reduce((sum, item) => {
+      const offer = item.offer;
+      const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.price;
+      return sum + (finalPrice * item.quantity);
+    }, 0);
 
-    req.session.grandTotal = grandTotal;
+    const totalSavings = grandTotal - discountedTotal;
+
+    req.session.grandTotal = discountedTotal;
 
     res.render("cart", {
       user: req.session.user,
       data,
       quantity,
-      grandTotal,
+      grandTotal: grandTotal,
+      discountedTotal: discountedTotal,
+      totalSavings: totalSavings,
       currentPage: page,
       totalPages,
       query: req.query || {},
@@ -118,6 +158,9 @@ const addToCart = async (req, res) => {
       return res.json({ status: "Product out of stock" });
     }
 
+    const currentOffer = await getLargestOffer(productId);
+    const finalPrice = currentOffer.percentage > 0 ? currentOffer.finalPrice : product.salePrice;
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -126,8 +169,10 @@ const addToCart = async (req, res) => {
         items: [{
           productId,
           quantity: 1,
-          price: product.salePrice,
-          totalPrice: product.salePrice,
+          price: finalPrice,
+          originalPrice: product.salePrice,
+          totalPrice: finalPrice,
+          addedAt: new Date()
           
         }]
       });
@@ -138,11 +183,18 @@ const addToCart = async (req, res) => {
         cart.items.push({
           productId,
           quantity: 1,
-          price: product.salePrice,
-          totalPrice: product.salePrice,
+          price: finalPrice,
+          originalPrice: product.salePrice,
+          totalPrice: finalPrice,
+          addedAt: new Date()
           
         });
-       }
+       } else {
+        const existingItem = cart.items[existingItemIndex];
+        existingItem.price = finalPrice;
+        existingItem.originalPrice = product.salePrice;
+        existingItem.totalPrice = finalPrice * existingItem.quantity;
+      }
     }
 
     await cart.save();
@@ -212,8 +264,13 @@ const changeQuantity = async (req, res) => {
       });
     }
 
+    const currentOffer = await getLargestOffer(productId);
+    const finalPrice = currentOffer.percentage > 0 ? currentOffer.finalPrice : product.salePrice;
+
     cart.items[itemIndex].quantity = newQuantity;
-    cart.items[itemIndex].totalPrice = newQuantity * cart.items[itemIndex].price;
+    cart.items[itemIndex].price = finalPrice;
+    cart.items[itemIndex].originalPrice = product.salePrice;
+    cart.items[itemIndex].totalPrice = finalPrice * newQuantity;
 
     await cart.save();
     const cartCount = await getCartCount(userId);
@@ -233,19 +290,39 @@ const changeQuantity = async (req, res) => {
         product.brand && !product.brand.isBlocked &&
         product.quantity > 0
       ) {
-        return sum + item.totalPrice;
+        return sum + (item.originalPrice * item.quantity);
       }
       return sum;
     }, 0);
+
+    const discountedTotal = cart.items.reduce((sum, item) => {
+      const product = products.find(p => p._id.toString() === item.productId.toString());
+      if (
+        product &&
+        !product.isBlocked &&
+        product.category && product.category.isListed !== false &&
+        product.brand && !product.brand.isBlocked &&
+        product.quantity > 0
+      ) {
+        return sum + item.totalPrice; 
+      }
+      return sum;
+    }, 0);
+
+    const totalSavings = grandTotal - discountedTotal;
 
     res.json({
       status: true,
       productId,
       quantity: newQuantity,
       totalPrice: cart.items[itemIndex].totalPrice,
-      grandTotal,
+      finalPrice: finalPrice,
+      grandTotal: grandTotal,
+      discountedTotal: discountedTotal,
+      totalSavings: totalSavings,
       stock: product.quantity,
       cartCount: cartCount,
+      offer: currentOffer
     });
   } catch (err) {
     console.error(err);

@@ -602,6 +602,32 @@
         }
     }
 
+    .discount-badge {
+        background-color: #e74c3c;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .offer-type {
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .current-price {
+        color: #2c3e50;
+        font-weight: bold;
+    }
+
+    .original-price {
+        color: #95a5a6;
+        text-decoration: line-through;
+    }
+
     </style>
 </head>
 <body>
@@ -808,14 +834,25 @@
                                 <h4><%= products[i].productName %></h4>
                                 </a>
                                 <p class="no-underline">Brand: <%= products[i].brand.brandName %></p>
+
                                 <p class="no-underline">
-                                Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
-                                <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                                <% if (products[i].bestOffer && products[i].bestOffer.percentage > 0) { %>
+                                    Price: <strong>₹<%= products[i].bestOffer.finalPrice.toFixed(2) %></strong>
                                     <span class="text-muted" style="opacity: 0.5;">
-                                    <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+                                        <strike>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strike>
                                     </span>
+                                    <span style="color: #e74c3c; font-size: 12px; margin-left: 5px;">
+                                        (<%= products[i].bestOffer.percentage %>% OFF)
+                                    </span>
+                                <% } else { %>
+                                    Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %></strong>
+                                    <% if (products[i].regularPrice && products[i].regularPrice > products[i].salePrice) { %>
+                                        <span class="text-muted" style="opacity: 0.5;">
+                                            <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+                                        </span>
+                                    <% } %>
                                 <% } %>
-                                </p>
+                            </p>
                                 <%if(products[i].quantity == 0){%>
                                 <div class="out-of-stock-icon"> Out of Stock </div> 
 

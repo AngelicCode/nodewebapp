@@ -249,8 +249,42 @@
             opacity: 0.7;
             background-color: #f8f9fa;
         }
-        
 
+        .discounted-price {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .final-price {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .original-price {
+            font-size: 0.85rem;
+        }
+
+        .discounted-total {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .final-total {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .original-total {
+            font-size: 0.85rem;
+        }
+
+        .discount-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+    
     </style>
 </head>
 <body>
@@ -389,9 +423,36 @@
                                                     <span class="text-muted">Not specified</span>
                                                 <% } %>
                                             </td>
-                                            <td>₹<%= item.price.toFixed(2) %></td>
-                                            <td><%= item.quantity %></td>
-                                            <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
+                                            <td>
+                                            <% if (item.originalPrice && item.originalPrice > item.price) { %>
+                                                <div class="discounted-price">
+                                                    <span class="final-price">₹<%= item.price.toFixed(2) %></span>
+                                                    <small class="original-price text-muted">
+                                                        <del>₹<%= item.originalPrice.toFixed(2) %></del>
+                                                    </small>
+                                                    <% if (item.offerApplied && item.offerApplied.percentage > 0) { %>
+                                                        <small class="discount-badge" style="background: #e74c3c; color: white; padding: 2px 6px; border-radius: 8px; font-size: 0.75rem; margin-left: 5px;">
+                                                            <%= item.offerApplied.percentage %>% OFF
+                                                        </small>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                ₹<%= item.price.toFixed(2) %>
+                                            <% } %>
+                                        </td>
+                                        <td><%= item.quantity %></td>
+                                        <td>
+                                            <% if (item.originalPrice && item.originalPrice > item.price) { %>
+                                                <div class="discounted-total">
+                                                    <span class="final-total">₹<%= (item.price * item.quantity).toFixed(2) %></span>
+                                                    <small class="original-total text-muted">
+                                                        <del>₹<%= (item.originalPrice * item.quantity).toFixed(2) %></del>
+                                                    </small>
+                                                </div>
+                                            <% } else { %>
+                                                ₹<%= (item.price * item.quantity).toFixed(2) %>
+                                            <% } %>
+                                        </td>
                                             <td>
                                             <span class="badge 
                                         <%= item.itemStatus === 'delivered' ? 'bg-success' : 
@@ -459,6 +520,23 @@
                                     <span>Subtotal:</span>
                                     <span>₹<%= order.total.toFixed(2) %></span>
                                     </div>
+
+                                    <!-- Offer Savings -->
+                                    <% if (order.discountedTotal && order.discountedTotal < order.total) { %>
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>
+                                            <i class="fas fa-tag me-1"></i>
+                                            Offer Savings
+                                        </span>
+                                        <span>-₹<%= (order.total - order.discountedTotal).toFixed(2) %></span>
+                                    </div>
+
+                                    <!-- Offer Details Tooltip -->
+                                    <div class="alert alert-info py-2 mb-2" style="font-size: 0.85rem;">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        You saved ₹<%= (order.total - order.discountedTotal).toFixed(2) %> from product/category offers
+                                    </div>
+                                    <% } %>
 
                                     <!-- Shipping -->
                                     <% if (order.status !== 'cancelled') { %>

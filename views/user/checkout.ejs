@@ -623,16 +623,6 @@
                     </div>
                 </div> -->
 
-                <div id="codDetails" style="margin-top: 25px; display: none;">
-                    <div class="cod-option">
-                        <input type="checkbox" id="confirmCod" checked>
-                        <label for="confirmCod">I understand that I'll pay when the order is delivered</label>
-                    </div>
-                    <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                        Note: Cash on Delivery may have additional charges. Please check the order summary.
-                    </p>
-                </div>
-
                 <div class="security-badges">
                     
                     <div class="security-badge">✅ Verified</div>
@@ -659,8 +649,24 @@
                         </div>
                     </div>
                         <div class="product-price">
+                        <% if (item.finalPrice && item.finalPrice < item.productId.salePrice) { %>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: #71cd14;">
+                                    ₹<%= (item.finalPrice * item.quantity).toFixed(2) %>
+                                </div>
+                                <small style="color: #95a5a6; text-decoration: line-through;">
+                                    ₹<%= (item.productId.salePrice * item.quantity).toFixed(2) %>
+                                </small>
+                                <% if (item.offer && item.offer.percentage > 0) { %>
+                                    <div style="font-size: 0.8rem; color: #e74c3c; margin-top: 2px;">
+                                        <%= item.offer.percentage %>% OFF
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } else { %>
                             ₹<%= (item.productId.salePrice * item.quantity).toFixed(2) %>
-                        </div>
+                        <% } %>
+                    </div>
                         </div>
                         <% }); %>
 
@@ -713,10 +719,25 @@
 
 
                         <div style="margin-top: 25px;">
+                        <!-- Original Subtotal -->
                         <div class="summary-row">
                             <span>Subtotal:</span>
                             <span id="subtotal">₹<%= cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0).toFixed(2) %></span>
                         </div>
+
+                        <!-- Offer Savings (if any) -->
+                        <% if (discountedSubtotal && discountedSubtotal < cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0)) { %>
+                        <div class="summary-row" style="color: #27ae60;">
+                            <span>Offer Savings:</span>
+                            <span id="total-savings">-₹<%= (cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) - discountedSubtotal).toFixed(2) %></span>
+                        </div>
+
+                        <!-- Discounted Subtotal -->
+                        <div class="summary-row">
+                            <span>Discounted Subtotal:</span>
+                            <span id="discounted-subtotal">₹<%= discountedSubtotal.toFixed(2) %></span>
+                        </div>
+                        <% } %>
                         <div class="summary-row">
                             <span>Shipping:</span>
                             <span id="shipping">₹50</span>
@@ -739,7 +760,9 @@
                         
                         <div class="summary-row total">
                             <span>Total:</span>
-                            <span id="total">₹<%= (cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0) + 50).toFixed(2) %></span>
+                            <span id="total">
+                                ₹<%= ((discountedSubtotal || cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0)) + 50).toFixed(2) %>
+                            </span>
                         </div>
                         </div>
 
@@ -1043,38 +1066,6 @@
         });
     }
 
-    function updatePaymentMethodDisplay(methodType) {
-        const cardDetails = document.getElementById('cardDetails');
-        const codDetails = document.getElementById('codDetails');
-        const codChargeRow = document.getElementById('cod-charge-row');
-        const totalSpan = document.getElementById('total');
-        const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('₹', ''));
-        const shipping = parseFloat(document.getElementById('shipping').textContent.replace('₹', ''));
-        
-        let total = subtotal + shipping;
-        
-        if (methodType === 'card') {
-            cardDetails.style.display = 'block';
-            codDetails.style.display = 'none';
-            codChargeRow.style.display = 'none';
-        } else if (methodType === 'cod') {
-            cardDetails.style.display = 'none';
-            codDetails.style.display = 'block';
-            codChargeRow.style.display = 'flex';
-            total += 5;
-        } else if (methodType === 'wallet') {
-            cardDetails.style.display = 'none';
-            codDetails.style.display = 'none';
-            codChargeRow.style.display = 'none';
-        } else {
-            cardDetails.style.display = 'none';
-            codDetails.style.display = 'none';
-            codChargeRow.style.display = 'none';
-        }
-        
-        totalSpan.textContent = `₹${total.toFixed(2)}`;
-    }
-
     async function processPayment() {
         const btn = document.querySelector('.btn-primary');
         btn.innerHTML = '⏳ Processing...';
@@ -1101,19 +1092,20 @@
             }
 
             const orderData = {
-                addressId: addressId,
-                paymentMethod: paymentMethod,
-                cartItems: <%- JSON.stringify(cartItems) %>,
-                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-                total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
-
-                coupon: appliedCoupon ? {
-                    code: appliedCoupon.code,
-                    discountAmount: appliedCoupon.discountAmount
-                } : null
-            };
+            addressId: addressId,
+            paymentMethod: paymentMethod,
+            cartItems: <%- JSON.stringify(cartItems) %>,
+            subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
+            discountedSubtotal: parseFloat(document.getElementById('discounted-subtotal')?.textContent.replace('₹', '') || document.getElementById('subtotal').textContent.replace('₹', '')),
+            totalSavings: parseFloat(document.getElementById('total-savings')?.textContent.replace('₹', '') || 0),
+            shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
+            tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
+            total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
+            coupon: appliedCoupon ? {
+                code: appliedCoupon.code,
+                discountAmount: appliedCoupon.discountAmount
+            } : null
+        };
 
             const response = await fetch('/place-order', {
                 method: 'POST',
@@ -1279,28 +1271,33 @@
             });
         }
 
-        // Enhanced payment method selection with wallet balance check
+        
         document.querySelectorAll('.payment-method').forEach(method => {
             method.addEventListener('click', function() {
                 const methodType = this.dataset.method;
                 
                 if (methodType === 'wallet') {
-                    // Check wallet balance before selecting wallet
-                    const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
-                    
-                    if (userWalletBalance < orderTotal) {
-                        showInsufficientBalanceAlert(userWalletBalance, orderTotal);
+                    const currentTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+                    if (userWalletBalance < currentTotal) {
+                        showInsufficientBalanceAlert(userWalletBalance, currentTotal);
                         return; 
                     }
                 }
                 
-                
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 this.classList.add('active');
+                
                 
                 updatePaymentMethodDisplay(methodType);
             });
         });
+
+        function updatePaymentMethodDisplay(methodType) {
+            const codChargeRow = document.getElementById('cod-charge-row');
+            if (codChargeRow) {
+                codChargeRow.style.display = methodType === 'cod' ? 'flex' : 'none';
+            }
+        }
 
         document.addEventListener('change', function(e) {
             if (e.target.name === 'selectedAddress') {
@@ -1420,37 +1417,34 @@ function hideAppliedCoupon() {
 }
 
 function updateOrderSummary(discountAmount, finalAmount) {
-  const shipping = 50;
-  const codCharge = 5;
-  const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
-  
-  document.getElementById('coupon-discount-row').style.display = 'flex';
-  document.getElementById('coupon-discount').textContent = `-₹${discountAmount.toFixed(2)}`;
-  
-  let total = finalAmount + shipping;
-  if (paymentMethod === 'cod') {
-    total += codCharge;
-    document.getElementById('cod-charge-row').style.display = 'flex';
-  }
-  
-  document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+    const shipping = 50;
+    
+    document.getElementById('coupon-discount-row').style.display = 'flex';
+    document.getElementById('coupon-discount').textContent = `-₹${discountAmount.toFixed(2)}`;
+    
+    // Use the finalAmount which should already include both product discounts and coupon discount
+    let total = finalAmount + shipping;
+    
+    document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
 }
 
 function resetOrderSummary(cartTotal) {
-  const shipping = 50;
-  const codCharge = 5;
-  const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
-  
-  document.getElementById('coupon-discount-row').style.display = 'none';
-  
-  let total = cartTotal + shipping;
-  if (paymentMethod === 'cod') {
-    total += codCharge;
-    document.getElementById('cod-charge-row').style.display = 'flex';
-  }
-  
-  document.getElementById('subtotal').textContent = `₹${cartTotal.toFixed(2)}`;
-  document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+    const shipping = 50;
+    const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
+    
+    document.getElementById('coupon-discount-row').style.display = 'none';
+    
+    const discountedSubtotalElement = document.getElementById('discounted-subtotal');
+    let total = cartTotal + shipping;
+    
+    if (discountedSubtotalElement && discountedSubtotalElement.textContent) {
+        const discountedSubtotal = parseFloat(discountedSubtotalElement.textContent.replace('₹', ''));
+        total = discountedSubtotal + shipping;
+    }
+    
+    document.getElementById('cod-charge-row').style.display = 'none';
+    document.getElementById('subtotal').textContent = `₹${cartTotal.toFixed(2)}`;
+    document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
 }
 
 function showCouponMessage(message, type) {

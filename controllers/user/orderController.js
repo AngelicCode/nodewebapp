@@ -192,13 +192,16 @@ const cancelOrder = async (req, res) => {
       } else if (order.paymentMethod === 'razorpay' || order.paymentMethod === 'wallet') {
         order.paymentStatus = 'refunded';
         
-        await refundToWallet(orderId, refundAmount, `Refund for cancelled order ${order.orderId}`);
+        await refundToWallet(orderId, refundAmount, `Refund for cancelled order ${order.orderId} (with offers applied)`);
       }
 
       order.cancellationReason = reason;
       order.cancelledBy = 'user';
 
       order.finalAmount = 0;
+       if (order.discountedTotal) {
+        order.discountedTotal = 0;
+      }
 
       for (const item of order.orderItems) {
         if (item.itemStatus !== 'cancelled') {
@@ -254,7 +257,10 @@ const cancelOrderItem = async(req,res)=>{
     }
 
     const itemTotal = item.price * item.quantity;
-    order.total -= itemTotal;
+    order.total -= item.originalPrice * item.quantity;
+    if (order.discountedTotal) {
+      order.discountedTotal -= itemTotal; 
+    }
     order.finalAmount -= itemTotal;
 
     item.itemStatus = "cancelled";
@@ -265,7 +271,7 @@ const cancelOrderItem = async(req,res)=>{
     await Product.findByIdAndUpdate(productId, { $inc: { quantity: quantity } });
 
     if (order.paymentMethod !== 'cod') {
-      await refundToWallet(orderId, itemTotal, `Refund for cancelled item in order ${order.orderId}`);
+      await refundToWallet(orderId, itemTotal, `Refund for cancelled item in order ${order.orderId} (${item.offerApplied?.percentage || 0}% offer applied)`);
     }
 
     const newStatus = order.calculateOrderStatus();
