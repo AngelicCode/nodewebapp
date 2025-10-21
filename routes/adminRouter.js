@@ -63,6 +63,7 @@ router.post('/updateOrderStatus',orderController.updateOrderStatus);
 router.get('/getOrderDetails/:orderId',adminAuth,orderController.getOrderDetails);
 router.get('/returnRequests',adminAuth,orderController.getReturnRequests);
 router.post('/handleReturnAction',adminAuth,orderController.handleReturnAction);
+router.post('/addToInventory', adminAuth, orderController.addToInventory);
 
 //Coupon Management
 router.get("/coupon",adminAuth,couponController.couponList);

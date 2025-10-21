@@ -442,6 +442,22 @@ body {
   display: block;
 }
 
+.add-to-inventory {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: white;
+}
+
+.add-to-inventory:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.badge.bg-info {
+  background-color: #17a2b8 !important;
+}
+
 </style>
 </head>
 <body>
@@ -459,7 +475,7 @@ body {
   </svg>
   </div>
 
-  <!-- Return Requests Section -->
+ <!-- Return Requests Section -->
 <div class="card mb-4">
   <div class="card-header bg-warning text-blue">
     <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Return Requests</h5>
@@ -855,7 +871,6 @@ $(document).ready( function() {
     });
   });
   
-  // Initialize original values
   $('.status-select').each(function() {
     $(this).data('original-value', $(this).val());
   });
@@ -864,7 +879,6 @@ $(document).ready( function() {
   $('.view-order').on('click', function() {
     const orderId = $(this).data('order-id');
     
-    // Show the modal with loading state
     $('#modalOrderId').text(orderId);
     $('#orderDetailsContent').html(`
       <div class="text-center py-4">
@@ -1002,60 +1016,80 @@ function loadReturnRequests() {
           return;
         }
         
-        container.innerHTML = `
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Return Reason</th>
-                  <th>Request Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.returnRequests.map(request => {
-                  const returnDate = request.returnRequestedAt ? 
-                    new Date(request.returnRequestedAt).toLocaleDateString() : 
-                    'N/A';
-                  
-                  const customerName = request.user ? 
-                    request.user.name : 
-                    'N/A';
-                  
-                  return `
-                  <tr>
-                    <td>#${request.orderId}</td>
-                    <td>${customerName}</td>
-                    <td>${request.item.productName}</td>
-                    <td>${request.item.quantity}</td>
-                    <td>${request.returnReason || 'No reason provided'}</td>
-                    <td>${returnDate}</td>
-                    <td>
-                      <div class="btn-group btn-group-sm">
-                        <button class="btn btn-success approve-return" 
-                                data-order-id="${request.orderId}" 
-                                data-item-index="${request.itemIndex}">
-                          Approve
-                        </button>
-                        <button class="btn btn-danger reject-return" 
-                                data-order-id="${request.orderId}" 
-                                data-item-index="${request.itemIndex}">
-                          Reject
-                        </button>
-                        
-                      </div>
-                    </td>
-                  </tr>
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Return Reason</th>
+                <th>Request Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.returnRequests.map(request => {
+                const returnDate = request.returnRequestedAt ? 
+                  new Date(request.returnRequestedAt).toLocaleDateString() : 
+                  'N/A';
+                
+                const customerName = request.user ? 
+                  request.user.name : 
+                  'N/A';
+                
+                let statusBadge = '';
+                let actionButtons = '';
+                
+                if (request.item.itemStatus === 'return requested') {
+                  statusBadge = '<span class="badge bg-warning">Pending Approval</span>';
+                  actionButtons = `
+                    <button class="btn btn-success btn-sm approve-return" 
+                            data-order-id="${request.orderId}" 
+                            data-item-index="${request.itemIndex}">
+                      Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm reject-return" 
+                            data-order-id="${request.orderId}" 
+                            data-item-index="${request.itemIndex}">
+                      Reject
+                    </button>
                   `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
+                } else if (request.item.itemStatus === 'returned' && !request.item.inventoryAdded) {
+                  statusBadge = '<span class="badge bg-info">Pending Inventory</span>';
+                  actionButtons = `
+                    <button class="btn btn-info btn-sm add-to-inventory" 
+                            data-order-id="${request.orderId}" 
+                            data-item-index="${request.itemIndex}">
+                      Add to Inventory
+                    </button>
+                  `;
+                }
+                
+                return `
+                <tr>
+                  <td>#${request.orderId}</td>
+                  <td>${customerName}</td>
+                  <td>${request.item.productName}</td>
+                  <td>${request.item.quantity}</td>
+                  <td>${statusBadge}</td>
+                  <td>${request.returnReason || 'No reason provided'}</td>
+                  <td>${returnDate}</td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      ${actionButtons}
+                    </div>
+                  </td>
+                </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
         
         document.querySelectorAll('.approve-return').forEach(button => {
           button.addEventListener('click', function() {
@@ -1073,11 +1107,11 @@ function loadReturnRequests() {
           });
         });
         
-        document.querySelectorAll('.view-item').forEach(button => {
+        document.querySelectorAll('.add-to-inventory').forEach(button => {
           button.addEventListener('click', function() {
             const orderId = this.getAttribute('data-order-id');
             const itemIndex = this.getAttribute('data-item-index');
-            viewReturnItem(orderId, itemIndex);
+            addToInventory(orderId, itemIndex);
           });
         });
       }
@@ -1206,9 +1240,74 @@ document.getElementById('confirmReject').addEventListener('click', function() {
   });
 });
 
-// Load return requests when page loads
 document.addEventListener('DOMContentLoaded', function() {
   loadReturnRequests();
+});
+
+function addToInventory(orderId, itemIndex) {
+  Swal.fire({
+    title: 'Add to Inventory?',
+    text: `Are you sure you want to add the returned items from order #${orderId} back to inventory? This will increase the product stock count.`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Add to Inventory',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#0B6E8F'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const button = document.querySelector(`.add-to-inventory[data-order-id="${orderId}"][data-item-index="${itemIndex}"]`);
+      if (button) {
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        button.disabled = true;
+      }
+      
+      fetch('/admin/addToInventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          itemIndex: itemIndex
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            title: 'Success!',
+            text: data.message,
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+          }).then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire('Error!', data.message, 'error');
+          if (button) {
+            button.innerHTML = '<i class="fas fa-boxes"></i> Add to Inventory';
+            button.disabled = false;
+          }
+        }
+      })
+      .catch(error => {
+        Swal.fire('Error!', 'Something went wrong.', 'error');
+        if (button) {
+          button.innerHTML = '<i class="fas fa-boxes"></i> Add to Inventory';
+          button.disabled = false;
+        }
+      });
+    }
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('add-to-inventory')) {
+    const orderId = e.target.getAttribute('data-order-id');
+    const itemIndex = e.target.getAttribute('data-item-index');
+    addToInventory(orderId, itemIndex);
+  }
 });
 
 </script>

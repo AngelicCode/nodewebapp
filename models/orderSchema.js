@@ -98,6 +98,10 @@ const orderSchema = new Schema({
          enum: ["confirmed","processing", "shipped", "out for delivery", "delivered", "cancelled", "return requested", "returned", "return rejected"],
          default: "confirmed"
       },
+      inventoryAdded: {
+         type: Boolean,
+         default: false
+      },
       offerApplied: {  
          percentage: {
             type: Number,

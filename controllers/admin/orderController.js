@@ -211,7 +211,13 @@ const getOrderDetails = async (req,res)=>{
 const getReturnRequests = async (req,res) => {
   try {
     const ordersWithReturnRequests = await Order.find({
-      "orderItems.itemStatus": "return requested"
+      $or: [
+        { "orderItems.itemStatus": "return requested" },
+        { 
+          "orderItems.itemStatus": "returned",
+          "orderItems.inventoryAdded": false
+        }
+      ]
     })
       .populate('userId', 'name email')
       .populate('orderItems.productId', 'name images')
@@ -221,7 +227,7 @@ const getReturnRequests = async (req,res) => {
 
     for (const order of ordersWithReturnRequests) {
       order.orderItems.forEach((item, index) => {
-        if (item.itemStatus === "return requested") {
+        if (item.itemStatus === "return requested" || item.itemStatus === "returned" && !item.inventoryAdded) {
           formattedRequests.push({
             orderId: order.orderId,
             itemIndex: index,
@@ -264,14 +270,10 @@ const handleReturnAction = async (req, res) => {
       
       if (action === 'approve') {
         item.itemStatus = "returned";
+        item.inventoryAdded = false;
         refundAmount = item.price * item.quantity;
 
         order.finalAmount -= refundAmount;
-        
-        await Product.findByIdAndUpdate(
-          item.productId,
-          { $inc: { quantity: item.quantity } }
-        );
         
       } else if (action === 'reject') {
         item.itemStatus = "return rejected";
@@ -282,12 +284,9 @@ const handleReturnAction = async (req, res) => {
         for (const item of order.orderItems) {
           if (item.itemStatus === "return requested") {
             item.itemStatus = "returned";
+            item.inventoryAdded = false;
             refundAmount += item.price * item.quantity;
             
-            await Product.findByIdAndUpdate(
-              item.productId,
-              { $inc: { quantity: item.quantity } }
-            );
           }
         }
 
@@ -326,6 +325,68 @@ const handleReturnAction = async (req, res) => {
   }
 };
 
+const addToInventory = async (req, res) => {
+  try {
+    const { orderId, itemIndex } = req.body;
+    
+    const order = await Order.findOne({ orderId })
+      .populate('orderItems.productId');
+    
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
+    let item;
+    if (itemIndex !== undefined && itemIndex !== null) {
+      item = order.orderItems[itemIndex];
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+    } else {
+     
+      item = order.orderItems.find(item => 
+        item.itemStatus === "returned" && !item.inventoryAdded
+      );
+      if (!item) {
+        return res.status(400).json({ success: false, message: 'No eligible items found for inventory update' });
+      }
+    }
+    
+    if (item.itemStatus !== "returned") {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Item is not in returned status' 
+      });
+    }
+    
+    if (item.inventoryAdded) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Inventory already added for this item' 
+      });
+    }
+    
+    await Product.findByIdAndUpdate(
+      item.productId,
+      { $inc: { quantity: item.quantity } }
+    );
+    
+    item.inventoryAdded = true;
+    await order.save();
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully added ${item.quantity} items back to inventory`,
+      productName: item.productName,
+      quantity: item.quantity
+    });
+    
+  } catch (error) {
+    console.error('Error adding to inventory:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 function checkAllItemsProcessed(orderItems) {
   const result = {
     allReturnApproved: true,
@@ -349,5 +410,5 @@ function checkAllItemsProcessed(orderItems) {
 }
 
 module.exports = {
-  orderList,updateOrderStatus,getOrderDetails,getReturnRequests,handleReturnAction,
+  orderList,updateOrderStatus,getOrderDetails,getReturnRequests,handleReturnAction,addToInventory,
 }
