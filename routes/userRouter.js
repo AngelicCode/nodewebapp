@@ -10,6 +10,7 @@ const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
 const orderController = require("../controllers/user/orderController");
 const walletController = require("../controllers/user/walletController");
+const invoiceController = require("../controllers/user/invoiceController");
 const { validateCheckoutItems } = require("../middlewares/inventoryValidation");
 const upload = require("../helpers/multer");
 
@@ -116,6 +117,7 @@ router.post("/order/:id/cancel", userAuth, orderController.cancelOrder);
 router.post("/order/:id/cancel-item", userAuth, orderController.cancelOrderItem);
 router.post("/order/:id/return",userAuth,orderController.returnOrder);
 router.post("/order/:id/return-item", userAuth, orderController.returnOrderItem);
+router.get("/order/:id/invoice", userAuth, invoiceController.downloadInvoice);
 
 //Wallet Management
 router.get("/wallet-history",userAuth,walletController.getWalletHistory);

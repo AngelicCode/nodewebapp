@@ -769,10 +769,10 @@
                                 <% } %>
                             <% } %>
                                 
-                                <% if (order.status === 'delivered') { %>
-                                <a href="#" class="btn btn-success">
-                                    <i class="fas fa-download"></i> Download Invoice
-                                </a>
+                                <% if (order.status === 'delivered' || order.status === 'cancelled' || order.status === 'refunded') { %>
+                                    <a href="/order/<%= order._id %>/invoice" class="btn btn-success" target="_blank">
+                                        <i class="fas fa-download"></i> Download Invoice
+                                    </a>
                                 <% } %>
                             </div>
                         </div>
