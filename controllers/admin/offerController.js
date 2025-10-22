@@ -5,6 +5,10 @@ const { getLargestOffer } = require("../../helpers/offerHelper");
 const addProductOffer = async (req, res) => {
   try {
     const { productId, percentage, startDate, endDate } = req.body;
+
+     if(percentage >100){
+      return res.status(404).json({error:"Adding offer exceeds the limit"});
+    }
     
     const product = await Product.findById(productId);
     if (!product) {
@@ -17,7 +21,7 @@ const addProductOffer = async (req, res) => {
       endDate: new Date(endDate),
       isActive: true
     };
-
+    
     await product.save();
     res.status(200).json({ message: "Product offer added successfully" });
   } catch (error) {
@@ -47,6 +51,10 @@ const removeProductOffer = async (req, res) => {
 const addCategoryOffer = async (req, res) => {
   try {
     const { categoryId, percentage, startDate, endDate } = req.body;
+
+    if(percentage >100){
+      return res.status(404).json({error:"Adding offer exceeds the limit"});
+    }
     
     const category = await Category.findById(categoryId);
     if (!category) {
