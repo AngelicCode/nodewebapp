@@ -52,6 +52,8 @@ router.post("/update-profile-photo", userAuth, upload.single('profilePhoto'), pr
 router.post("/remove-profile-photo", userAuth, profileController.removeProfilePhoto);
 router.post("/update-profile",userAuth,profileController.updateProfile);
 
+
+router.get("/ref/:code",userController.refCode);
 router.get("/signup",userController.loadSignup);
 router.post("/signup",userController.signup);
 router.post("/verify-otp",userController.verifyOtp);

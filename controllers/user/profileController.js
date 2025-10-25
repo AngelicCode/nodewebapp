@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const { getCartCount } = require('../../helpers/cartHelper');
 const session = require("express-session");
 const { HTTP_STATUS } = require("../../helpers/httpStatus");
+const { generateReferralCode, addReferralBonus } = require('../../helpers/referelCodeHelper');
 
 
 // const { resendOtp } = require("./userController");
@@ -156,7 +157,9 @@ const verifyForgotPassOtp = async (req,res)=>{
     try {
       const userId = req.session.user;
       const cartCount = await getCartCount(userId);
-      const userData = await User.findById(userId);
+      
+      let userData = await User.findById(userId).select('name email phone profilePhoto wallet referelCode redeemedUsers');      
+
       const addressData = await Address.findOne({userId:userId});
 
       const page = parseInt(req.query.page) || 1;

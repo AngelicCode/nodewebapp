@@ -688,6 +688,17 @@
     pointer-events: none;
   }
 
+  .stat-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
     </style>
 </head>
 <body>
@@ -1069,33 +1080,80 @@
                         </div>
 
                                     <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="referal-tab">
-                                        <div class="card">
-                                            <div class="card-header">
-                                                <h5 class="mb-0"><i class="fas fa-share-alt"></i> Referral Program</h5>
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-share-alt"></i> Referral Program</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-center mb-4">
+                                                <i class="fas fa-users" style="font-size: 4rem; color: var(--primary-blue);"></i>
                                             </div>
-                                            <div class="card-body">
-                                                <div class="text-center mb-4">
-                                                    <i class="fas fa-users" style="font-size: 4rem; color: var(--primary-blue);"></i>
+                                            <h6 class="mb-3 text-center">
+                                                <i class="fas fa-gift"></i> Refer your friends and earn ₹50 per referral!
+                                            </h6>
+                                            
+                                            <!-- Referral Link - FIXED -->
+                                            <div class="referral-link text-center">
+                                                <% if (user.referelCode) { %>
+                                                    <a href="http://localhost:3000/ref/<%= user.referelCode %>" 
+                                                    id="referralLink" 
+                                                    target="_blank"
+                                                    style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">
+                                                        http://localhost:3000/ref/<%= user.referelCode %>
+                                                    </a>
+                                                <% } else { %>
+                                                    <span class="text-danger">Referral code not available</span>
+                                                <% } %>
+                                            </div>
+                                            
+                                            <!-- Referral Stats -->
+                                            <div class="row text-center mt-4">
+                                                <div class="col-md-4">
+                                                    <div class="stat-card p-3 bg-light rounded">
+                                                        <h4 class="text-primary"><%= user.redeemedUsers ? user.redeemedUsers.length : 0 %></h4>
+                                                        <p class="mb-0">Successful Referrals</p>
+                                                    </div>
                                                 </div>
-                                                <h6 class="mb-3 text-center">
-                                                    <i class="fas fa-gift"></i> Refer your friends and earn money!
-                                                </h6>
-                                                <div class="referral-link text-center">
-                                                    <strong>https://aquapure.com/ref/user123</strong>
+                                                <div class="col-md-4">
+                                                    <div class="stat-card p-3 bg-light rounded">
+                                                        <h4 class="text-success">₹<%= user.redeemedUsers ? (user.redeemedUsers.length * 50).toFixed(2) : '0.00' %></h4>
+                                                        <p class="mb-0">Total Earned</p>
+                                                    </div>
                                                 </div>
-                                                <div class="text-center mt-4">
-                                                    <p class="h5">
-                                                        <i class="fas fa-coins"></i> Total Earned: <span class="text-success">$45.00</span>
-                                                    </p>
+                                                <div class="col-md-4">
+                                                    <div class="stat-card p-3 bg-light rounded">
+                                                        <h4 class="text-info">₹<%= user.wallet ? user.wallet.toFixed(2) : '0.00' %></h4>
+                                                        <p class="mb-0">Wallet Balance</p>
+                                                    </div>
                                                 </div>
-                                                <div class="text-center mt-3">
-                                                    <button class="btn btn-success" onclick="navigator.clipboard.writeText('https://aquapure.com/ref/user123')">
-                                                        <i class="fas fa-copy"></i> Copy Link
+                                            </div>
+                                            
+                                            <!-- Copy Button -->
+                                            <div class="text-center mt-4">
+                                                <% if (user.referelCode) { %>
+                                                    <button class="btn btn-success" onclick="copyReferralLink()">
+                                                        <i class="fas fa-copy"></i> Copy Referral Link
                                                     </button>
-                                                </div>
+                                                <% } else { %>
+                                                    <button class="btn btn-secondary" disabled>
+                                                        <i class="fas fa-exclamation-triangle"></i> No Referral Code
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                            
+                                            <!-- How it works -->
+                                            <div class="mt-4">
+                                                <h6><i class="fas fa-info-circle"></i> How it works:</h6>
+                                                <ul class="list-unstyled">
+                                                    <li><i class="fas fa-check text-success"></i> Share your referral link with friends</li>
+                                                    <li><i class="fas fa-check text-success"></i> Friend signs up using your link</li>
+                                                    <li><i class="fas fa-check text-success"></i> ₹50 is automatically added to your wallet</li>
+                                                    <li><i class="fas fa-check text-success"></i> Use wallet money for shopping or withdraw</li>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>
@@ -1352,6 +1410,48 @@
                 Swal.fire('Error', 'Failed to add money to wallet', 'error');
             }
         }
+
+        // Add this to your existing script in profile.ejs
+        function copyReferralLink() {
+            const referralLinkElement = document.getElementById('referralLink');
+            if (referralLinkElement) {
+                const referralLink = referralLinkElement.href;
+                
+                navigator.clipboard.writeText(referralLink).then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Referral link copied to clipboard',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    // Fallback
+                    const tempInput = document.createElement('input');
+                    tempInput.value = referralLink;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Referral link copied to clipboard',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Referral link not available'
+                });
+            }
+        }
+
     </script>
 
     </body>

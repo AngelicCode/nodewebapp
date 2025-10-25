@@ -9,6 +9,7 @@ const bcrypt = require("bcrypt");
 const env = require("dotenv").config();
 const { getCartCount } = require('../../helpers/cartHelper');
 const { getLargestOffer } = require('../../helpers/offerHelper');
+const { generateReferralCode, addReferralBonus } = require('../../helpers/referelCodeHelper');
 
 const pageNotFound = async (req,res)=>{
 
@@ -70,17 +71,19 @@ const loadHomepage = async (req, res) => {
   }
 };
 
-const loadSignup = async (req,res)=>{
-
-  try{
-    return res.render("signup");
-
-  }catch(error){
-    console.log("Home page not loading :",error.message);
-    res.status(500).send("Server Error");
-
-  }
-
+const loadSignup = async (req, res) => {
+    try {
+        
+        const referralCode = req.session.referelCode;
+        
+        return res.render("signup", { 
+            referralCode: referralCode 
+        });
+        
+    } catch (error) {
+        console.log("Signup page not loading:", error.message);
+        res.status(500).send("Server Error");
+    }
 };
 
 const loadShopping = async (req,res)=>{
@@ -144,6 +147,13 @@ const signup = async (req,res)=>{
   try{
     const { name,phone,email,password,confirmPassword } = req.body;
 
+    const referelCode = req.session.referelCode;
+    let referringUser = null;
+
+    if(referelCode){
+      referringUser = await User.findOne({referelCode:referelCode});
+    }
+
    if(password !== confirmPassword){
     return res.render("signup",{message:"Password do not match"});
 
@@ -166,7 +176,18 @@ const signup = async (req,res)=>{
    }
 
    req.session.userOtp = otp;
-   req.session.userData = {name,phone,email,password};
+   req.session.userData = {
+    name,
+    phone,
+    email,
+    password,
+    referelCode:generateReferralCode(),
+    referredBy: referringUser ? referringUser._id : null,
+  };
+
+  if (referringUser) {
+      req.session.referringUserId = referringUser._id;
+    }
 
    res.render("verify-otp");
 
@@ -201,14 +222,22 @@ const verifyOtp = async (req,res)=>{
         name:user.name,
         email:user.email,
         phone:user.phone,
-        password:passwordHash
+        password:passwordHash,
+        referelCode: user.referelCode, 
+        referredBy: user.referredBy,
+
       })
 
       await saveUserData.save();
-     // req.session.user = saveUserData._id;
+
+       if (req.session.referringUserId) {
+        await addReferralBonus(req.session.referringUserId, saveUserData._id);
+      }
 
      req.session.userOtp = null;
      req.session.userData = null;
+     req.session.referringUserId = null;
+     req.session.referelCode = null;
      
      return res.json({ success:true, redirectUrl:"/login" })
 
@@ -222,6 +251,21 @@ const verifyOtp = async (req,res)=>{
 
   }
   };
+
+const refCode = async (req, res) => {
+    try {
+
+        const referelCode = req.params.code;
+        
+        req.session.referelCode = referelCode;
+        
+        res.redirect("/signup");
+        
+    } catch (error) {
+        console.error("Error in refCode:", error);
+        res.redirect("/signup");
+    }
+};
 
 const resendOtp = async (req,res)=>{
   try{
@@ -506,4 +550,4 @@ const loadShoppingPage = async (req, res) => {
     });
   }
 };
-module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,}
+module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,refCode,}
