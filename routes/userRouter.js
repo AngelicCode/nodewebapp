@@ -98,6 +98,7 @@ router.get("/cart", userAuth, cartController.getCartPage);
 router.post("/addToCart",userAuth, cartController.addToCart);
 router.post("/changeQuantity", userAuth,cartController.changeQuantity);
 router.get("/deleteItem", userAuth, cartController.deleteProduct);
+router.get("/test-cart-validation",userAuth,validateCheckoutItems,cartController.testCart);
 
 //Checkout Management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);

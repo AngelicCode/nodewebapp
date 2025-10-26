@@ -6,6 +6,18 @@ const Wishlist = require("../../models/wishlistSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
 const { getLargestOffer } = require('../../helpers/offerHelper');
 
+const testCart = async(req,res)=>{
+  try {
+    res.json({ 
+        status: true, 
+        message: "All cart items are valid" 
+    });
+
+  } catch (error) {
+    console.error(error);
+    
+  }
+}
 
 const getCartPage = async (req, res) => {
   try {
@@ -402,4 +414,5 @@ module.exports = {
   addToCart,
   changeQuantity,
   deleteProduct,
+  testCart,
 };
