@@ -19,8 +19,6 @@ async function addReferralBonus(referringUserId, newUserId) {
       $inc: { wallet: referralBonus },
       $push: { redeemedUsers: newUserId } 
     });
-
-    console.log(`₹${referralBonus} added to wallet for user ${referringUserId} for referring ${newUserId}`);
     
   } catch (error) {
     console.error("Error adding referral bonus:", error);

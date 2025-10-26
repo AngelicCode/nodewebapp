@@ -234,12 +234,19 @@ const verifyOtp = async (req,res)=>{
         await addReferralBonus(req.session.referringUserId, saveUserData._id);
       }
 
+      req.session.user = {
+                _id: saveUserData._id,           
+                name: saveUserData.name,         
+                email: saveUserData.email,       
+                phone: saveUserData.phone,       
+            };
+
      req.session.userOtp = null;
      req.session.userData = null;
      req.session.referringUserId = null;
      req.session.referelCode = null;
      
-     return res.json({ success:true, redirectUrl:"/login" })
+     return res.json({ success:true, redirectUrl:"/" })
 
     }else{
      return res.status(400).json({success:false, message:"Invalid OTP, Please try again"});
@@ -256,7 +263,6 @@ const refCode = async (req, res) => {
     try {
 
         const referelCode = req.params.code;
-        
         req.session.referelCode = referelCode;
         
         res.redirect("/signup");
