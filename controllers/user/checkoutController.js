@@ -215,6 +215,15 @@ const placeOrder = async(req,res)=>{
       });
     }
 
+    const blockedProducts = validatedItems.filter(item => item.productId.isBlocked === true);
+    if (blockedProducts.length > 0) {
+      const blockedNames = blockedProducts.map(p => p.productId.productName).join(', ');
+      return res.status(400).json({
+        status: false,
+        message: `Some products are unavailable: ${blockedNames}. Please review your cart.`
+      });
+    }
+
     if (!addressId || !paymentMethod) {
         return res.status(400).json({ 
             status: false,
@@ -366,7 +375,8 @@ const placeOrder = async(req,res)=>{
             message: 'Order placed successfully',
             orderId:  newOrder._id,
       
-        });        
+        });      
+          
 
   } catch (error) {
     console.error('Error placing order:', error);

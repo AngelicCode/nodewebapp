@@ -1122,6 +1122,18 @@
 
             const result = await response.json();
 
+             if (!response.ok) {
+            if (result.errors && result.errors.length > 0) {
+                showValidationErrorAlert(result.errors, result.validItems);
+                btn.innerHTML = 'Complete Order';
+                btn.disabled = false;
+                return;
+            } else {
+                window.location.href = '/order-failure?reason=order_creation_failed';
+                return;
+            }
+        }
+
             if (!result.status) {
                 window.location.href = '/order-failure?reason=order_creation_failed';
                 return;
@@ -1143,6 +1155,30 @@
             window.location.href = '/order-failure?reason=network_error';
         }
     }
+
+    function showValidationErrorAlert(errors, validItems) {
+    let errorMessage = 'Some items in your cart are no longer available:<br><br>';
+    
+    errors.forEach(error => {
+        errorMessage += `• ${error.productName}: ${error.message}<br>`;
+    });
+
+    if (validItems && validItems.length > 0) {
+        errorMessage += `<br>Available items: ${validItems.length}`;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Cart Issues',
+        html: errorMessage,
+        confirmButtonText: 'Update Cart',
+        confirmButtonColor: '#3085d6',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/cart';
+        }
+    });
+}
 
     function updateCartAfterCheckout() {
         const cartCountElement = document.getElementById('cartCount');
