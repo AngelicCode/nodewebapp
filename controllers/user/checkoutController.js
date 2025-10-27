@@ -222,6 +222,12 @@ const placeOrder = async(req,res)=>{
         });
     }
 
+    if(paymentMethod === "cod" && parseFloat(total) > 1000 ){
+      return res.status(400).json({
+        status:false,
+        message:"COD not allowed for orders above ₹1000. Please choose another payment method."});
+    }
+
     if (paymentMethod === 'wallet') {
         const user = await User.findById(userId);
         if (user.wallet < total) {

@@ -1070,9 +1070,17 @@
         try {
             const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
             const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
+            const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
 
             if (!addressId) {
                 throw new Error('Please select a shipping address');
+            }
+
+            if (paymentMethod === 'cod' && orderTotal > 1000) {
+                btn.innerHTML = 'Complete Order';
+                btn.disabled = false;
+                showCodRestrictionAlert(orderTotal);
+                return;
             }
 
             
@@ -1097,6 +1105,7 @@
             shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
             tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
             total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
+            total: orderTotal,
             coupon: appliedCoupon ? {
                 code: appliedCoupon.code,
                 discountAmount: appliedCoupon.discountAmount
@@ -1271,6 +1280,12 @@
         document.querySelectorAll('.payment-method').forEach(method => {
             method.addEventListener('click', function() {
                 const methodType = this.dataset.method;
+                const currentTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+
+                if (methodType === 'cod' && currentTotal > 1000) {
+                    showCodRestrictionAlert(currentTotal);
+                    return; 
+                }
                 
                 if (methodType === 'wallet') {
                     const currentTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
@@ -1418,7 +1433,7 @@ function updateOrderSummary(discountAmount, finalAmount) {
     document.getElementById('coupon-discount-row').style.display = 'flex';
     document.getElementById('coupon-discount').textContent = `-₹${discountAmount.toFixed(2)}`;
     
-    // Use the finalAmount which should already include both product discounts and coupon discount
+    
     let total = finalAmount + shipping;
     
     document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
@@ -1534,6 +1549,33 @@ document.addEventListener('DOMContentLoaded', function() {
   loadAvailableCoupons();
 });
 
+function showCodRestrictionAlert(orderTotal) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'COD Not Available',
+        html: `
+            <div>
+                <p>Cash on Delivery is not available for orders above ₹1000.</p>
+                <p>Your order total: <strong>₹${orderTotal.toFixed(2)}</strong></p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Choose Another Method',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#71cd14',
+        cancelButtonColor: '#95a5a6'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+            document.querySelector('.payment-method[data-method="razorpay"]').classList.add('active');
+            
+            updatePaymentMethodDisplay('razorpay');
+        } else {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+            document.querySelector('.payment-method[data-method="cod"]').classList.add('active');
+        }
+    });
+}
 
 </script>
 </body>
