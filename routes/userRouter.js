@@ -104,7 +104,7 @@ router.get("/test-cart-validation",userAuth,validateCheckoutItems,cartController
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.post("/checkoutAddAddress",userAuth,checkoutController.checkoutAddAddress);
 router.put("/checkoutEditAddress/:id",userAuth,checkoutController.checkoutEditAddress);
-router.post("/place-order",userAuth,validateCheckoutItems, checkoutController.placeOrder);
+router.post("/place-order", userAuth, validateCheckoutItems, checkoutController.placeOrder);
 router.post("/verify-payment", userAuth, checkoutController.verifyRazorpayPayment);
 router.get("/order-failure", userAuth,checkoutController.orderFailure);
 router.post("/retry-payment", userAuth, checkoutController.handleFailedPayment);

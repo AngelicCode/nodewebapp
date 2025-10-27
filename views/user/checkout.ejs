@@ -1303,13 +1303,6 @@
             });
         });
 
-        function updatePaymentMethodDisplay(methodType) {
-            const codChargeRow = document.getElementById('cod-charge-row');
-            if (codChargeRow) {
-                codChargeRow.style.display = methodType === 'cod' ? 'flex' : 'none';
-            }
-        }
-
         document.addEventListener('change', function(e) {
             if (e.target.name === 'selectedAddress') {
                 console.log('Selected address:', e.target.value);
@@ -1548,6 +1541,13 @@ function displayAvailableCoupons(coupons) {
 document.addEventListener('DOMContentLoaded', function() {
   loadAvailableCoupons();
 });
+
+function updatePaymentMethodDisplay(methodType) {
+            const codChargeRow = document.getElementById('cod-charge-row');
+            if (codChargeRow) {
+                codChargeRow.style.display = methodType === 'cod' ? 'flex' : 'none';
+            }
+        }
 
 function showCodRestrictionAlert(orderTotal) {
     Swal.fire({
