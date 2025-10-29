@@ -10,6 +10,7 @@ const brandController = require("../controllers/admin/brandController");
 const orderController = require("../controllers/admin/orderController");
 const couponController = require("../controllers/admin/couponController");
 const salesreportController = require("../controllers/admin/salesreportController");
+const dashboardController = require("../controllers/admin/dashboardController");
 
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { storage, fileFilter } = require("../helpers/multer");
@@ -82,6 +83,9 @@ router.post("/add-category-offer", adminAuth, offerController.addCategoryOffer);
 router.post("/remove-category-offer/:categoryId", adminAuth, offerController.removeCategoryOffer);
 router.get("/offer-details/:productId", adminAuth, offerController.getProductOfferDetails);
 
+//Dashboard Management
+router.get("/dashboard", adminAuth, dashboardController.getDashboard);
+router.get("/dashboard/data", adminAuth, dashboardController.getDashboardData);
 
 
 module.exports = router;
