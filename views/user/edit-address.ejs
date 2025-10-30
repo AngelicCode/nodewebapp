@@ -465,15 +465,12 @@
         </div>
     </div>
 
-        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script> -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.getElementById('addressForm').addEventListener('submit', function(event) {
-    // Call validation; if invalid, prevent submission!
     if (!validateForm()) {
         event.preventDefault();
     } else {
-        // Set loading state if you want
         document.getElementById('submitButton').classList.add('btn-loading');
     }
 });
@@ -484,18 +481,15 @@ function validateForm() {
     const requiredFields = [
         "addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"
     ];
-    // Remove previous in-line errors
     requiredFields.forEach(function(field) {
         const prev = document.getElementById(field + '-error');
         if (prev) prev.remove();
     });
 
-    // Basic required check, capture the first empty field
     requiredFields.forEach(function(field) {
         const input = document.getElementById(field);
         if (input.value.trim() === "") {
             if (!firstErrorField) firstErrorField = input;
-            // Optional: Add below-field error (Bootstrap style)
             const errorDiv = document.createElement('div');
             errorDiv.className = "text-danger";
             errorDiv.textContent = "This field is required.";
@@ -505,9 +499,7 @@ function validateForm() {
         }
     });
 
-    // If a required field is empty, show Swal and focus first error
     if (!isValid) {
-        // Focus after Swal closes
         Swal.fire({
             title: 'Incomplete Form',
             text: 'Please fill in all required fields.',
@@ -519,7 +511,6 @@ function validateForm() {
         return false;
     }
 
-    // Pattern checks
     const name = document.getElementById('name').value.trim();
     const city = document.getElementById('city').value.trim();
     const landMark = document.getElementById('landMark').value.trim();
@@ -613,11 +604,9 @@ function validateForm() {
         return false;
     }
 
-    // If all checks passed
     return true;
 }
 
-// Optional: Smooth field focus transitions (optional)
 document.querySelectorAll('.form-control').forEach(input => {
     input.addEventListener('focus', function() {
         this.parentNode.style.transform = 'scale(1.02)';

@@ -436,11 +436,9 @@
   <script>
     let salesRevenueChart, customerGrowthChart, ordersChart, categoryPerformanceChart;
 
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
   loadDashboardData();
   
-  // Add event listener for filter change
   document.getElementById('chartFilter').addEventListener('change', function() {
     loadDashboardData(this.value);
   });
@@ -491,17 +489,16 @@ function updateSalesRevenueChart(salesData) {
 
   if (salesData && salesData.length > 0) {
     labels = salesData.map(item => {
-      // Handle different date formats
       if (item.date.includes('-')) {
-        if (item.date.split('-').length === 3) { // Daily: YYYY-MM-DD
+        if (item.date.split('-').length === 3) { 
           const date = new Date(item.date);
           return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        } else if (item.date.split('-').length === 2) { // Monthly: YYYY-MM
+        } else if (item.date.split('-').length === 2) { 
           const [year, month] = item.date.split('-');
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           return `${monthNames[parseInt(month) - 1]} ${year}`;
         }
-      } else { // Yearly: YYYY
+      } else { 
         return item.date;
       }
       return item.date;
@@ -509,7 +506,6 @@ function updateSalesRevenueChart(salesData) {
     
     sales = salesData.map(item => item.sales || 0);
   } else {
-    // Fallback to sample data with proper labels
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     labels = monthNames;
     sales = [700000, 600000, 500000, 400000, 300000, 200000, 100000];
@@ -585,15 +581,15 @@ function updateCustomerGrowthChart(customerData) {
   if (customerData && customerData.length > 0) {
     labels = customerData.map(item => {
       if (item.date.includes('-')) {
-        if (item.date.split('-').length === 3) { // Daily
+        if (item.date.split('-').length === 3) { 
           const date = new Date(item.date);
           return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        } else if (item.date.split('-').length === 2) { // Monthly
+        } else if (item.date.split('-').length === 2) { 
           const [year, month] = item.date.split('-');
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           return `${monthNames[parseInt(month) - 1]} ${year}`;
         }
-      } else { // Yearly
+      } else { 
         return item.date;
       }
       return item.date;
@@ -601,7 +597,6 @@ function updateCustomerGrowthChart(customerData) {
     
     customers = customerData.map(item => item.newCustomers || 0);
   } else {
-    // Fallback to sample data
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     labels = monthNames;
     customers = [25, 20, 15, 10, 5, 8, 12];
@@ -660,15 +655,15 @@ function updateOrdersChart(salesData) {
   if (salesData && salesData.length > 0) {
     labels = salesData.map(item => {
       if (item.date.includes('-')) {
-        if (item.date.split('-').length === 3) { // Daily
+        if (item.date.split('-').length === 3) {
           const date = new Date(item.date);
           return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        } else if (item.date.split('-').length === 2) { // Monthly
+        } else if (item.date.split('-').length === 2) { 
           const [year, month] = item.date.split('-');
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           return `${monthNames[parseInt(month) - 1]} ${year}`;
         }
-      } else { // Yearly
+      } else { 
         return item.date;
       }
       return item.date;
@@ -676,7 +671,6 @@ function updateOrdersChart(salesData) {
     
     orders = salesData.map(item => item.orders || 0);
   } else {
-    // Fallback to sample data
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     labels = monthNames;
     orders = [150, 120, 180, 140, 110, 90, 130];
@@ -726,7 +720,6 @@ function updateCategoryPerformanceChart(categoryPerformance) {
     categoryPerformanceChart.destroy();
   }
 
-  // Use dynamic data if available, otherwise use sample data
   const labels = categoryPerformance && categoryPerformance.length > 0 
     ? categoryPerformance.map(item => item.name)
     : ['Sports Bottles', 'Stainless Steel', 'Glass Bottles', 'Plastic Bottles'];
@@ -778,7 +771,6 @@ function updateCategoryPerformanceChart(categoryPerformance) {
 }
 
 function updateTopLists(data) {
-  // Update Top Products
   const productsList = document.getElementById('topProductsList');
   if (data.topProducts && data.topProducts.length > 0) {
     productsList.innerHTML = data.topProducts.map((product, index) => `
@@ -795,7 +787,6 @@ function updateTopLists(data) {
     productsList.innerHTML = '<div class="loading">No products data available</div>';
   }
 
-  // Update Top Categories
   const categoriesList = document.getElementById('topCategoriesList');
   if (data.topCategories && data.topCategories.length > 0) {
     categoriesList.innerHTML = data.topCategories.map((category, index) => `

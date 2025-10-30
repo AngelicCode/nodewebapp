@@ -22,7 +22,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated water droplets background */
         body::before {
             content: '';
             position: absolute;
@@ -410,7 +409,6 @@
             }
         }
 
-        // Add some interactive effects
         document.addEventListener('DOMContentLoaded', function() {
             const emailInput = document.getElementById('email');
             
@@ -421,7 +419,6 @@
                 }
             });
 
-            // Add focus effect to step indicator
             emailInput.addEventListener('focus', function() {
                 document.querySelector('.step.active').style.transform = 'scale(1.3)';
             });

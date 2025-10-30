@@ -224,7 +224,6 @@
   <script>
     document.getElementById("otp").focus();
 
-    // Create water drops background
     function createWaterDrops() {
       const waterDrops = document.getElementById('waterDrops');
       const numberOfDrops = 10;
@@ -233,16 +232,13 @@
         const drop = document.createElement('div');
         drop.classList.add('drop');
         
-        // Random size between 10px and 30px
         const size = Math.floor(Math.random() * 20) + 10;
         drop.style.width = `${size}px`;
         drop.style.height = `${size}px`;
         
-        // Random position
         drop.style.left = `${Math.random() * 100}%`;
         drop.style.top = `${Math.random() * 100}%`;
         
-        // Random animation delay
         drop.style.animationDelay = `${Math.random() * 4}s`;
         
         waterDrops.appendChild(drop);

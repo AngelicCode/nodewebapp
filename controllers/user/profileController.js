@@ -9,8 +9,6 @@ const { HTTP_STATUS } = require("../../helpers/httpStatus");
 const { generateReferralCode, addReferralBonus } = require('../../helpers/referelCodeHelper');
 
 
-// const { resendOtp } = require("./userController");
-
 
 function generateOtp(){
   const digits = "1234567890";

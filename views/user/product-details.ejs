@@ -19,7 +19,6 @@
                 <div class="row mb-50">
                     <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="detail-gallery">
-                            <!-- <span class="zoom-icon" id="zoomIcon"><i class="fi-rs-search"></i></span> -->
                             <div class="main-product-image-container" id="imageContainer">
                                 <div class="main-product-image" id="zoomContainer">
                                     <img id="mainProductImage" src="/Uploads/product-images/<%=product.productImage[0]%>" alt="<%=product.productName%>">
@@ -1115,7 +1114,6 @@ async function toggleWishlist(event, productId, btn) {
     });
 }
 
-// Replace the existing event listener with:
 document.addEventListener('DOMContentLoaded', function() {
   const addToCartBtn = document.querySelector('.add-to-cart-btn');
   if (!addToCartBtn) return;

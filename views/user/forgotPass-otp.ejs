@@ -393,11 +393,9 @@
             clearInterval(otpTimerInterval);
         }
         
-        // Reset timer
         timer = duration;
         const timerElement = document.getElementById("otpTimer");
         
-        // Initial display
         const minutes = Math.floor(timer / 60);
         const seconds = timer % 60;
         timerElement.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;

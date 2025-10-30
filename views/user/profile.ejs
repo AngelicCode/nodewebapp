@@ -45,10 +45,6 @@
             line-height: 1.6;
         }
 
-        /*.main {
-            padding: 40px 0;
-        }*/
-
         .page-header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -322,7 +318,6 @@
             color: var(--primary-blue);
         }
 
-        /* Address Grid Styling */
             .address-grid {
                 display: flex;
                 flex-wrap: wrap;
@@ -330,7 +325,6 @@
                 margin: 0 -10px;
             }
 
-            /* Card Container - Two cards per row */
             .address-grid .col-lg-15 {
                 flex: 0 0 calc(50% - 10px);
                 max-width: calc(50% - 10px);
@@ -338,7 +332,6 @@
                 margin-bottom: 20px;
             }
 
-            /* Ensure all cards have the same height */
             .address-grid .card {
                 height: 100%;
                 display: flex;
@@ -354,7 +347,6 @@
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             }
 
-            /* Card Header Styling */
             .card-header {
                 background-color: #f8f9fa;
                 border-bottom: 1px solid #dee2e6;
@@ -374,7 +366,6 @@
                 color: #007bff;
             }
 
-            /* Card Body Styling */
             .card-body {
                 padding: 20px;
                 flex-grow: 1;
@@ -383,7 +374,6 @@
                 justify-content: space-between;
             }
 
-            /* Address Content Styling */
             .card-body address {
                 margin-bottom: 20px;
                 line-height: 1.6;
@@ -404,7 +394,6 @@
                 text-align: center;
             }
 
-            /* Button Styling */
             .btn-small {
                 padding: 8px 16px;
                 font-size: 0.875rem;
@@ -438,13 +427,11 @@
                 color: white;
             }
 
-            /* Action Buttons Container */
             .d-flex.justify-content-between {
                 gap: 10px;
                 margin-top: auto;
             }
 
-            /* Add New Address Button */
             .btn.btn-primary {
                 padding: 12px 24px;
                 font-weight: 600;
@@ -460,7 +447,6 @@
                 box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
             }
 
-            /* No Address Message Styling */
             .col-12 .card-body {
                 text-align: center;
                 padding: 40px 20px;
@@ -473,7 +459,6 @@
                 color: #dee2e6;
             }
 
-            /* Responsive Design */
             @media (max-width: 768px) {
                 .address-grid .col-lg-15 {
                     flex: 0 0 100%;
@@ -1065,9 +1050,11 @@
                                     <th><i class="fas fa-exchange-alt"></i> Type</th>
                                     </tr>
                                 </thead>
+
                                 <tbody id="walletHistoryTable">
                                     <!-- Wallet history will be loaded here -->
                                 </tbody>
+
                                 </table>
                             </div>
 
@@ -1092,7 +1079,7 @@
                                                 <i class="fas fa-gift"></i> Refer your friends and earn ₹50 per referral!
                                             </h6>
                                             
-                                            <!-- Referral Link - FIXED -->
+                                            <!-- Referral Link  -->
                                             <div class="referral-link text-center">
                                                 <% if (user.referelCode) { %>
                                                     <a href="http://localhost:3000/ref/<%= user.referelCode %>" 
@@ -1128,7 +1115,6 @@
                                                 </div>
                                             </div>
                                             
-                                            <!-- Copy Button -->
                                             <div class="text-center mt-4">
                                                 <% if (user.referelCode) { %>
                                                     <button class="btn btn-success" onclick="copyReferralLink()">
@@ -1141,7 +1127,6 @@
                                                 <% } %>
                                             </div>
                                             
-                                            <!-- How it works -->
                                             <div class="mt-4">
                                                 <h6><i class="fas fa-info-circle"></i> How it works:</h6>
                                                 <ul class="list-unstyled">
@@ -1216,13 +1201,12 @@
                 tab.addEventListener('click', function(e) {
                     const tabName = e.target.getAttribute('aria-controls').replace('-tab', '');
                     const url = new URL(window.location);
-                    url.searchParams.delete('page'); // remove old pagination param
+                    url.searchParams.delete('page'); 
                     url.searchParams.set('tab', tabName);
                     window.history.pushState({}, '', url);
                 });
             });
 
-            // Handle pagination clicks in orders tab
             document.addEventListener('click', function(e) {
                 if (e.target.closest('.pagination a')) {
                     e.preventDefault();
@@ -1411,7 +1395,6 @@
             }
         }
 
-        // Add this to your existing script in profile.ejs
         function copyReferralLink() {
             const referralLinkElement = document.getElementById('referralLink');
             if (referralLinkElement) {
@@ -1427,7 +1410,6 @@
                     });
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
-                    // Fallback
                     const tempInput = document.createElement('input');
                     tempInput.value = referralLink;
                     document.body.appendChild(tempInput);

@@ -585,10 +585,8 @@
       }
     });
 
-    // Set minimum date for validity to today
     document.getElementById('couponValidity').min = new Date().toISOString().split('T')[0];
 
-    // Clear form when modal is closed
     document.getElementById('addCouponModal').addEventListener('hidden.bs.modal', function () {
       document.getElementById('couponCode').value = '';
       document.getElementById('couponType').value = '';

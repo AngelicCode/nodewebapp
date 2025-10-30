@@ -757,7 +757,6 @@ body {
     });
   });
 
-  // Toggle sidebar on mobile - FIXED VERSION
   $('[data-trigger="#offcanvas_aside"]').on('click', function (e) {
     e.preventDefault();
     $('.navbar-aside').toggleClass('show');
@@ -796,14 +795,12 @@ body {
   const sort = $('#sortFilter').val();
   const searchTerm = $('.search-container input[name="search"]').val();
   
-  // Build query string
   let queryParams = [];
   if (status) queryParams.push(`status=${status}`);
   if (dateRange) queryParams.push(`date=${dateRange}`);
   if (sort) queryParams.push(`sort=${sort}`);
   if (searchTerm) queryParams.push(`search=${encodeURIComponent(searchTerm)}`);
   
-  // Redirect to filtered page
   window.location.href = `/admin/orderList${queryParams.length ? '?' + queryParams.join('&') : ''}`;
 }
 
@@ -826,7 +823,6 @@ $(document).ready( function() {
       cancelButtonText: 'Cancel'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Show loading state
         $select.prop('disabled', true);
         $select.html('<option>Updating...</option>');
         
@@ -861,11 +857,9 @@ $(document).ready( function() {
         .catch(error => {
           console.error('Fetch error:', error);
           Swal.fire('Error!', error.message || 'Update failed', 'error');
-          // Reload to get fresh data even on error
           window.location.reload(true);
         });
       } else {
-        // User cancelled - revert to original value
         $select.val(originalValue);
       }
     });
@@ -1172,7 +1166,6 @@ function showRejectModal(orderId, itemIndex) {
   modal.show();
 }
 
-// Add viewReturnItem function
 function viewReturnItem(orderId, itemIndex) {
   fetch(`/admin/returnItemDetails/${orderId}/${itemIndex}`)
     .then(response => response.json())
@@ -1200,7 +1193,6 @@ function viewReturnItem(orderId, itemIndex) {
     });
 }
 
-// Handle reject confirmation
 document.getElementById('confirmReject').addEventListener('click', function() {
   const orderId = document.getElementById('rejectOrderId').value;
   const itemIndex = document.getElementById('rejectItemIndex').value;

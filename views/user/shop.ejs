@@ -242,7 +242,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
 
-        /* Product Grid */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr); 
@@ -250,7 +249,6 @@
             width: 100%;
         }
 
-        /* Product Card Styling */
         .product-card {
             background: white;
             border-radius: 20px;
@@ -658,19 +656,16 @@
                     <% if (query.category) { %>
                         <span class="filter-tag">
                             Category: <%= category.find(c => c._id.toString() === query.category.name) %>
-                            <!-- <a href="/remove-filter/category">×</a> -->
                         </span>
                     <% } %>
                     <% if (query.brand) { %>
                         <span class="filter-tag">
                             Brand: <%= brand.find(b => b._id.toString() === query.brand.brandName) %>
-                            <!-- <a href="/remove-filter/brand">×</a> -->
                         </span>
                     <% } %>
                     <% if (query.minPrice || query.maxPrice) { %>
                         <span class="filter-tag">
                             Price: ₹<%= query.minPrice || 0 %>-<%= query.maxPrice || '∞' %>
-                            <!-- <a href="/remove-filter/price">×</a> -->
                         </span>
                     <% } %>
                     <a href="/clear-filters" class="clear-filters-btn1">Clear all filters</a>

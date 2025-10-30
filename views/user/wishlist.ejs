@@ -21,7 +21,6 @@
             color: #334155;
         }
 
-        /* Breadcrumb Styling */
         .page-header {
             background: linear-gradient(135deg, #87ceeb 0%, #5fa8d3 100%);
             padding: 22px 0;
@@ -70,7 +69,6 @@
             font-weight: bold;
         }
 
-        /* Main Content Container */
         .wishlist-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -117,7 +115,6 @@
             border-radius: 50%;
         }
 
-        /* Table Styling */
         .table-container {
             padding: 40px;
         }
@@ -179,7 +176,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        /* Product Image */
         .product-thumbnail img {
             width: 80px;
             height: 80px;
@@ -194,7 +190,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        /* Product Details */
         .product-name h5 {
             font-size: 1.1rem;
             font-weight: 600;
@@ -220,7 +215,6 @@
             line-height: 1.4;
         }
 
-        /* Price Styling */
         .price {
             font-size: 1.3rem;
             font-weight: 700;
@@ -234,7 +228,6 @@
             background-clip: text;
         }
 
-        /* Button Styling */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -298,7 +291,6 @@
             font-size: 1rem;
         }
 
-        /* Empty State */
         .empty-wishlist {
             text-align: center;
             padding: 80px 40px;
@@ -327,7 +319,6 @@
             border-radius: 12px;
         }
 
-        /* Responsive Design */
         @media (max-width: 1200px) {
             .wishlist-container {
                 margin: 20px;
@@ -402,7 +393,6 @@
             }
         }
 
-        /* Animation */
         .fade-in {
             animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -484,7 +474,6 @@
                                   <%if(wishlist.length>0){%>
                                     <%for(let product of wishlist){%>
 
-                                    <!-- Sample wishlist item (replace with your dynamic content) -->
                                     <tr>
                                         <td class="image product-thumbnail">
                                             <img src="/uploads/product-images/<%=product.productImage[0]%>" alt="Product Image" />

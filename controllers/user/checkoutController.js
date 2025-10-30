@@ -15,6 +15,7 @@ const Coupon = require("../../models/couponSchema");
 const { updateCouponUsage  } = require('../../helpers/couponUsageUpdate');
 const { getLargestOffer } = require('../../helpers/offerHelper');
 
+
 const loadCheckout = async(req,res)=>{
   try {
     const userId = req.session.user._id;

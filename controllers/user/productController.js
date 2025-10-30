@@ -48,9 +48,7 @@ const productDetails = async (req, res) => {
 
          const bestOffer = await getLargestOffer(productId);
 
-         const findCategory = product.category;     
-        //  const categoryOffer = findCategory?.categoryOffer || 0;     const productOffer = product.productOffer || 0;     
-        //  const totalOffer = categoryOffer + productOffer;      
+         const findCategory = product.category;           
          const brand = product.brand ? {...product.brand.toObject(),name: product.brand.brandName} : null;  
 
          const relatedProducts = await Product.find({category:product.category._id,
@@ -75,7 +73,6 @@ const productDetails = async (req, res) => {
           product: product,       
           quantity: product.quantity,
           bestOffer: bestOffer,       
-          // totalOffer: totalOffer,       
           category: findCategory,       
           brand: brand,
           relatedProducts:relatedProductsWithOffers,

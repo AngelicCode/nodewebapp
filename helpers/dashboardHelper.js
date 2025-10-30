@@ -189,7 +189,7 @@ async function getCustomerGrowthData(filter) {
       break;
     case 'weekly':
       startDate = new Date(today.setDate(today.getDate() - 28));
-      groupFormat = '%Y-%U'; // Fixed: Use week format instead of day
+      groupFormat = '%Y-%U'; 
       break;
     case 'yearly':
       startDate = new Date(today.getFullYear() - 3, 0, 1);

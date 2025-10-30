@@ -348,6 +348,7 @@
     <div class="row">
       <div class="col-lg-8 mx-auto">
         <form onsubmit="return validateForm()" id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
+
           <!-- Basic Info Section -->
           <div class="form-section">
             <h4 class="section-title">Basic Information</h4>
@@ -537,7 +538,6 @@
       const cropButton = document.getElementById('cropButton');
       const form = document.querySelector('form');
 
-      // File upload handling
       uploadBox.addEventListener('click', () => {
         imageInput.value = '';
         imageInput.click();
@@ -549,7 +549,6 @@
         }
       });
 
-      // Handle drag and drop
       uploadBox.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadBox.classList.add('drag-over');
@@ -859,7 +858,6 @@ function addFiles(newFiles) {
     });
   </script>
   <script>
-    // Check for success/error messages in URL parameters
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       const success = urlParams.get('success');

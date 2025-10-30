@@ -2,7 +2,7 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Order =  require("../../models/orderSchema");
 const { refundToWallet } = require("../../helpers/walletHelper"); 
-// const { customerInfo } = require("./customerController");
+
 
 const orderList = async (req, res) => {
   try {

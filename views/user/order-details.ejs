@@ -570,7 +570,7 @@
                                     </div>
                                     <% } %>
 
-                                    <!-- Other Discounts (if any) -->
+                                    <!-- Other Discounts  -->
                                     <% if (order.discount > 0 && (!order.couponDetails || order.discount !== order.couponDetails.discountAmount)) { %>
                                     <div class="d-flex justify-content-between mb-2 text-success">
                                     <span>Other Discount:</span>
@@ -1195,7 +1195,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Confirm return single item
     const confirmReturnItem = document.getElementById('confirmReturnItem');
     if (confirmReturnItem) {
         confirmReturnItem.addEventListener('click', function() {
