@@ -90,13 +90,7 @@
                                 <div class="current-price">₹<%= product.salePrice %></div>
                                 <div class="price-details">
                                     <span class="original-price">₹<%= product.regularPrice %></span>
-                                    <% if (product.regularPrice > product.salePrice) { %>
-                                        <% 
-                                            const discount = product.regularPrice - product.salePrice;
-                                            const discountPercent = Math.round((discount / product.regularPrice) * 100);
-                                        %>
-                                        <span class="discount-badge"><%= discountPercent %>% OFF</span>
-                                    <% } %>
+                                    
                                 </div>
                             <% } %>
                         </div>
