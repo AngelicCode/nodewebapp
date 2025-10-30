@@ -1063,39 +1063,42 @@
     }
 
     async function processPayment() {
-        const btn = document.querySelector('.btn-primary');
-        btn.innerHTML = '⏳ Processing...';
-        btn.disabled = true;
+    const btn = document.querySelector('.btn-primary');
+    btn.innerHTML = '⏳ Processing...';
+    btn.disabled = true;
 
-        try {
-            const paymentMethod = document.querySelector('.payment-method.active').dataset.method;
-            const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
+    try {
+        const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
+        const addressInputs = document.querySelectorAll('input[name="selectedAddress"]');
+        const addressId = document.querySelector('input[name="selectedAddress"]:checked')?.value;
+        const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+
+        if (addressInputs.length === 0) {
+            throw new Error('No saved addresses found. Please add a shipping address before proceeding.');
+        }
+
+        if (!addressId) {
+            throw new Error('Please select a shipping address');
+        }
+
+        if (paymentMethod === 'cod' && orderTotal > 1000) {
+            btn.innerHTML = 'Complete Order';
+            btn.disabled = false;
+            showCodRestrictionAlert(orderTotal);
+            return;
+        }
+
+        if (paymentMethod === 'wallet') {
             const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
-
-            if (!addressId) {
-                throw new Error('Please select a shipping address');
-            }
-
-            if (paymentMethod === 'cod' && orderTotal > 1000) {
+            if (userWalletBalance < orderTotal) {
                 btn.innerHTML = 'Complete Order';
                 btn.disabled = false;
-                showCodRestrictionAlert(orderTotal);
+                showInsufficientBalanceAlert(userWalletBalance, orderTotal);
                 return;
             }
+        }
 
-            
-            if (paymentMethod === 'wallet') {
-                const orderTotal = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
-                
-                if (userWalletBalance < orderTotal) {
-                    btn.innerHTML = 'Complete Order';
-                    btn.disabled = false;
-                    showInsufficientBalanceAlert(userWalletBalance, orderTotal);
-                    return;
-                }
-            }
-
-            const orderData = {
+        const orderData = {
             addressId: addressId,
             paymentMethod: paymentMethod,
             cartItems: <%- JSON.stringify(cartItems) %>,
@@ -1112,17 +1115,15 @@
             } : null
         };
 
-            const response = await fetch('/place-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
+        const response = await fetch('/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
 
-            const result = await response.json();
+        const result = await response.json();
 
-             if (!response.ok) {
+        if (!response.ok) {
             if (result.errors && result.errors.length > 0) {
                 showValidationErrorAlert(result.errors, result.validItems);
                 btn.innerHTML = 'Complete Order';
@@ -1134,27 +1135,34 @@
             }
         }
 
-            if (!result.status) {
-                window.location.href = '/order-failure?reason=order_creation_failed';
+        if (!result.status) {
+            window.location.href = '/order-failure?reason=order_creation_failed';
+            return;
+        }
+
+        if (paymentMethod === 'razorpay') {
+            await initiateRazorpayPayment(orderData, result.razorpayOrder);
+        } else {
+            if (!result.orderId) {
+                window.location.href = '/order-failure?reason=order_id_missing';
                 return;
             }
-
-            if (paymentMethod === 'razorpay') {
-                await initiateRazorpayPayment(orderData, result.razorpayOrder);
-            } else {
-                if (!result.orderId) {
-                    window.location.href = '/order-failure?reason=order_id_missing';
-                    return;
-                }
-                updateCartAfterCheckout();
-                window.location.href = `/order-success/${result.orderId}`;
-            }
-
-        } catch (error) {
-            console.error('Order error:', error);
-            window.location.href = '/order-failure?reason=network_error';
+            updateCartAfterCheckout();
+            window.location.href = `/order-success/${result.orderId}`;
         }
+
+    } catch (error) {
+        console.error('Order error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.message || 'Something went wrong while processing your order. Please try again.',
+        });
+        btn.innerHTML = 'Complete Order';
+        btn.disabled = false;
     }
+}
+
 
     function showValidationErrorAlert(errors, validItems) {
     let errorMessage = 'Some items in your cart are no longer available:<br><br>';
