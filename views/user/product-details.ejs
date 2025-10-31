@@ -1163,7 +1163,11 @@ document.addEventListener('DOMContentLoaded', function() {
           icon: 'error',
           title: 'Error',
           text: data.message || 'Could not add product to cart',
-        });
+        }).then(()=>{
+            if (data.reload) {
+            location.reload();
+            }
+        })
       }
     } catch (error) {
       Swal.fire({

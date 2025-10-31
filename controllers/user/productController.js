@@ -96,7 +96,7 @@ const detailspageAddToCart = async(req,res)=>{
     const quantityToAdd = parseInt(req.body.quantity)||1;
 
     if (!userId) {
-      return res.status(401).json({ status: "User not authenticated" });
+      return res.status(401).json({ status: false,message:"User not authenticated" });
     }
 
     const product = await Product.findById(productId)
@@ -104,13 +104,20 @@ const detailspageAddToCart = async(req,res)=>{
     .populate("brand");
 
     if (!product) {
-      return res.json({ status: "Product not found" });
+      return res.json({ status: false, message:"Product not found" });
     }
 
     if(
-      product.isBlocked || !product.category || product.category.isListed == false || !product.brand || product.brand.isBlocked
+      product.isBlocked || 
+      !product.category || 
+      product.category.isListed == false || 
+      !product.brand || 
+      product.brand.isBlocked
     ){
-      return res.json({redirect:"/shop",status:false,message:"This product is Blocked or Unavailable"});
+      return res.json({redirect:"/shop",
+        status:false,
+        message:"This product is Blocked or Unavailable"
+      });
 
     }
 
@@ -118,8 +125,12 @@ const detailspageAddToCart = async(req,res)=>{
       return res.status(400).json({ status: false, message: "Maximum quantity per item in cart is 5" });
     }
     
-    if (product.quantity < quantityToAdd) {
-      return res.json({ status: "Insufficient stock available" });
+    if (product.quantity <= 0 || product.quantity < quantityToAdd) {
+      return res.json({
+        status: false,
+        message: "Insufficient stock available",
+        reload: true  
+      });
     }
 
     const currentOffer = await getLargestOffer(productId);
@@ -138,7 +149,9 @@ const detailspageAddToCart = async(req,res)=>{
           totalPrice: finalPrice * quantityToAdd,
           addedAt: new Date()
           
-        }]
+        },
+      ],
+
       });
     } else {
       const existingItemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
@@ -147,8 +160,6 @@ const detailspageAddToCart = async(req,res)=>{
         cart.items.push({
           productId,
           quantity: quantityToAdd,
-          price: product.salePrice,
-          totalPrice: product.salePrice*quantityToAdd,
           price: finalPrice, 
           originalPrice: product.salePrice, 
           totalPrice: finalPrice * quantityToAdd,
@@ -160,7 +171,8 @@ const detailspageAddToCart = async(req,res)=>{
         const newQuantity = existingItem.quantity + quantityToAdd;
 
         if (newQuantity > product.quantity) {
-          return res.json({ status: "Insufficient stock available" });
+          return res.json({ status: false,
+            message:"Insufficient stock available" });
         }
 
         existingItem.price = finalPrice;
