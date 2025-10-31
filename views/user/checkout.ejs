@@ -1393,6 +1393,7 @@ async function removeCoupon() {
       hideAppliedCoupon();
       resetOrderSummary(result.cartTotal);
       showCouponMessage(result.message, 'success');
+      
     }
   } catch (error) {
     console.error('Error removing coupon:', error);
@@ -1445,22 +1446,29 @@ function updateOrderSummary(discountAmount, finalAmount) {
 }
 
 function resetOrderSummary(cartTotal) {
-    const shipping = 50;
-    const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
-    
-    document.getElementById('coupon-discount-row').style.display = 'none';
-    
-    const discountedSubtotalElement = document.getElementById('discounted-subtotal');
-    let total = cartTotal + shipping;
-    
-    if (discountedSubtotalElement && discountedSubtotalElement.textContent) {
-        const discountedSubtotal = parseFloat(discountedSubtotalElement.textContent.replace('₹', ''));
-        total = discountedSubtotal + shipping;
-    }
-    
-    document.getElementById('cod-charge-row').style.display = 'none';
-    document.getElementById('subtotal').textContent = `₹${cartTotal.toFixed(2)}`;
-    document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+  const shipping = 50;
+  const paymentMethod = document.querySelector('.payment-method.active')?.dataset.method;
+
+  const couponDiscountRow = document.getElementById('coupon-discount-row');
+  const codChargeRow = document.getElementById('cod-charge-row');
+  const discountedSubtotalElement = document.getElementById('discounted-subtotal');
+  const subtotalElement = document.getElementById('subtotal');
+  const totalElement = document.getElementById('total');
+
+  if (couponDiscountRow) couponDiscountRow.style.display = 'none';
+  if (codChargeRow) codChargeRow.style.display = 'none';
+
+  let total = cartTotal + shipping;
+
+  if (discountedSubtotalElement && discountedSubtotalElement.textContent) {
+    const discountedSubtotal = parseFloat(
+      discountedSubtotalElement.textContent.replace('₹', '')
+    );
+    total = discountedSubtotal + shipping;
+  }
+
+  if (subtotalElement) subtotalElement.textContent = `₹${cartTotal.toFixed(2)}`;
+  if (totalElement) totalElement.textContent = `₹${total.toFixed(2)}`;
 }
 
 function showCouponMessage(message, type) {
