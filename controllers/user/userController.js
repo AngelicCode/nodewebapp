@@ -365,40 +365,51 @@ const logout = async (req,res)=>{
 
 const loadShoppingPage = async (req, res) => {
   try {
+  
+    for (const key in req.query) {
+      if (
+        req.query[key] === 'null' ||
+        req.query[key] === 'undefined' ||
+        req.query[key] === '' ||
+        req.query[key] === null
+      ) {
+        delete req.query[key];
+      }
+    }
+
     const user = req.session.user;
     const cartCount = await getCartCount(user?._id);
 
     let cartProductIds = [];
     let wishlistProductIds = [];
+
     if (user) {
-      const wishlistDoc = await Wishlist.findOne({ userId: user._id }).lean();
-      if (wishlistDoc && Array.isArray(wishlistDoc.products)) {
+      const [wishlistDoc, cartDoc] = await Promise.all([
+        Wishlist.findOne({ userId: user._id }).lean(),
+        Cart.findOne({ userId: user._id }).lean()
+      ]);
+
+      if (wishlistDoc?.products) {
         wishlistProductIds = wishlistDoc.products.map(p => p.productId.toString());
       }
 
-      const cartDoc = await Cart.findOne({ userId: user._id }).lean();
-      if (cartDoc && Array.isArray(cartDoc.items)) {
-        cartProductIds = cartDoc.items.map(p => p.productId.toString()); 
+      if (cartDoc?.items) {
+        cartProductIds = cartDoc.items.map(p => p.productId.toString());
       }
-
     }
-    
+
     const [categories, brands] = await Promise.all([
       Category.find({ isListed: true }),
-      Brand.find({ isBlocked: false }),
-      
+      Brand.find({ isBlocked: false })
     ]);
 
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    let query = {
-      isBlocked: false,
-      
-    };
+    let query = { isBlocked: false };
 
-    const searchTerm = req.query.search || (req.body && req.body.search) || '';
+    const searchTerm = req.query.search?.trim() || '';
     if (searchTerm) {
       query.$or = [
         { productName: { $regex: searchTerm, $options: 'i' } },
@@ -406,24 +417,24 @@ const loadShoppingPage = async (req, res) => {
       ];
     }
 
-    const categoryFilter = req.query.category || (req.body && req.body.category) || req.session.filterCategory;
-    if (categoryFilter && categoryFilter !== 'all' && categoryFilter !== 'undefined' && categoryFilter !== '') {
+    const categoryFilter = req.query.category || req.session.filterCategory || null;
+    if (categoryFilter && categoryFilter !== 'all') {
       query.category = categoryFilter;
       req.session.filterCategory = categoryFilter;
     } else if (categoryFilter === 'all') {
       delete req.session.filterCategory;
     }
 
-    const brandFilter = req.query.brand || (req.body && req.body.brand) || req.session.filterBrand;
-    if (brandFilter && brandFilter !== 'all' && brandFilter !== 'undefined' && brandFilter !== '') {
+    const brandFilter = req.query.brand || req.session.filterBrand || null;
+    if (brandFilter && brandFilter !== 'all') {
       query.brand = brandFilter;
       req.session.filterBrand = brandFilter;
     } else if (brandFilter === 'all') {
       delete req.session.filterBrand;
     }
 
-    const minPrice = parseFloat(req.query.minPrice || (req.body && req.body.minPrice) || '');
-    const maxPrice = parseFloat(req.query.maxPrice || (req.body && req.body.maxPrice) || '');
+    const minPrice = parseFloat(req.query.minPrice);
+    const maxPrice = parseFloat(req.query.maxPrice);
 
     if (!isNaN(minPrice) || !isNaN(maxPrice)) {
       query.salePrice = {
@@ -441,7 +452,7 @@ const loadShoppingPage = async (req, res) => {
       };
     }
 
-    const sortOption = req.query.sort || (req.body && req.body.sort) || 'newest';
+    const sortOption = req.query.sort || 'newest';
     let sortCriteria = { createdAt: -1 };
 
     switch (sortOption) {
@@ -466,47 +477,41 @@ const loadShoppingPage = async (req, res) => {
       .limit(limit)
       .lean();
 
-      products = products.filter(product => {
-      return product &&
-        product.category && product.category.isListed !== false &&
-        product.brand && product.brand.isBlocked === false &&
-        product.isBlocked === false;
-    });
+    products = products.filter(p =>
+      p &&
+      p.category?.isListed !== false &&
+      p.brand?.isBlocked === false &&
+      p.isBlocked === false
+    );
 
     const productsWithOffers = await Promise.all(
-      products.map(async (product) => {
+      products.map(async product => {
         const offer = await getLargestOffer(product._id);
-        return {
-          ...product,
-          bestOffer: offer
-        };
+        return { ...product, bestOffer: offer };
       })
     );
 
-    const totalFilteredCount = await Product.countDocuments({
-      ...query,
-    });
-
+    const totalFilteredCount = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalFilteredCount / limit);
 
-
-    productsWithOffers.forEach((product, index) => {
-      product.animationClass = "product-item";
-      product.delay = index * 0.1;
+    productsWithOffers.forEach((p, i) => {
+      p.animationClass = 'product-item';
+      p.delay = i * 0.1;
     });
 
-    const isFiltered = !!(categoryFilter || brandFilter || minPrice || maxPrice || req.session.priceFilter);
+    const isFiltered =
+      !!(categoryFilter || brandFilter || req.session.priceFilter);
 
     const viewQuery = {
-      search: searchTerm,
-      category: categoryFilter,
-      brand: brandFilter,
-      minPrice: minPrice || (req.session.priceFilter && req.session.priceFilter.min),
-      maxPrice: maxPrice || (req.session.priceFilter && req.session.priceFilter.max),
+      search: searchTerm || '',
+      category: categoryFilter || '',
+      brand: brandFilter || '',
+      minPrice: req.session.priceFilter?.min || '',
+      maxPrice: req.session.priceFilter?.max || '',
       sort: sortOption
     };
 
-    res.render("shop", {
+    res.render('shop', {
       user,
       products: productsWithOffers,
       category: categories,
@@ -517,22 +522,16 @@ const loadShoppingPage = async (req, res) => {
       query: viewQuery,
       isSearch: !!searchTerm,
       isFiltered,
-      searchTerm: searchTerm || '',
-      animationSettings: {
-        stagger: 0.1,
-        duration: 0.8,
-        ease: "power2.out"
-      },
-      wishlistProductIds, 
+      searchTerm,
+      animationSettings: { stagger: 0.1, duration: 0.8, ease: 'power2.out' },
+      wishlistProductIds,
       cartProductIds,
-      cartCount: cartCount,
-        
+      cartCount
     });
 
   } catch (error) {
-    console.error("Error loading shopping page:", error);
-
-    res.status(500).render("shop", {
+    console.error('Error loading shopping page:', error);
+    res.status(500).render('shop', {
       message: "Couldn't load products",
       user: req.session.user,
       products: [],
@@ -541,19 +540,15 @@ const loadShoppingPage = async (req, res) => {
       totalProducts: 0,
       currentPage: 1,
       totalPages: 1,
-      query: req.query || {},
+      query: {},
       isSearch: false,
       isFiltered: false,
       searchTerm: '',
-      animationSettings: {
-        stagger: 0.1,
-        duration: 0.8,
-        ease: "power2.out"
-      },
+      animationSettings: { stagger: 0.1, duration: 0.8, ease: 'power2.out' },
       wishlistProductIds: [],
-      cartProductIds: [],
-
+      cartProductIds: []
     });
   }
 };
+
 module.exports = {loadHomepage,pageNotFound,loadSignup,loadShopping,signup,verifyOtp,resendOtp,loadLogin,login,logout,loadShoppingPage,refCode,}

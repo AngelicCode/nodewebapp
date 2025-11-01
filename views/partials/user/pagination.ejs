@@ -39,24 +39,30 @@
 
 <!-- pagination-query.ejs -->
 <div class="pagination-glass">
-  <%const queryString = Object.entries(query || {})
-        .filter(([key]) => key !== 'page')
-        .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
-        .join('&');
-    %>
+  <% 
+    const queryString = Object.entries(query || {})
+      .filter(([key, val]) => 
+        key !== 'page' &&
+        val !== null &&
+        val !== undefined &&
+        val !== '' &&
+        val !== 'null'
+      )
+      .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+      .join('&');
+  %>
 
-    <% if (currentPage > 1) { %>
-      <a href="?page=<%= currentPage - 1 %><%= queryString ? '&' + queryString : '' %>">Prev</a>
-    <% } %>
+  <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %><%= queryString ? '&' + queryString : '' %>">Prev</a>
+  <% } %>
 
-    <% for (let i = 1; i <= totalPages; i++) { %>
-      <a class="<%= currentPage === i ? 'active' : '' %>" href="?page=<%= i %><%= queryString ? '&' + queryString : '' %>">
-        <%= i %>
-      </a>
-    <% } %>
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <a class="<%= currentPage === i ? 'active' : '' %>" href="?page=<%= i %><%= queryString ? '&' + queryString : '' %>">
+      <%= i %>
+    </a>
+  <% } %>
 
-    <% if (currentPage < totalPages) { %>
-      <a href="?page=<%= currentPage + 1 %><%= queryString ? '&' + queryString : '' %>">Next</a>
-    <% } %>
-  
+  <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %><%= queryString ? '&' + queryString : '' %>">Next</a>
+  <% } %>
 </div>
