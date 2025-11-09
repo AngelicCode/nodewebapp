@@ -307,6 +307,26 @@ const placeOrder = async(req,res)=>{
       })
     );
 
+    let couponDistribution = [];
+    if (coupon) {
+      const couponDiscount = coupon.discountAmount; 
+
+      couponDistribution = orderItems.map(item => {
+        const itemTotalAfterOffer = item.price * item.quantity;
+
+        const itemCouponShare =
+          (itemTotalAfterOffer / discountedSubtotal) * couponDiscount;
+
+        return {
+          productId: item.productId,
+          couponDiscount: parseFloat(itemCouponShare.toFixed(2)),
+          percentage: parseFloat(((itemTotalAfterOffer / discountedSubtotal) * 100).toFixed(2)),
+          itemTotalAfterOffers: parseFloat(itemTotalAfterOffer.toFixed(2)),
+          priceAfterCoupon: parseFloat((itemTotalAfterOffer - itemCouponShare).toFixed(2))
+        };
+      });
+    }
+
     const newOrder = new Order({
             userId: userId,
             addressId: addressId,
@@ -336,7 +356,8 @@ const placeOrder = async(req,res)=>{
               couponDiscount: coupon.discount,
               discountAmount: coupon.discountAmount
             } : null,
-            discount: coupon ? coupon.discountAmount : 0
+            discount: coupon ? coupon.discountAmount : 0,
+            couponDistribution
         });
 
         await newOrder.save();
@@ -424,11 +445,11 @@ const verifyRazorpayPayment = async (req, res) => {
     } = req.body;
 
     const userId = req.session.user._id;
-    
+
     const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
     hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
     const generatedSignature = hmac.digest('hex');
-    
+
     if (generatedSignature !== razorpay_signature) {
       return res.json({
         status: false,
@@ -436,18 +457,18 @@ const verifyRazorpayPayment = async (req, res) => {
         redirectUrl: `/order-failure?reason=verification_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`
       });
     }
-    
+
     const { addressId, subtotal, shipping, tax, total, coupon, discountedSubtotal, totalSavings } = orderData;
-    
-    const addressDoc = await Address.findOne({ 
+
+    const addressDoc = await Address.findOne({
       userId: userId,
-      "address._id": addressId 
+      "address._id": addressId
     });
 
     if (!addressDoc) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         status: false,
-        message: 'Address not found' 
+        message: 'Address not found'
       });
     }
 
@@ -455,9 +476,9 @@ const verifyRazorpayPayment = async (req, res) => {
 
     const cart = await Cart.findOne({ userId: userId }).populate('items.productId');
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: false,
-        message: 'Cart is empty' 
+        message: 'Cart is empty'
       });
     }
 
@@ -470,9 +491,9 @@ const verifyRazorpayPayment = async (req, res) => {
     }
 
     if (validatedItems.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: false,
-        message: 'No valid items to order' 
+        message: 'No valid items to order'
       });
     }
 
@@ -480,12 +501,12 @@ const verifyRazorpayPayment = async (req, res) => {
       validatedItems.map(async (item) => {
         const offer = await getLargestOffer(item.productId._id);
         const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.productId.salePrice;
-        
+
         return {
           productId: item.productId._id,
           productName: item.productId.productName,
-          price: finalPrice, 
-          originalPrice: item.productId.salePrice, 
+          price: finalPrice,
+          originalPrice: item.productId.salePrice,
           quantity: item.quantity,
           offerApplied: offer.percentage > 0 ? {
             percentage: offer.percentage,
@@ -495,20 +516,30 @@ const verifyRazorpayPayment = async (req, res) => {
       })
     );
 
+    let couponDistribution = [];
+    if (coupon) {
+      const couponDiscount = coupon.discountAmount;
+
+      couponDistribution = orderItems.map(item => {
+        const itemTotalAfterOffer = item.price * item.quantity;
+        const itemCouponShare =
+          (itemTotalAfterOffer / discountedSubtotal) * couponDiscount;
+
+        return {
+          productId: item.productId,
+          couponDiscount: parseFloat(itemCouponShare.toFixed(2)),
+          percentage: parseFloat(((itemTotalAfterOffer / discountedSubtotal) * 100).toFixed(2)),
+          itemTotalAfterOffers: parseFloat(itemTotalAfterOffer.toFixed(2)),
+          priceAfterCoupon: parseFloat((itemTotalAfterOffer - itemCouponShare).toFixed(2))
+        };
+      });
+    }
+
     let order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
 
     if (order) {
       order.orderItems = orderItems;
-      order.shippingAddress = {
-        addressType: selectedAddress.addressType,
-        name: selectedAddress.name,
-        city: selectedAddress.city,
-        landMark: selectedAddress.landMark,
-        state: selectedAddress.state,
-        pincode: selectedAddress.pincode,
-        phone: selectedAddress.phone,
-        altPhone: selectedAddress.altPhone
-      };
+      order.shippingAddress = selectedAddress;
       order.total = parseFloat(subtotal);
       order.discountedTotal = parseFloat(discountedSubtotal);
       order.totalSavings = parseFloat(totalSavings);
@@ -519,7 +550,6 @@ const verifyRazorpayPayment = async (req, res) => {
       order.paymentStatus = 'paid';
       order.razorpayPaymentId = razorpay_payment_id;
       order.paidAt = new Date();
-      
       order.couponDetails = coupon ? {
         couponCode: coupon.code,
         couponType: coupon.type,
@@ -527,27 +557,18 @@ const verifyRazorpayPayment = async (req, res) => {
         discountAmount: coupon.discountAmount
       } : null;
       order.discount = coupon ? coupon.discountAmount : 0;
-      
+      order.couponDistribution = couponDistribution;
+
       await order.save();
 
     } else {
       order = new Order({
         userId: userId,
         addressId: addressId,
-        shippingAddress: {
-          addressType: selectedAddress.addressType,
-          name: selectedAddress.name,
-          city: selectedAddress.city,
-          landMark: selectedAddress.landMark,
-          state: selectedAddress.state,
-          pincode: selectedAddress.pincode,
-          phone: selectedAddress.phone,
-          altPhone: selectedAddress.altPhone
-        },
+        shippingAddress: selectedAddress,
         paymentMethod: 'razorpay',
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
         orderItems: orderItems,
         total: parseFloat(subtotal),
         discountedTotal: parseFloat(discountedSubtotal),
@@ -558,14 +579,14 @@ const verifyRazorpayPayment = async (req, res) => {
         status: 'confirmed',
         paymentStatus: 'paid',
         paidAt: new Date(),
-
         couponDetails: coupon ? {
           couponCode: coupon.code,
           couponType: coupon.type,
           couponDiscount: coupon.discount,
           discountAmount: coupon.discountAmount
         } : null,
-        discount: coupon ? coupon.discountAmount : 0
+        discount: coupon ? coupon.discountAmount : 0,
+        couponDistribution
       });
 
       await order.save();
@@ -781,7 +802,6 @@ const applyCoupon = async (req, res) => {
 
     let discountAmount = 0;
     let finalAmount = discountedSubtotal;
-
     if (coupon.couponType === 'percentage') {
       discountAmount = (discountedSubtotal * coupon.couponDiscount) / 100;
 

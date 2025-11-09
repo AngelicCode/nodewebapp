@@ -271,7 +271,14 @@ const handleReturnAction = async (req, res) => {
       if (action === 'approve') {
         item.itemStatus = "returned";
         item.inventoryAdded = false;
-        refundAmount = item.price * item.quantity;
+        
+        const couponShare = order.couponDistribution?.find(c => 
+          c.productId.toString() === item.productId._id.toString()
+        );
+        const couponDiscount = couponShare?.couponDiscount || 0;
+        const itemTotal = item.price * item.quantity;
+        
+        refundAmount = Math.max(0, itemTotal - couponDiscount);
 
         order.finalAmount -= refundAmount;
         
@@ -285,8 +292,14 @@ const handleReturnAction = async (req, res) => {
           if (item.itemStatus === "return requested") {
             item.itemStatus = "returned";
             item.inventoryAdded = false;
-            refundAmount += item.price * item.quantity;
             
+            const couponShare = order.couponDistribution?.find(c => 
+              c.productId.toString() === item.productId._id.toString()
+            );
+            const couponDiscount = couponShare?.couponDiscount || 0;
+            const itemTotal = item.price * item.quantity;
+            
+            refundAmount += Math.max(0, itemTotal - couponDiscount);
           }
         }
 
@@ -317,7 +330,6 @@ const handleReturnAction = async (req, res) => {
       success: true, 
       message: `Return ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
       refundAmount: action === 'approve' ? refundAmount : 0,
-      
     });
   } catch (error) {
     console.error('Error handling return action:', error);

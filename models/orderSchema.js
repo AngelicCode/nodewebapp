@@ -238,6 +238,30 @@ const orderSchema = new Schema({
       type: String,
       default: null
    },
+   couponDistribution: [{
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true
+    },
+    couponDiscount: {
+      type: Number,
+      default: 0
+    },
+    percentage: {
+      type: Number,
+      default: 0
+    },
+    itemTotalAfterOffers: { 
+      type: Number,
+      default: 0
+    },
+    priceAfterCoupon: {  
+      type: Number,
+      default: 0
+    }
+
+  }]
    
 }, { timestamps: true });
 
