@@ -26,60 +26,60 @@
             padding: 0 20px;
         }
 
+        /* Updated Header & Breadcrumb Styles - Match Profile Page */
         .page-header {
-            background: linear-gradient(135deg, white 0%, white 100%);
-            padding: 60px 0 -3px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            
-        }
-
-        @keyframes wave {
-            0% { background-position-x: 0; }
-            100% { background-position-x: 200px; }
-        }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 2;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         .breadcrumb {
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 10px;
-            position: relative;
-            z-index: 2;
-            background-color: #849bb1;
+            font-size: 16px;
+            color: #2c3e50;
+            margin: 0;
+            padding: 0;
+            background: none;
+            justify-content: center;
         }
 
         .breadcrumb a {
-            color: rgba(227, 228, 228, 0.9);
+            color: #5a8dc7;
             text-decoration: none;
-            transition: color 0.3s ease;
+            position: relative;
+            margin: 0 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .breadcrumb a:hover {
-            color: white;
+            color: #7ba5d8;
+            transform: translateY(-2px);
         }
 
         .breadcrumb span {
-            color: rgba(255, 255, 255, 0.6);
+            margin: 0 10px;
+            color: #7f8c8d;
+        }
+
+        .breadcrumb a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(135deg, #8da8f0 0%, #9bb3c4 100%);
+            left: 0;
+            bottom: -3px;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .breadcrumb a:hover::after {
+            transform: scaleX(1);
         }
 
         .main-content {
@@ -353,10 +353,6 @@
         }
 
         @media (max-width: 640px) {
-            .page-header h1 {
-                font-size: 2rem;
-            }
-
             .container {
                 padding: 0 15px;
             }
@@ -373,15 +369,6 @@
             .summary-content {
                 padding: 25px;
             }
-        }
-
-        @keyframes droplet {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-10px) scale(1.1); }
-        }
-
-        .water-icon {
-            animation: droplet 3s ease-in-out infinite;
         }
 
         .cart-item.out-of-stock-card {
@@ -499,7 +486,6 @@
     
     <div class="page-header">
         <div class="container">
-            <h1 style="margin-top: 15px;"><i class="fas fa-tint water-icon"></i> Your Cart</h1>
             <div class="breadcrumb">
                 <a href="/"><i class="fas fa-home"></i> Home</a>
                 <span><i class="fas fa-chevron-right"></i></span>
@@ -894,4 +880,3 @@
 </body>
 </html>
 <%- include("../../views/partials/user/footer") %>
-
