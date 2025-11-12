@@ -159,15 +159,36 @@ const addToCart = async (req, res) => {
       return res.json({ status: "Product not found" });
     }
 
-    if(
-      product.isBlocked || !product.category || product.category.isListed === false || !product.brand || product.brand.isBlocked
-    ){
-      return res.json({redirect:"/shop",status:false,message:"This product is Blocked or Unavailable"});
+    if (product.isBlocked) {
+      return res.json({
+        status: false,
+        type: "blocked",
+        message: "This product is currently blocked by the admin."
+      });
+    }
 
+    if (!product.category || product.category.isListed === false) {
+      return res.json({
+        status: false,
+        type: "category_unlisted",
+        message: "This product's category is not available at the moment."
+      });
+    }
+
+    if (!product.brand || product.brand.isBlocked) {
+      return res.json({
+        status: false,
+        type: "brand_blocked",
+        message: "This product's brand is currently blocked."
+      });
     }
 
     if (product.quantity <= 0) {
-      return res.json({ status: "Product out of stock" });
+      return res.json({
+        status: false,
+        type: "out_of_stock",
+        message: "This product is currently out of stock."
+      });
     }
 
     const currentOffer = await getLargestOffer(productId);

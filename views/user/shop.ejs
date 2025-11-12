@@ -976,20 +976,40 @@
 
                 const data = await response.json();
 
-                if (data.redirect) {
+                if (data.status === false) {
+                let alertTitle = "Unavailable";
+                let alertIcon = "error";
+
+                switch (data.type) {
+                    case "blocked":
+                    alertTitle = "Product Blocked";
+                    break;
+                    case "category_unlisted":
+                    alertTitle = "Category Unavailable";
+                    break;
+                    case "brand_blocked":
+                    alertTitle = "Brand Blocked";
+                    break;
+                    case "out_of_stock":
+                    alertTitle = "Out of Stock";
+                    alertIcon = "warning";
+                    break;
+                    default:
+                    alertTitle = "Unavailable";
+                }
+
                 Swal.fire({
-                    icon: "error",
-                    title: "Unavailable",
-                    text: data.message || "This product is unavailable or blocked.",
-                    timer: 3000,
-                    showConfirmButton: true,
+                    icon: alertIcon,
+                    title: alertTitle,
+                    text: data.message || "This product cannot be added to the cart right now.",
+                    timer: 2500,
+                    showConfirmButton: false,
                     customClass: {
                     title: 'no-border-title'
                     },
-                }).then(() => {
-                    window.location.href = data.redirect;
                 });
-                return;
+
+                return; 
                 }
 
                 if (data.status === true) {
