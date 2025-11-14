@@ -520,13 +520,28 @@ body {
                 <label for="statusFilter" class="form-label">Status</label>
                 <select class="form-select" id="statusFilter">
                   <option value="">All Statuses</option>
+
                   <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Pending</option>
+                  <option value="confirmed" <%= status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
                   <option value="processing" <%= status === 'processing' ? 'selected' : '' %>>Processing</option>
                   <option value="shipped" <%= status === 'shipped' ? 'selected' : '' %>>Shipped</option>
                   <option value="out for delivery" <%= status === 'out for delivery' ? 'selected' : '' %>>Out for Delivery</option>
                   <option value="delivered" <%= status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+
                   <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                  <option value="partially cancelled" <%= status === 'partially cancelled' ? 'selected' : '' %>>Partially Cancelled</option>
+
+                  <option value="return requested" <%= status === 'return requested' ? 'selected' : '' %>>Return Requested</option>
+                  <option value="return approved" <%= status === 'return approved' ? 'selected' : '' %>>Return Approved</option>
+                  <option value="return rejected" <%= status === 'return rejected' ? 'selected' : '' %>>Return Rejected</option>
+
+                  <option value="partially returned" <%= status === 'partially returned' ? 'selected' : '' %>>Partially Returned</option>
+                  <option value="refunded" <%= status === 'refunded' ? 'selected' : '' %>>Refunded</option>
+                  <option value="partially refunded" <%= status === 'partially refunded' ? 'selected' : '' %>>Partially Refunded</option>
+
+                  <option value="failed" <%= status === 'failed' ? 'selected' : '' %>>Failed</option>
                 </select>
+
               </div>
 
               <div class="mb-3">
