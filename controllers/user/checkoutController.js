@@ -198,8 +198,6 @@ const checkoutEditAddress = async(req,res)=>{
   }
 };
 
-// Replace your existing placeOrder function with this updated version
-
 const placeOrder = async(req,res)=>{
   try {
     const userId = req.session.user._id;
@@ -250,7 +248,6 @@ const placeOrder = async(req,res)=>{
         }
     }
 
-    // Get address details
     const addressDoc = await Address.findOne({ 
         userId: userId,
         "address._id": addressId 
@@ -265,7 +262,6 @@ const placeOrder = async(req,res)=>{
 
     const selectedAddress = addressDoc.address.find(addr => addr._id.toString() === addressId);
 
-    // Prepare order items
     const orderItems = await Promise.all(
       validatedItems.map(async (item) => {
         const offer = await getLargestOffer(item.productId._id);
@@ -285,7 +281,6 @@ const placeOrder = async(req,res)=>{
       })
     );
 
-    // Calculate coupon distribution
     let couponDistribution = [];
     if (coupon) {
       const couponDiscount = coupon.discountAmount; 
@@ -306,12 +301,10 @@ const placeOrder = async(req,res)=>{
       });
     }
 
-    // For Razorpay, create order in DB first with pending status
     if (paymentMethod === 'razorpay') {
         try {
             const razorpayOrder = await createRazorpayOrder(total);
             
-            // Create order in database with pending/failed status
             const newOrder = new Order({
                 userId: userId,
                 addressId: addressId,
@@ -335,7 +328,7 @@ const placeOrder = async(req,res)=>{
                 tax: parseFloat(tax),
                 finalAmount: parseFloat(total),
                 status: 'pending',
-                paymentStatus: 'pending', // Will be updated on payment success/failure
+                paymentStatus: 'pending', 
                 couponDetails: coupon ? {
                   couponCode: coupon.code,
                   couponType: coupon.type,
@@ -352,7 +345,7 @@ const placeOrder = async(req,res)=>{
                 status: true,
                 message: 'Razorpay order created',
                 razorpayOrder: razorpayOrder,
-                orderId: newOrder._id, // Send order ID for tracking
+                orderId: newOrder._id, 
                 orderData: {
                     addressId,
                     paymentMethod,
@@ -374,7 +367,6 @@ const placeOrder = async(req,res)=>{
         }
     }
 
-    // For COD and Wallet - existing logic
     const newOrder = new Order({
             userId: userId,
             addressId: addressId,
@@ -726,12 +718,10 @@ const handleFailedPayment = async (req, res) => {
       });
     }
 
-    // If orderId is provided, find existing order and reuse its Razorpay order ID
     if (orderId) {
       const existingOrder = await Order.findOne({ _id: orderId, userId: userId });
       
       if (existingOrder && existingOrder.razorpayOrderId) {
-        // Reuse existing Razorpay order
         return res.json({
           status: true,
           order: {
@@ -745,7 +735,6 @@ const handleFailedPayment = async (req, res) => {
       }
     }
 
-    // If no orderId or order not found, create new Razorpay order
     const totalAmount = parseFloat(orderData.total);
     if (isNaN(totalAmount) || totalAmount <= 0) {
       return res.status(400).json({
@@ -782,18 +771,15 @@ const handleFailedPayment = async (req, res) => {
   }
 };
 
-// NEW FUNCTION - Add this new function
 const handlePaymentFailure = async (req, res) => {
   try {
     const { razorpay_order_id, error } = req.body;
 
     console.log('Recording payment failure for order:', razorpay_order_id);
 
-    // Find order by razorpay order ID
     const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
 
     if (order) {
-      // Only update to failed if not already paid (prevents overwriting successful retries)
       if (order.paymentStatus !== 'paid') {
         order.paymentStatus = 'failed';
         order.status = 'failed';
