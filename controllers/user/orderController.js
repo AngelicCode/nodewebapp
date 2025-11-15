@@ -387,7 +387,69 @@ const returnOrderItem = async (req, res) => {
   }
 };
 
+const getOrderDataForRetry = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const order = await Order.findById(orderId);
+        
+        if (!order) {
+            return res.json({
+                status: false,
+                message: "Order not found"
+            });
+        }
+
+        if (order.userId.toString() !== req.session.user._id.toString()) {
+            return res.json({
+                status: false,
+                message: "Unauthorized access"
+            });
+        }
+
+        if (order.paymentStatus !== 'failed') {
+            return res.json({
+                status: false,
+                message: "This order cannot be retried"
+            });
+        }
+
+        const orderData = {
+            addressId: order.addressId,
+            paymentMethod: order.paymentMethod,
+            cartItems: order.orderItems.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity
+            })),
+            subtotal: order.total,
+            shipping: order.shipping,
+            tax: order.tax || 0,
+            total: order.finalAmount,
+            discountedSubtotal: order.discountedTotal,
+            totalSavings: order.totalSavings,
+            coupon: order.couponDetails ? {
+                code: order.couponDetails.couponCode,
+                type: order.couponDetails.couponType,
+                discount: order.couponDetails.couponDiscount,
+                discountAmount: order.couponDetails.discountAmount
+            } : null,
+            shippingAddress: order.shippingAddress
+        };
+
+        res.json({
+            status: true,
+            orderData: orderData
+        });
+
+    } catch (error) {
+        console.error("Error getting order data:", error);
+        res.json({
+            status: false,
+            message: "Failed to load order data"
+        });
+    }
+};
+
 
 module.exports = {
-  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,returnOrder,returnOrderItem,
+  orderSuccess,getOrders,getOrderDetails,cancelOrder,cancelOrderItem,returnOrder,returnOrderItem,getOrderDataForRetry,
 }

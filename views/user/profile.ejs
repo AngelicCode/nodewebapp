@@ -13,6 +13,8 @@
 
     <!-- SweetAlert JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <style>
         :root {
             --primary-blue: #5a8dc7;
@@ -638,52 +640,52 @@
             }
         }
 
-  .pagination-glass {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-  }
+        .pagination-glass {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
 
-  .pagination-glass a {
-    padding: 14px 20px;
-    text-decoration: none;
-    color: #333;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    min-width: 50px;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
+        .pagination-glass a {
+            padding: 14px 20px;
+            text-decoration: none;
+            color: #333;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 50px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
 
-  .pagination-glass a:hover {
-    background: rgba(255, 255, 255, 0.4);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  }
+        .pagination-glass a:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
 
-  .pagination-glass a.active {
-    background: rgba(53, 55, 56, 0.332);
-    color: black;
-    border-color: rgba(4, 4, 4, 0.8);
-    pointer-events: none;
-  }
+        .pagination-glass a.active {
+            background: rgba(53, 55, 56, 0.332);
+            color: black;
+            border-color: rgba(4, 4, 4, 0.8);
+            pointer-events: none;
+        }
 
-  .stat-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-}
+        .stat-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
+        .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
 
     </style>
 </head>
@@ -891,160 +893,177 @@
                                     </div>
 
 
-                    <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                    <div class="card">
-                        <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Your Orders</h5>
-                        </div>
-                        <div class="card-body">
-                        <% if (orders && orders.length > 0) { %>
-                            <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th><i class="fas fa-image"></i> Image</th>
-                                    <th><i class="fas fa-cube"></i> Product</th>
-                                    <th><i class="fas fa-hashtag"></i> Order ID</th>
-                                    <th><i class="fas fa-info-circle"></i> Status</th>
-                                    <th><i class="fas fa-inr"></i> Price</th>
-                                    <th><i class="fas fa-box"></i> Qty</th>
-                                    <th><i class="fas fa-inr"></i> Final Total</th>
-                                    <th><i class="fas fa-cog"></i> Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <% orders.forEach(order => { %>
-                                    <% 
-                                    let cancelledTotal = 0;
-                                    let returnedTotal = 0;
-                                    
-                                    order.orderItems.forEach(item => {
-                                    if (item.itemStatus === 'cancelled' || item.itemStatus === 'returned') {
-                                        const couponShare = order.couponDistribution?.find(c => 
-                                        c.productId.toString() === item.productId._id.toString()
-                                        );
-                                        const couponDiscount = couponShare?.couponDiscount || 0;
-                                        const itemRefund = Math.max(0, (item.price * item.quantity) - couponDiscount);
-                                        
-                                        if (item.itemStatus === 'cancelled') {
-                                        cancelledTotal += itemRefund;
-                                        } else if (item.itemStatus === 'returned') {
-                                        returnedTotal += itemRefund;
-                                        }
-                                    }
-                                    });
-                                    
-                                    const allItemsCancelled = order.orderItems.every(item => item.itemStatus === 'cancelled');
-                                    const shippingRefunded = allItemsCancelled ? order.shipping : 0;
-                                    const totalAdjustment = cancelledTotal + returnedTotal + shippingRefunded;
-                                    %>
-                                    
-                                    <% order.orderItems.forEach((item, index) => { %>
-                                    <tr class="<%= allItemsCancelled ? 'order-cancelled' : '' %>">
-                                        <td>
-                                        <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
-                                            <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productName %>" 
-                                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                                        <% } else { %>
-                                            <img src="/path/to/default/image.jpg" alt="No image" 
-                                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                                        <% } %>
-                                        </td>
-                                        <td>
-                                        <%= item.productName %>
-                                        <% if (item.itemStatus === 'cancelled' || item.itemStatus === 'returned') { %>
-                                            <br><small class="badge <%= item.itemStatus === 'cancelled' ? 'bg-danger' : 'bg-warning' %>">
-                                            <%= item.itemStatus.toUpperCase() %>
-                                            </small>
-                                        <% } %>
-                                        </td>
-                                        
-                                        <% if (index === 0) { %>
-                                        <td rowspan="<%= order.orderItems.length %>">
-                                            <%= order.orderId %>
-                                        </td>
-                                        <td rowspan="<%= order.orderItems.length %>">
-                                            <span class="badge 
-                                            <%= order.status === 'delivered' ? 'bg-success' : 
-                                            order.status === 'cancelled' ? 'bg-danger' : 
-                                            order.status === 'shipped' ? 'bg-info' : 
-                                            order.status === 'return requested' ? 'bg-warning' : 
-                                            order.status === 'return approved' || order.status === 'refunded' ? 'bg-success' :
-                                            order.status === 'return rejected' ? 'bg-danger' :
-                                            order.status === 'partially cancelled' ? 'bg-warning' :
-                                            order.status === 'partially returned' ? 'bg-warning' :
-                                            order.status === 'partially refunded' ? 'bg-info' :
-                                            'bg-warning' %>">
-                                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                                            </span>
-                                        </td>
-                                        <% } %>
-                                        
-                                        <td>
-                                        ₹<%= item.price.toFixed(2) %>
-                                        <% 
-                                            const itemCoupon = order.couponDistribution?.find(c => 
-                                            c.productId.toString() === item.productId._id.toString()
-                                            );
-                                            if (itemCoupon && itemCoupon.couponDiscount > 0) {
-                                        %>
-                                            <br><small class="text-success">-₹<%= itemCoupon.couponDiscount.toFixed(2) %> coupon</small>
-                                        <% } %>
-                                        </td>
-                                        <td><%= item.quantity %></td>
-                                        
-                                        <% if (index === 0) { %>
-                                        <td rowspan="<%= order.orderItems.length %>">
-                                            <% if (allItemsCancelled) { %>
-                                            <strong>₹0.00</strong>
-                                            <br><small class="text-danger">All Cancelled</small>
-                                            <% if (order.paymentMethod !== 'cod') { %>
-                                                <br><small class="text-info">Refunded: ₹<%= totalAdjustment.toFixed(2) %></small>
-                                            <% } %>
-                                            <% } else { %>
-                                            <strong>₹<%= order.finalAmount.toFixed(2) %></strong>
-                                            
-                                            <% if (totalAdjustment > 0) { %>
-                                                <br><small class="<%= order.paymentMethod === 'cod' ? 'text-info' : 'text-success' %>">
-                                                <%= order.paymentMethod === 'cod' ? 'Reduced' : 'Refunded' %>: 
-                                                ₹<%= totalAdjustment.toFixed(2) %>
-                                                </small>
-                                            <% } %>
-                                            
-                                            <% if (order.couponDetails && order.couponDetails.discountAmount > 0) { %>
-                                                <br><small class="text-success">
-                                                <i class="fas fa-tag"></i> Coupon: -₹<%= order.couponDetails.discountAmount.toFixed(2) %>
-                                                </small>
-                                            <% } %>
-                                            <% } %>
-                                        </td>
-                                        <td rowspan="<%= order.orderItems.length %>">
-                                            <a href="/order-details/<%= order._id %>" class="btn-small">
-                                            <i class="fas fa-eye"></i> View
-                                            </a>
-                                        </td>
-                                        <% } %>
-                                    </tr>
-                                    <% }); %>
-                                <% }); %>
-                                </tbody>
-                            </table>
-                            </div>
-
-                            <%- include("../../views/partials/user/pagination") %>
-
-                            <% } else { %>
-                                <div class="text-center py-5">
-                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                <h5>No orders found</h5>
-                                <p>You haven't placed any orders yet.</p>
-                                <a href="/shop" class="btn btn-success">
-                                    <i class="fas fa-shopping-bag"></i> Shop Now
-                                </a>
+                            <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Your Orders</h5>
                                 </div>
-                            <% } %>
+                                <div class="card-body">
+                                    <% if (orders && orders.length > 0) { %>
+                                        <div class="table-responsive">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th><i class="fas fa-image"></i> Image</th>
+                                                        <th><i class="fas fa-cube"></i> Product</th>
+                                                        <th><i class="fas fa-hashtag"></i> Order ID</th>
+                                                        <th><i class="fas fa-info-circle"></i> Status</th>
+                                                        <th><i class="fas fa-inr"></i> Price</th>
+                                                        <th><i class="fas fa-box"></i> Qty</th>
+                                                        <th><i class="fas fa-inr"></i> Final Total</th>
+                                                        <th><i class="fas fa-cog"></i> Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <% orders.forEach(order => { %>
+                                                        <% 
+                                                        let cancelledTotal = 0;
+                                                        let returnedTotal = 0;
+                                                        
+                                                        order.orderItems.forEach(item => {
+                                                            if (item.itemStatus === 'cancelled' || item.itemStatus === 'returned') {
+                                                                const couponShare = order.couponDistribution?.find(c => 
+                                                                    c.productId.toString() === item.productId._id.toString()
+                                                                );
+                                                                const couponDiscount = couponShare?.couponDiscount || 0;
+                                                                const itemRefund = Math.max(0, (item.price * item.quantity) - couponDiscount);
+                                                                
+                                                                if (item.itemStatus === 'cancelled') {
+                                                                    cancelledTotal += itemRefund;
+                                                                } else if (item.itemStatus === 'returned') {
+                                                                    returnedTotal += itemRefund;
+                                                                }
+                                                            }
+                                                        });
+                                                        
+                                                        const allItemsCancelled = order.orderItems.every(item => item.itemStatus === 'cancelled');
+                                                        const shippingRefunded = allItemsCancelled ? order.shipping : 0;
+                                                        const totalAdjustment = cancelledTotal + returnedTotal + shippingRefunded;
+                                                        
+                                                        const isFailedPayment = order.paymentStatus === 'failed';
+                                                        %>
+                                                        
+                                                        <% order.orderItems.forEach((item, index) => { %>
+                                                            <tr class="<%= allItemsCancelled ? 'order-cancelled' : '' %>">
+                                                                <td>
+                                                                    <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
+                                                                        <img src="/uploads/product-images/<%= item.productId.productImage[0] %>" alt="<%= item.productName %>" 
+                                                                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                                    <% } else { %>
+                                                                        <img src="/path/to/default/image.jpg" alt="No image" 
+                                                                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                                    <% } %>
+                                                                </td>
+                                                                <td>
+                                                                    <%= item.productName %>
+                                                                    <% if (item.itemStatus === 'cancelled' || item.itemStatus === 'returned') { %>
+                                                                        <br><small class="badge <%= item.itemStatus === 'cancelled' ? 'bg-danger' : 'bg-warning' %>">
+                                                                            <%= item.itemStatus.toUpperCase() %>
+                                                                        </small>
+                                                                    <% } %>
+                                                                </td>
+                                                                
+                                                                <% if (index === 0) { %>
+                                                                    <td rowspan="<%= order.orderItems.length %>">
+                                                                        <%= order.orderId %>
+                                                                    </td>
+                                                                    <td rowspan="<%= order.orderItems.length %>">
+                                                                        <span class="badge 
+                                                                            <%= order.status === 'delivered' ? 'bg-success' : 
+                                                                            order.status === 'cancelled' ? 'bg-danger' : 
+                                                                            order.status === 'shipped' ? 'bg-info' : 
+                                                                            order.status === 'return requested' ? 'bg-warning' : 
+                                                                            order.status === 'return approved' || order.status === 'refunded' ? 'bg-success' :
+                                                                            order.status === 'return rejected' ? 'bg-danger' :
+                                                                            order.status === 'partially cancelled' ? 'bg-warning' :
+                                                                            order.status === 'partially returned' ? 'bg-warning' :
+                                                                            order.status === 'partially refunded' ? 'bg-info' :
+                                                                            order.paymentStatus === 'failed' ? 'bg-danger' :
+                                                                            'bg-warning' %>">
+                                                                            <%= order.paymentStatus === 'failed' ? 'Payment Failed' : 
+                                                                            order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                                                        </span>
+                                                                        <% if (order.paymentStatus === 'failed') { %>
+                                                                            <br><small class="text-danger mt-1 d-block">
+                                                                                <i class="fas fa-exclamation-triangle"></i> Payment failed
+                                                                            </small>
+                                                                        <% } %>
+                                                                    </td>
+                                                                <% } %>
+                                                                
+                                                                <td>
+                                                                    ₹<%= item.price.toFixed(2) %>
+                                                                    <% 
+                                                                        const itemCoupon = order.couponDistribution?.find(c => 
+                                                                            c.productId.toString() === item.productId._id.toString()
+                                                                        );
+                                                                        if (itemCoupon && itemCoupon.couponDiscount > 0) {
+                                                                    %>
+                                                                        <br><small class="text-success">-₹<%= itemCoupon.couponDiscount.toFixed(2) %> coupon</small>
+                                                                    <% } %>
+                                                                </td>
+                                                                <td><%= item.quantity %></td>
+                                                                
+                                                                <% if (index === 0) { %>
+                                                                    <td rowspan="<%= order.orderItems.length %>">
+                                                                        <% if (allItemsCancelled) { %>
+                                                                            <strong>₹0.00</strong>
+                                                                            <br><small class="text-danger">All Cancelled</small>
+                                                                            <% if (order.paymentMethod !== 'cod') { %>
+                                                                                <br><small class="text-info">Refunded: ₹<%= totalAdjustment.toFixed(2) %></small>
+                                                                            <% } %>
+                                                                        <% } else { %>
+                                                                            <strong>₹<%= order.finalAmount.toFixed(2) %></strong>
+                                                                            
+                                                                            <% if (totalAdjustment > 0) { %>
+                                                                                <br><small class="<%= order.paymentMethod === 'cod' ? 'text-info' : 'text-success' %>">
+                                                                                    <%= order.paymentMethod === 'cod' ? 'Reduced' : 'Refunded' %>: 
+                                                                                    ₹<%= totalAdjustment.toFixed(2) %>
+                                                                                </small>
+                                                                            <% } %>
+                                                                            
+                                                                            <% if (order.couponDetails && order.couponDetails.discountAmount > 0) { %>
+                                                                                <br><small class="text-success">
+                                                                                    <i class="fas fa-tag"></i> Coupon: -₹<%= order.couponDetails.discountAmount.toFixed(2) %>
+                                                                                </small>
+                                                                            <% } %>
+                                                                        <% } %>
+                                                                    </td>
+                                                                    <td rowspan="<%= order.orderItems.length %>">
+                                                                        <% if (isFailedPayment) { %>
+                                                                            <!-- Retry Payment Button for failed payments -->
+                                                                            <button class="btn btn-warning btn-sm" onclick="retryPaymentFromOrders('<%= order._id %>')">
+                                                                                <i class="fas fa-redo"></i> Retry Payment
+                                                                            </button>
+                                                                        <% } else { %>
+                                                                            <!-- Regular View Button for other orders -->
+                                                                            <a href="/order-details/<%= order._id %>" class="btn-small">
+                                                                                <i class="fas fa-eye"></i> View
+                                                                            </a>
+                                                                        <% } %>
+                                                                    </td>
+                                                                <% } %>
+                                                            </tr>
+                                                        <% }); %>
+                                                    <% }); %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <%- include("../../views/partials/user/pagination") %>
+
+                                    <% } else { %>
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                            <h5>No orders found</h5>
+                                            <p>You haven't placed any orders yet.</p>
+                                            <a href="/shop" class="btn btn-success">
+                                                <i class="fas fa-shopping-bag"></i> Shop Now
+                                            </a>
+                                        </div>
+                                    <% } %>
+                                </div>
                             </div>
-                        </div>
                         </div>
 
                         <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
@@ -1479,6 +1498,130 @@
                     icon: 'error',
                     title: 'Error',
                     text: 'Referral link not available'
+                });
+            }
+        }       
+
+        async function verifyPayment(paymentResponse, orderData) {
+            try {
+                const response = await fetch("/verify-payment", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                        orderData: orderData,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.status) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Payment Successful!",
+                        text: "Your payment has been processed successfully.",
+                        confirmButtonText: "View Orders"
+                    }).then(() => {
+                        window.location.href = "/userProfile?tab=orders";
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Verification Failed",
+                        text: data.message || "Payment verification failed",
+                    }).then(() => {
+                        window.location.href = "/order-failure?reason=verification_failed";
+                    });
+                }
+            } catch (error) {
+                console.error("Verification error:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Payment verification error. Please contact support.",
+                });
+            }
+        }
+
+        async function retryPaymentFromOrders(orderId) {
+            try {
+                console.log("Retrying payment for order:", orderId);
+                
+                Swal.fire({
+                    title: 'Preparing Payment',
+                    text: 'Please wait...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`/get-order-data/${orderId}`);
+                const data = await response.json();
+
+                if (data.status) {
+                    const orderData = data.orderData;
+                    
+                    const retryResponse = await fetch("/retry-payment", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            orderData: orderData,
+                            orderId: orderId  
+                        })
+                    });
+
+                    const retryData = await retryResponse.json();
+                    
+                    if (retryData.status) {
+                        Swal.close();
+                        
+                        const options = {
+                            key: retryData.key_id, 
+                            amount: retryData.order.amount,
+                            currency: "INR",
+                            name: "QuickSip",
+                            description: "Order Payment Retry",
+                            order_id: retryData.order.id,
+                            handler: async function (response) {
+                                await verifyPayment(response, orderData);
+                            },
+                            prefill: {
+                                name: orderData?.shippingAddress?.name || "",
+                                email: orderData?.shippingAddress?.email || "",
+                                contact: orderData?.shippingAddress?.phone || "",
+                            },
+                            theme: {
+                                color: "#007bff",
+                            },
+                        };
+
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Retry Failed",
+                            text: retryData.message || "Unable to retry payment.",
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: data.message || "Failed to load order data.",
+                    });
+                }
+            } catch (err) {
+                console.error("Retry payment error:", err);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "An unexpected error occurred.",
                 });
             }
         }

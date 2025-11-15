@@ -967,60 +967,104 @@
     }
 
     async function initiateRazorpayPayment(orderData, razorpayOrder) {
-        const options = {
-            key: '<%= process.env.RAZORPAY_KEY_ID %>', 
-            amount: razorpayOrder.amount,
-            currency: razorpayOrder.currency,
-            name: "Quick Sip",
-            description: "Order Payment",
-            order_id: razorpayOrder.id,
+    const options = {
+        key: '<%= process.env.RAZORPAY_KEY_ID %>', 
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency || "INR",
+        name: "QuickSip",
+        description: "Order Payment",
+        order_id: razorpayOrder.id,
 
-            handler: async function(response) {
+        handler: async function(response) {
+            try {
+                const verifyResponse = await fetch('/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        orderData: orderData
+                    })
+                });
+
+                const result = await verifyResponse.json();
+
+                if (result.status) {
+                    updateCartAfterCheckout();
+                    window.location.href = `/order-success/${result.orderId}`;
+                } else {
+                    window.location.href = `/order-failure?reason=verification_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                }
+
+            } catch (error) {
+                console.error('Payment verification error:', error);
+                window.location.href = `/order-failure?reason=server_error&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+            }
+        },
+
+        modal: {
+            ondismiss: async function() {
                 try {
-                    const verifyResponse = await fetch('/verify-payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                    const failureResponse = await fetch("/payment-failure", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
-                            orderData: orderData
+                            razorpay_order_id: razorpayOrder.id,
+                            error: "Payment cancelled by user"
                         })
                     });
-
-                    const result = await verifyResponse.json();
-
-                    if (result.status) {
-                        updateCartAfterCheckout();
-                        window.location.href = `/order-success/${result.orderId}`;
-                    } else {
-                        window.location.href = `/order-failure?reason=verification_failed&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
-                    }
-
+                    
+                    const failureData = await failureResponse.json();
+                    const orderId = failureData.orderId || '';
+                    
+                    window.location.href = `/order-failure?reason=payment_failed&amount=${orderData.total}&orderId=${orderId}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
                 } catch (error) {
-                    console.error('Payment verification error:', error);
-                    window.location.href = `/order-failure?reason=server_error&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                    console.error('Error recording payment cancellation:', error);
+                    window.location.href = `/order-failure?reason=payment_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
                 }
-            },
+            }
+        },
 
-            prefill: {
-                name: "<%= req.session.user.name %>",
-                email: "<%= req.session.user.email %>",
-                contact: "" 
-            },
+                prefill: {
+                    name: "<%= req.session.user.name %>",
+                    email: "<%= req.session.user.email %>",
+                    contact: "" 
+                },
 
-            theme: { color: "#71cd14" }
-        };
+                theme: { 
+                    color: "#71cd14" 
+                }
+            };
 
-        const rzp = new Razorpay(options);
-        rzp.open();
+            const rzp = new Razorpay(options);
 
-        rzp.on('payment.failed', function(response) {
+            // Handle payment failure
+            rzp.on('payment.failed', async function(response) {
             const errorReason = response.error.description || 'payment_failed';
             
-            window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+            try {
+                const failureResponse = await fetch("/payment-failure", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.error.metadata.order_id,
+                        error: errorReason
+                    })
+                });
+                
+                const failureData = await failureResponse.json();
+                const orderId = failureData.orderId || '';
+                
+                window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&amount=${orderData.total}&orderId=${orderId}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+            } catch (error) {
+                console.error('Error recording payment failure:', error);
+                window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+            }
         });
-    }
+
+            rzp.open();
+        }
 
     function showInsufficientBalanceAlert(currentBalance, orderTotal) {
         Swal.fire({

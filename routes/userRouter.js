@@ -111,6 +111,7 @@ router.post("/retry-payment", userAuth, checkoutController.handleFailedPayment);
 router.post("/apply-coupon", userAuth, checkoutController.applyCoupon);
 router.post("/remove-coupon", userAuth, checkoutController.removeCoupon);
 router.get("/get-available-coupons", userAuth, checkoutController.getAvailableCoupons);
+router.post("/payment-failure", userAuth, checkoutController.handlePaymentFailure);
 
 //Order Management
 router.get("/order-success/:id",userAuth,orderController.orderSuccess);
@@ -121,6 +122,7 @@ router.post("/order/:id/cancel-item", userAuth, orderController.cancelOrderItem)
 router.post("/order/:id/return",userAuth,orderController.returnOrder);
 router.post("/order/:id/return-item", userAuth, orderController.returnOrderItem);
 router.get("/order/:id/invoice", userAuth, invoiceController.downloadInvoice);
+router.get("/get-order-data/:orderId", userAuth, orderController.getOrderDataForRetry);
 
 //Wallet Management
 router.get("/wallet-history",userAuth,walletController.getWalletHistory);
