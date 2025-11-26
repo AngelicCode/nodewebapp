@@ -157,6 +157,7 @@ const wishlistAddToCart = async (req,res)=>{
           quantity: 1,
           price: product.salePrice,
           totalPrice: product.salePrice,
+          originalPrice: product.regularPrice,
           
         }]
       });
@@ -169,6 +170,7 @@ const wishlistAddToCart = async (req,res)=>{
           quantity: 1,
           price: product.salePrice,
           totalPrice: product.salePrice,
+          originalPrice: product.regularPrice,
           
         });
        }
