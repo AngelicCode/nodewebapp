@@ -532,10 +532,16 @@
                                         ₹<span><%= product.cartTotal.toFixed(2) %></span>
                                     </div>
                                     <div class="price-details">
-                                        <span class="original-price">₹<%= product.salePrice %> / item</span>
-                                        <span class="discount-badge"><%= product.offer.percentage %>% OFF</span>
+                                        <span class="original-price">
+                                            ₹<%= product.originalPricePerItem %> / item
+                                        </span>
+                                        <span class="discount-badge">
+                                            <%= product.offer.percentage %>% OFF
+                                        </span>
                                     </div>
-                                    
+                                    <div class="savings">
+                                        You save ₹<%= product.savings.toFixed(2) %>
+                                    </div>
                                 </div>
                             <% } else { %>
                                 <div class="regular-price">
@@ -543,15 +549,15 @@
                                         ₹<span><%= product.cartTotal.toFixed(2) %></span>
                                     </div>
                                     <div class="price-per-item">
-                                        ₹<%= product.salePrice %> / item
+                                        ₹<%= product.originalPricePerItem %> / item
                                     </div>
                                 </div>
                             <% } %>
-                        </div>
+                            </div>
 
                             <div class="quantity-control">
                                 <button class="quantity-btn" 
-                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, -1, <%= product.salePrice %>, <%= product.quantity %>)"
+                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, -1, <%= product.finalPrice %>, <%= product.quantity %>)"
                                     <%= outOfStock ? "disabled" : "" %>>
                                     <i class="fas fa-minus"></i>
                                 </button>
@@ -559,7 +565,7 @@
                                     value="<%= product.cartQuantity %>" readonly
                                     <%= outOfStock ? "disabled" : "" %>>
                                 <button class="quantity-btn"
-                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, 1, <%= product.salePrice %>, <%= product.quantity %>)"
+                                    onclick="changeQuantity('<%= product._id %>', <%= i %>, 1, <%= product.finalPrice %>, <%= product.quantity %>)"
                                     <%= outOfStock ? "disabled" : "" %>>
                                     <i class="fas fa-plus"></i>
                                 </button>
@@ -676,18 +682,7 @@
             },
             success: (response) => {
                 if(response.status){
-                    totalElement.textContent = response.discountedTotal.toFixed(2);
-                    
-                    quantityInput.value = response.quantity;
-                    subtotalElement.textContent = parseFloat(response.totalPrice).toFixed(2);
-
-                    if (response.totalSavings > 0) {
-                        console.log(`You're saving ₹${response.totalSavings.toFixed(2)} from offers!`);
-                    }
-
-                    if (response.quantity === 0 || response.message === 'Product out of stock' || response.stock === 0) {
-                        disableCartCard(idx);
-                    }
+                     window.location.reload();
                 } else {
                     Swal.fire({
                         title: 'Error',

@@ -19,128 +19,124 @@ const testCart = async(req,res)=>{
   }
 }
 
-const getCartPage = async (req, res) => {
+const getCartPage = async(req,res)=>{
   try {
+    
     const id = req.session.user._id;
-    if (!id) {
-      return res.redirect('/login');
+    if(!id){
+      return res.redirect("/login");
     }
 
     const cartCount = await getCartCount(id);
 
     const page = parseInt(req.query.page) || 1;
     const limit = 3;
-    const skip = (page - 1) * limit;
+    const skip = (page-1) *limit;
 
-    const cart = await Cart.findOne({ userId: id })
-      .populate({
-        path: "items.productId",
-        populate: [
-          { path: "category" },
-          { path: "brand" }
-        ]
-      })
-      .lean();
+    const cart = await Cart.findOne({userId:id})
+    .populate({
+      path:"items.productId",
+      populate:[{
+        path:"category"
+      },
+    {
+      path:"brand"
+    }]
+    }).lean();
 
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return res.render("cart", {
-        user: req.session.user,
-        data: [],
-        quantity: 0,
-        grandTotal: 0,
+    if(!cart || !cart.items || cart.items.length == 0){
+      return res.render("cart",{
+        user:req.session.user,
+        data:[],
+        quantity:0,
+        grandTotal:0,
         discountedTotal: 0,
         totalSavings: 0,
         currentPage: page,
         totalPages: 1,
-        query: {}
-      });
+        query: {},
+        cartCount
+
+      })
     }
 
-    const filteredItems = (cart.items || []).filter(item => {
-      const product = item.productId;
-      return product &&
-        !product.isBlocked &&
-        product.category && product.category.isListed !== false &&
-        product.brand && !product.brand.isBlocked;
+    const filteredItems = cart.items.filter(item=>{
+      const product= item.productId;
+      return product && !product.isBlocked &&
+             product.category && product.category.isListed !== false &&
+             product.brand && !product.brand.isBlocked;
     });
 
     const itemsWithOffers = await Promise.all(
-      filteredItems.map(async (item) => {
-        const offer = await getLargestOffer(item.productId._id);
-        return {
-          ...item,
-          offer: offer
-        };
-      })
+      filteredItems.map(async item=>({
+        ...item,
+        offer: await getLargestOffer(item.productId._id)
+      }))
     );
 
-    const validItems = itemsWithOffers.filter(item=> item.productId.quantity > 0);
-    const outOfStockItems = itemsWithOffers.filter(item => item.productId.quantity <= 0);
+    const validItems = itemsWithOffers.filter(item => item.productId.quantity > 0);
 
     const totalItems = itemsWithOffers.length;
     const totalPages = Math.ceil(totalItems / limit);
 
     const paginatedItems = itemsWithOffers
-    .sort((a, b) => b.addedAt - a.addedAt)
-    .slice(skip, skip + limit);
+      .sort((a, b) => b.addedAt - a.addedAt)
+      .slice(skip, skip + limit);
 
-    const data = await Promise.all(
-      paginatedItems.map(async (item) => {
-        const offer = await getLargestOffer(item.productId._id);
-        const originalPrice = item.price;
-        const finalPrice = offer.percentage > 0 ? offer.finalPrice : originalPrice;
-        const itemTotal = finalPrice * item.quantity;
-        const originalTotal = originalPrice * item.quantity;
-        const savings = originalTotal - itemTotal;
+    const data = paginatedItems.map(item => {
+      const originalPrice = item.originalPrice; 
+      const finalPrice = item.price;           
 
-        return {
-          ...item.productId,
-          cartQuantity: item.quantity,
-          cartTotal: itemTotal,
-          originalTotal: originalTotal,
-          finalPrice: finalPrice,
-          savings: savings,
-          offer: offer,
-          itemId: item._id,
-          inStock: item.productId.quantity > 0,
-        };
-      })
-    );
+      const itemOriginalTotal = originalPrice * item.quantity;
+      const itemFinalTotal = finalPrice * item.quantity;
+      const savings = itemOriginalTotal - itemFinalTotal;
+
+      return {
+        ...item.productId,
+        cartQuantity: item.quantity,
+        cartTotal: itemFinalTotal,
+        originalTotal: itemOriginalTotal,
+        finalPrice: finalPrice,
+        originalPricePerItem: originalPrice,
+        savings: savings,
+        offer: item.offer,
+        itemId: item._id,
+        inStock: item.productId.quantity > 0,
+      };
+    });
 
     const quantity = validItems.reduce((sum, i) => sum + i.quantity, 0);
+
     const grandTotal = validItems.reduce((sum, item) => {
-      const originalTotal = item.price * item.quantity;
-      return sum + originalTotal;
+      return sum + (item.originalPrice * item.quantity);
     }, 0);
+
     const discountedTotal = validItems.reduce((sum, item) => {
-      const offer = item.offer;
-      const finalPrice = offer.percentage > 0 ? offer.finalPrice : item.price;
-      return sum + (finalPrice * item.quantity);
+      return sum + (item.price * item.quantity);
     }, 0);
 
     const totalSavings = grandTotal - discountedTotal;
 
     req.session.grandTotal = discountedTotal;
 
-    res.render("cart", {
+     res.render("cart", {
       user: req.session.user,
       data,
       quantity,
-      grandTotal: grandTotal,
-      discountedTotal: discountedTotal,
-      totalSavings: totalSavings,
+      grandTotal,
+      discountedTotal,
+      totalSavings,
       currentPage: page,
       totalPages,
       query: req.query || {},
-      cartCount , 
+      cartCount
     });
-
+  
   } catch (error) {
     console.error(error);
     res.redirect("/pageNotFound");
   }
-};
-
+}
 
 const addToCart = async (req, res) => {
   try {
