@@ -906,28 +906,30 @@
             method: 'POST',
             data: { productId },
             success: (response) => {
-            if (response.status) {
+
+            if (response.status === true) {
                 Swal.fire({
                 title: "Added to Wishlist",
-                text: "The product has been added to wishlist",
+                text: response.message,
                 icon: "success",
-                timer: 2000,
-                customClass: {
-                    title: 'no-border-title'
-                },
+                timer: 3000,
+                customClass: { title: 'no-border-title' }
                 });
 
-                $(btn).addClass('active'); 
+                $(btn).addClass('active');
+                heartIcon.textContent = '♥';
+
             } else {
                 Swal.fire({
-                title: 'Already in Wishlist',
+                title: "Cannot add to Wishlist",
                 text: response.message,
-                icon: 'info',
-                timer: 2000,
-                customClass: {
-                    title: 'no-border-title'
-                },
+                icon: "warning",
+                timer: 3000,
+                customClass: { title: 'no-border-title' }
                 });
+
+                btn.classList.remove('active');
+                heartIcon.textContent = '♡';
             }
             },
             error: () => {

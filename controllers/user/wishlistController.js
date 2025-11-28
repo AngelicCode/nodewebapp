@@ -69,6 +69,46 @@ const addToWishlist = async (req, res) => {
     const productId = req.body.productId;
     const userId = req.session.user;
 
+    const product = await Product.findById(productId)
+          .populate('category')
+          .populate('brand');
+    
+        if (!product) {
+          return res.json({ status: "Product not found" });
+        }
+    
+        if (product.isBlocked) {
+          return res.json({
+            status: false,
+            type: "blocked",
+            message: "This product is currently blocked by the admin."
+          });
+        }
+    
+        if (!product.category || product.category.isListed === false) {
+          return res.json({
+            status: false,
+            type: "category_unlisted",
+            message: "This product's category is not available at the moment."
+          });
+        }
+    
+        if (!product.brand || product.brand.isBlocked) {
+          return res.json({
+            status: false,
+            type: "brand_blocked",
+            message: "This product's brand is currently blocked."
+          });
+        }
+    
+        if (product.quantity <= 0) {
+          return res.json({
+            status: false,
+            type: "out_of_stock",
+            message: "This product is currently out of stock."
+          });
+        }
+
     let wishlist = await Wishlist.findOne({ userId });
 
     if (!wishlist) {
