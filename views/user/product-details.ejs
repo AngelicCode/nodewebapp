@@ -1107,41 +1107,50 @@ async function toggleWishlist(event, productId, btn) {
     event.preventDefault();
 
     const heartIcon = btn.querySelector('.heart-icon');
-    
+
     $.ajax({
         url: '/addToWishlist',
         method: 'POST',
         data: { productId },
         success: (response) => {
-            if (response.status) {
+
+            if (response.status === true) {
                 btn.classList.add('active');
                 heartIcon.textContent = '♥';
 
                 Swal.fire({
                     title: "Added to Wishlist",
-                    text: "The product has been added to wishlist",
+                    text: response.message || "The product has been added to wishlist",
                     icon: "success",
-                    timer: 2000,
+                    timer: 1800,
                     customClass: { title: 'no-border-title' },
+                }).then(() => {
+                    location.reload(); 
                 });
-            } else {
-                
-                 Swal.fire({
-                    title: 'Already in Wishlist',
-                    text: 'This product is already in your wishlist.',
-                    icon: 'info',
-                    timer: 2000,
-                    customClass: { title: 'no-border-title' },
-                });
+
+                return;
             }
+
+            Swal.fire({
+                title: "Oops!",
+                text: response.message || "Cannot add to wishlist.",
+                icon: "warning",
+                timer: 1800,
+                customClass: { title: 'no-border-title' }
+            }).then(() => {
+                location.reload(); 
+            });
         },
+
         error: () => {
             Swal.fire({
                 title: 'Error',
                 text: 'Something went wrong!',
                 icon: 'error',
-                timer: 2000,
+                timer: 1800,
                 customClass: { title: 'no-border-title' },
+            }).then(() => {
+                location.reload(); 
             });
         }
     });
