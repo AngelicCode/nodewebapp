@@ -645,30 +645,29 @@
         }
 
         let currentQuantity = parseInt(quantityInput.value);
-        let currentSubtotal = parseFloat(subtotalElement.textContent);
+        let currentSubtotal = parseFloat(subtotalElement.textContent.replace(/[^\d.-]/g, ""));
         let newQuantity = currentQuantity + count;
-        
-        if (newQuantity < 1) return; 
+
+        if (newQuantity < 1) return;
 
         if (newQuantity > MAX_CART_QTY) {
-                Swal.fire({
-                    title: 'Limit Exceeded!',
-                    text: 'You cannot add more than 5 units of this product.',
-                    icon: 'warning',
-                    timer: 2500,
-                    showConfirmButton: false,
-                });
-                return;
-            }
+            Swal.fire({
+                title: 'Limit Exceeded!',
+                text: 'You cannot add more than 5 units of this product.',
+                icon: 'warning',
+                timer: 2500,
+                showConfirmButton: false,
+            });
+            return;
+        }
 
         if (newQuantity > maxQuantity) {
             Swal.fire({
-            title: 'Out of Stock!',
-            text: 'You cannot add more than available stock.',
-            icon: 'error',
-            timer: 3000,
-            showConfirmButton: false,
-    
+                title: 'Out of Stock!',
+                text: 'You cannot add more than available stock.',
+                icon: 'error',
+                timer: 3000,
+                showConfirmButton: false,
             });
             return;
         }
@@ -676,68 +675,43 @@
         $.ajax({
             url: '/changeQuantity',
             method: 'POST',
-            data: {
-                productId,
-                count,
-            },
+            data: { productId, count },
             success: (response) => {
-                if(response.status){
-                     window.location.reload();
+                if (response.status === true) {
+                    window.location.reload();
                 } else {
                     Swal.fire({
-                        title: 'Error',
-                        text: response.message || 'Failed to update quantity.',
-                        icon: 'error',
-                        timer: 3000,
+                        title: "Cannot Update Quantity",
+                        text: response.message,
+                        icon: "warning",
+                        timer: 2500,
                         showConfirmButton: false,
-                        toast: true,
-                       
                     });
+
                     quantityInput.value = currentQuantity;
                     subtotalElement.textContent = currentSubtotal.toFixed(2);
-
-                    if (response.message && response.message.toLowerCase().includes('stock')) {
-                        disableCartCard(idx);
-                    }
                 }
             },
-            error: () => {
-            Swal.fire({
-                title: 'Error',
-                text: 'Something went wrong. Please try again.',
-                icon: 'error',
-                timer: 3000,
-                showConfirmButton: false,
-                
-            });
+            error: (xhr) => {
+                let message = "Something went wrong. Please try again.";
 
-            quantityInput.value = currentQuantity;
-            subtotalElement.textContent = currentSubtotal.toFixed(2);
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message; 
+                }
+
+                Swal.fire({
+                    title: "Stock Error",
+                    text: message,
+                    icon: "warning",
+                    timer: 2500,
+                    showConfirmButton: false,
+                });
+
+                quantityInput.value = currentQuantity;
+                subtotalElement.textContent = "₹" +currentSubtotal.toFixed(2);
             }
         });
-
-        function disableCartCard(idx) {
-        const card = document.querySelectorAll('.cart-item')[idx];
-        if (!card) return;
-        card.classList.add('out-of-stock-card');
-        if (!card.querySelector('.out-of-stock-overlay')) {
-            const overlay = document.createElement('div');
-            overlay.className = 'out-of-stock-overlay';
-            overlay.innerHTML = `<span class="out-of-stock-text">OUT OF STOCK</span>`;
-            card.appendChild(overlay);
-        }
-
-        card.querySelectorAll('button:not(.remove-btn), input').forEach(el => {
-            el.disabled = true;
-        
-    });
-
-    const removeBtn = card.querySelector('.remove-btn');
-    if (removeBtn) removeBtn.disabled = false;
-    removeBtn.style.pointerEvents = 'auto';
-}
     }
-
         
         function confirmRemove(productId) {
             Swal.fire({
