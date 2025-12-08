@@ -885,20 +885,11 @@
 
 
     <script>
-        async function toggleWishlist(event, productId, btn, isInWishlist) {
+    async function toggleWishlist(event, productId, btn, isInWishlist) {
         event.stopPropagation();
         event.preventDefault();
-    
+
         const heartIcon = btn.querySelector('.heart-icon');
-
-        if (isInWishlist) {
-            btn.classList.remove('active');
-            heartIcon.textContent = '♡';
-        } else {
-            btn.classList.add('active');
-            heartIcon.textContent = '♥';
-        }
-
         const url = isInWishlist ? '/removeFromWishlist' : '/addToWishlist';
 
         $.ajax({
@@ -907,170 +898,158 @@
             data: { productId },
             success: (response) => {
 
-            if (response.status === true) {
-                Swal.fire({
-                title: "Added to Wishlist",
-                text: response.message,
-                icon: "success",
-                timer: 3000,
-                customClass: { title: 'no-border-title' }
-                });
+                if (response.blocked) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Session Ended",
+                        text: "Your account has been blocked by admin.",
+                        timer: 2000
+                    }).then(() => window.location.href = "/login");
+                    return;
+                }
 
-                $(btn).addClass('active');
-                heartIcon.textContent = '♥';
-
-            } else {
-                Swal.fire({
-                title: "Cannot add to Wishlist",
-                text: response.message,
-                icon: "warning",
-                timer: 3000,
-                customClass: { title: 'no-border-title' }
-                });
-
-                btn.classList.remove('active');
-                heartIcon.textContent = '♡';
-            }
+                if (response.status === true) {
+                    Swal.fire({
+                        title: "Added to Wishlist",
+                        text: response.message,
+                        icon: "success",
+                        timer: 3000,
+                    });
+                    btn.classList.add('active');
+                    heartIcon.textContent = '♥';
+                } else {
+                    Swal.fire({
+                        title: "Cannot add to Wishlist",
+                        text: response.message,
+                        icon: "warning",
+                        timer: 3000,
+                    });
+                    btn.classList.remove('active');
+                    heartIcon.textContent = '♡';
+                }
             },
             error: () => {
-            Swal.fire({
-                title: 'Error',
-                text: 'Something went wrong!',
-                icon: 'error',
-                timer: 2000,
-                customClass: {
-                    title: 'no-border-title'
-                },
-            });
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Something went wrong!',
+                    icon: 'error',
+                    timer: 2000,
+                });
             }
         });
-        }
+    }
 
-        function updateCartCount(count) {
-                    const cartCountElement = document.getElementById('cartCount');
-                    if (cartCountElement) {
-                        cartCountElement.textContent = count;
-                        cartCountElement.style.display = count > 0 ? 'block' : 'none';
-                    }
-        }
 
-        document.addEventListener("DOMContentLoaded", () => {
+    function updateCartCount(count) {
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+            cartCountElement.textContent = count;
+            cartCountElement.style.display = count > 0 ? 'block' : 'none';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
         const addToCartButtons = document.querySelectorAll("button.add-to-cart-btn");
 
         addToCartButtons.forEach(button => {
             button.addEventListener("click", async (e) => {
-            e.preventDefault();
+                e.preventDefault();
 
-            const productId = button.getAttribute("data-product-id");
-            if (!productId) {
-                alert("Product ID not found.");
-                return;
-            }
-
-            try {
-                const response = await fetch("/addToCart", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ productId })
-                });
-
-                const data = await response.json();
-
-                if (data.status === false) {
-                let alertTitle = "Unavailable";
-                let alertIcon = "error";
-
-                switch (data.type) {
-                    case "blocked":
-                    alertTitle = "Product Blocked";
-                    break;
-                    case "category_unlisted":
-                    alertTitle = "Category Unavailable";
-                    break;
-                    case "brand_blocked":
-                    alertTitle = "Brand Blocked";
-                    break;
-                    case "out_of_stock":
-                    alertTitle = "Out of Stock";
-                    alertIcon = "warning";
-                    break;
-                    default:
-                    alertTitle = "Unavailable";
+                const productId = button.getAttribute("data-product-id");
+                if (!productId) {
+                    alert("Product ID not found.");
+                    return;
                 }
 
-                Swal.fire({
-                    icon: alertIcon,
-                    title: alertTitle,
-                    text: data.message || "This product cannot be added to the cart right now.",
-                    timer: 2500,
-                    showConfirmButton: false,
-                    customClass: {
-                    title: 'no-border-title'
-                    },
-                });
+                try {
+                    const response = await fetch("/addToCart", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ productId })
+                    });
 
-                return; 
+                    const data = await response.json();
+
+                    if (data.blocked) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Session Ended",
+                            text: "You have been blocked by admin.",
+                            timer: 2000
+                        }).then(() => window.location.href = "/login");
+                        return;
+                    }
+
+                    if (data.status === false) {
+                        let alertTitle = "Unavailable";
+                        let alertIcon = "error";
+
+                        switch (data.type) {
+                            case "blocked": alertTitle = "Product Blocked"; break;
+                            case "category_unlisted": alertTitle = "Category Unavailable"; break;
+                            case "brand_blocked": alertTitle = "Brand Blocked"; break;
+                            case "out_of_stock": alertTitle = "Out of Stock"; alertIcon = "warning"; break;
+                        }
+
+                        Swal.fire({
+                            icon: alertIcon,
+                            title: alertTitle,
+                            text: data.message || "This product cannot be added now.",
+                            timer: 2500,
+                            showConfirmButton: false,
+                        });
+
+                        return;
+                    }
+
+                    if (data.status === true) {
+
+                        if (data.cartCount !== undefined) {
+                            updateCartCount(data.cartCount);
+                        }
+
+                        Swal.fire({
+                            icon: "success",
+                            title: "Added to Cart",
+                            text: "Product added successfully.",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+
+                        changeToGoToCart(button);
+
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: data.message || "Could not add product.",
+                        });
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Something went wrong while adding to cart.",
+                    });
                 }
-
-                if (data.status === true) {
-                
-                if ( data.cartCount !== undefined) {
-                    updateCartCount(data.cartCount);
-                }
-
-                Swal.fire({
-                    icon: "success",
-                    title: "Added to Cart",
-                    text: "Product successfully added to your cart.",
-                    timer: 2000,
-                    showConfirmButton: false,
-                    customClass: {
-                    title: 'no-border-title'
-                    },
-                });
-
-                changeToGoToCart(button);
-
-                } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: data.message || "Could not add product to cart.",
-                    customClass: {
-                    title: 'no-border-title'
-                    },
-                });
-                }
-            } catch (err) {
-                console.error(err);
-                Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Something went wrong while adding to cart.",
-                customClass: {
-                    title: 'no-border-title'
-                },
-                });
-            }
             });
         });
-        });
+    });
+
 
     function changeToGoToCart(button) {
         const goToCartBtn = document.createElement('a');
         goToCartBtn.href = '/cart';
-        goToCartBtn.className = button.className; 
-        goToCartBtn.style.backgroundColor = '#2e4319'; 
+        goToCartBtn.className = button.className;
+        goToCartBtn.style.backgroundColor = '#2e4319';
         goToCartBtn.style.color = 'white';
         goToCartBtn.style.textAlign = 'center';
         goToCartBtn.textContent = 'Go to Cart';
-
         button.parentNode.replaceChild(goToCartBtn, button);
-}
-
-</script>
+    }
+    </script>
 
 </body>
 </html>

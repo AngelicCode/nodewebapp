@@ -1059,12 +1059,12 @@ function increaseQty() {
     if(currentQty>=MAX_CART_QTY){
         Swal.fire({
             title: 'Limit Exceeded!',
-                    text: 'You cannot add more than 5 units of this product.',
-                    icon: 'warning',
-                    timer: 2500,
-                    showConfirmButton: false,
-                })
-                return;
+            text: 'You cannot add more than 5 units of this product.',
+            icon: 'warning',
+            timer: 2500,
+            showConfirmButton: false,
+        });
+        return;
     }
 
     if (currentQty < maxQty) {
@@ -1078,28 +1078,6 @@ function decreaseQty() {
     if(currentQty > 1) {
         qtyElement.textContent = currentQty - 1;
     }
-   
-}
-
-function addToCart() {
-    const quantity = document.getElementById('quantity').textContent;
-    const productName = document.querySelector('.product-title').textContent;
-    
-    const button = document.querySelector('.add-to-cart-btn');
-    const originalText = button.innerHTML;
-    
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-    button.disabled = true;
-    
-    setTimeout(() => {
-        button.innerHTML = '<i class="fas fa-check"></i> Added!';
-        setTimeout(() => {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }, 1500);
-    }, 1000);
-    
-    console.log(`Added ${quantity} of ${productName} to cart`);
 }
 
 async function toggleWishlist(event, productId, btn) {
@@ -1120,12 +1098,11 @@ async function toggleWishlist(event, productId, btn) {
 
                 Swal.fire({
                     title: "Added to Wishlist",
-                    text: response.message || "The product has been added to wishlist",
+                    text: response.message || "Added successfully",
                     icon: "success",
                     timer: 1800,
-                    customClass: { title: 'no-border-title' },
                 }).then(() => {
-                    location.reload(); 
+                    location.reload();
                 });
 
                 return;
@@ -1136,9 +1113,8 @@ async function toggleWishlist(event, productId, btn) {
                 text: response.message || "Cannot add to wishlist.",
                 icon: "warning",
                 timer: 1800,
-                customClass: { title: 'no-border-title' }
             }).then(() => {
-                location.reload(); 
+                location.reload();
             });
         },
 
@@ -1148,9 +1124,8 @@ async function toggleWishlist(event, productId, btn) {
                 text: 'Something went wrong!',
                 icon: 'error',
                 timer: 1800,
-                customClass: { title: 'no-border-title' },
             }).then(() => {
-                location.reload(); 
+                location.reload();
             });
         }
     });
@@ -1166,8 +1141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const quantity = parseInt(document.getElementById('quantity').textContent);
     
     if (!productId) {
-      alert('Product ID not found');
-      return;
+      return Swal.fire('Error', 'Product not found', 'error');
     }
 
     try {
@@ -1176,80 +1150,74 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, quantity }),
       });
+
       const data = await response.json();
+
+      if (data.blocked) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Session Ended',
+          text: 'Your account has been blocked by admin.',
+          timer: 2000
+        }).then(()=> window.location.href='/login');
+        return;
+      }
 
       if (data.redirect) {
         Swal.fire({
           icon: 'error',
           title: 'Unavailable',
-          text: data.message || 'This product is unavailable or blocked.',
-          timer: 3000,
-          showConfirmButton: true,
-        }).then(() => {
-          window.location.href = data.redirect;
-        });
+          text: data.message || 'Item unavailable',
+        }).then(()=> window.location.href = data.redirect);
         return;
       }
 
       if (data.status === true) {
-
-         if ( data.cartCount !== undefined) {
-            updateCartCount(data.cartCount);
+        if ( data.cartCount !== undefined) {
+          updateCartCount(data.cartCount);
         }
 
         Swal.fire({
           icon: 'success',
           title: 'Added to Cart',
-          text: `${quantity} item(s) added to your cart`,
+          text: `${quantity} item(s) added`,
           timer: 2000,
           showConfirmButton: false,
         });
-        
+
         changeToGoToCart(this);
       } else {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: data.message || 'Could not add product to cart',
+          text: data.message || 'Unable to add',
         }).then(()=>{
-            if (data.reload) {
-            location.reload();
-            }
-        })
+          if (data.reload) location.reload();
+        });
       }
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Something went wrong while adding to cart',
+        text: 'Something went wrong',
       });
     }
   });
 });
-  
 
-  function changeToGoToCart(button) {
-    const goToCartBtn = document.createElement('a');
-    goToCartBtn.href = '/cart';
-    goToCartBtn.className = "go-to-cart-btn";
-    goToCartBtn.textContent = 'Go to Cart';
-    goToCartBtn.style.backgroundColor = '#2e4319';
-    goToCartBtn.style.color = 'white';
-    goToCartBtn.style.padding = '12px';
-    goToCartBtn.style.borderRadius = '8px';
-    goToCartBtn.style.textAlign = 'center';
-    goToCartBtn.style.display = 'inline-flex';
-    goToCartBtn.style.justifyContent = 'center';
-    goToCartBtn.style.alignItems = 'center';
-    button.parentNode.replaceChild(goToCartBtn, button);
-  }
-
-  function updateCartCount(count) {
-    const cartCountElement = document.getElementById('cartCount');
-    if (cartCountElement) {
-        cartCountElement.textContent = count;
-        cartCountElement.style.display = count > 0 ? 'block' : 'none';
-    }
+function changeToGoToCart(button) {
+  const goToCartBtn = document.createElement('a');
+  goToCartBtn.href = '/cart';
+  goToCartBtn.className = "go-to-cart-btn";
+  goToCartBtn.textContent = 'Go to Cart';
+  button.parentNode.replaceChild(goToCartBtn, button);
 }
-    
+
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById('cartCount');
+  if (cartCountElement) {
+      cartCountElement.textContent = count;
+      cartCountElement.style.display = count > 0 ? 'block' : 'none';
+  }
+}
 </script>

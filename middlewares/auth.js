@@ -1,24 +1,40 @@
 const User = require("../models/userSchema");
 
 
-const userAuth = (req, res, next) => {
-  if (req.session.user) {
-    User.findById(req.session.user)
-      .then(data => {
-        if (data && !data.isBlocked) {
-          next(); 
-        } else {
-          res.redirect("/login"); 
-        }
-      })
-      .catch(error => {
-        console.error("Error in userAuth middleware:", error);
-        res.status(500).send("Internal Server Error");
-      });
-  } else {
-    res.redirect("/login");
+const userAuth = async (req, res, next) => {
+  try {
+    if (!req.session.user) {
+      return handleBlocked(req, res);
+    }
+
+    const user = await User.findById(req.session.user);
+
+    if (!user || user.isBlocked) {
+      req.session.destroy(() => {});
+      return handleBlocked(req, res);
+    }
+
+    return next();
+  } catch (err) {
+    console.error("Auth Error:", err);
+    res.status(500).send("Internal Server Error");
   }
 };
+
+function handleBlocked(req, res) {
+  const isAjax =
+    req.xhr ||
+    req.headers.accept?.includes("application/json") ||
+    req.headers["content-type"] === "application/json";
+
+  if (isAjax) {
+    res.status(401).json({ blocked: true });
+    return; 
+  }
+
+  res.redirect("/login");
+  return; 
+}
 
 
 const adminAuth = (req, res, next) => {
@@ -30,31 +46,7 @@ const adminAuth = (req, res, next) => {
 };
 
 
-const isBlocked = async (req, res, next) => {
-  try {
-    const sessionUser = req.session.user;
-
-    if (!sessionUser) {
-      return res.redirect("/login");
-    }
-
-    
-    const user = await User.findOne({ _id: sessionUser, isBlocked: true });
-
-    if (user) {
-      console.log("User is blocked");
-      return res.render('login')
-    }
-
-    next(); 
-  } catch (err) {
-    console.error("Error in isBlocked middleware:", err);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
 module.exports = {
   userAuth,
   adminAuth,
-  isBlocked,
 };

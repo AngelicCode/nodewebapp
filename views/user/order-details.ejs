@@ -999,325 +999,259 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let selectedItemData = null;
-            
-            const cancelReason = document.getElementById('cancelReason');
-            const otherReasonContainer = document.getElementById('otherReasonContainer');
-            
-            if (cancelReason) {
-                cancelReason.addEventListener('change', function() {
-                    if (this.value === 'Other') {
-                        otherReasonContainer.style.display = 'block';
-                    } else {
-                        otherReasonContainer.style.display = 'none';
-                    }
-                });
-            }
-            
-            const cancelItemReason = document.getElementById('cancelItemReason');
-            const itemOtherReasonContainer = document.getElementById('itemOtherReasonContainer');
-            
-            if (cancelItemReason) {
-                cancelItemReason.addEventListener('change', function() {
-                    if (this.value === 'Other') {
-                        itemOtherReasonContainer.style.display = 'block';
-                    } else {
-                        itemOtherReasonContainer.style.display = 'none';
-                    }
-                });
-            }
-            
-            const returnReason = document.getElementById('returnReason');
-            const returnOtherReasonContainer = document.getElementById('returnOtherReasonContainer');
-            
-            if (returnReason) {
-                returnReason.addEventListener('change', function() {
-                    if (this.value === 'Other') {
-                        returnOtherReasonContainer.style.display = 'block';
-                    } else {
-                        returnOtherReasonContainer.style.display = 'none';
-                    }
-                });
-            }
-            
-            document.querySelectorAll('.cancel-item-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    selectedItemData = {
-                        index: this.getAttribute('data-item-index'),
-                        productId: this.getAttribute('data-product-id'),
-                        quantity: this.getAttribute('data-quantity'),
-                        productName: this.getAttribute('data-product-name')
-                    };
-                    
-                    document.getElementById('itemName').textContent = selectedItemData.productName;
-                    
-                    document.getElementById('cancelItemReason').value = '';
-                    document.getElementById('itemOtherReason').value = '';
-                    itemOtherReasonContainer.style.display = 'none';
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        let selectedItemData = null;
+        
+        const cancelReason = document.getElementById('cancelReason');
+        const otherReasonContainer = document.getElementById('otherReasonContainer');
+        
+        if (cancelReason) {
+            cancelReason.addEventListener('change', function() {
+                otherReasonContainer.style.display = (this.value === 'Other') ? 'block' : 'none';
             });
-            
-            // Confirm cancel entire order
-            const confirmCancelOrder = document.getElementById('confirmCancelOrder');
-            if (confirmCancelOrder) {
-                confirmCancelOrder.addEventListener('click', function() {
-                    const reason = document.getElementById('cancelReason').value;
-                    let finalReason = reason;
-                    
-                    if (reason === 'Other') {
-                        finalReason = document.getElementById('otherReason').value;
-                    }
-                    
-                    if (!finalReason) {
-                        Swal.fire('Error', 'Please provide a reason for cancellation', 'error');
+        }
+        
+        const cancelItemReason = document.getElementById('cancelItemReason');
+        const itemOtherReasonContainer = document.getElementById('itemOtherReasonContainer');
+        
+        if (cancelItemReason) {
+            cancelItemReason.addEventListener('change', function() {
+                itemOtherReasonContainer.style.display = (this.value === 'Other') ? 'block' : 'none';
+            });
+        }
+        
+        const returnReason = document.getElementById('returnReason');
+        const returnOtherReasonContainer = document.getElementById('returnOtherReasonContainer');
+        
+        if (returnReason) {
+            returnReason.addEventListener('change', function() {
+                returnOtherReasonContainer.style.display = (this.value === 'Other') ? 'block' : 'none';
+            });
+        }
+        
+        document.querySelectorAll('.cancel-item-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedItemData = {
+                    index: this.getAttribute('data-item-index'),
+                    productId: this.getAttribute('data-product-id'),
+                    quantity: this.getAttribute('data-quantity'),
+                    productName: this.getAttribute('data-product-name')
+                };
+                
+                document.getElementById('itemName').textContent = selectedItemData.productName;
+                document.getElementById('cancelItemReason').value = '';
+                document.getElementById('itemOtherReason').value = '';
+                itemOtherReasonContainer.style.display = 'none';
+            });
+        });
+        
+
+        //  cancel entire order
+        const confirmCancelOrder = document.getElementById('confirmCancelOrder');
+        if (confirmCancelOrder) {
+            confirmCancelOrder.addEventListener('click', function() {
+                const reasonVal = cancelReason.value;
+                let finalReason = reasonVal === 'Other' 
+                    ? document.getElementById('otherReason').value 
+                    : reasonVal;
+
+                if (!finalReason) {
+                    return Swal.fire('Error', 'Please provide a reason for cancellation', 'error');
+                }
+                
+                fetch(`/order/<%= order._id %>/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: finalReason, cancelType: 'entire' })
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.blocked) {
+                        Swal.fire('Session Expired', 'You have been logged out by admin.', 'warning')
+                        .then(()=> window.location.href='/login');
                         return;
                     }
-                    
-                    fetch(`/order/<%= order._id %>/cancel`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                            reason: finalReason,
-                            cancelType: 'entire'
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
 
-                            if (data.newFinalAmount !== undefined) {
-                                const totalElements = document.querySelectorAll('.final-total-amount');
-                                totalElements.forEach(element => {
-                                    element.textContent = `₹${data.newFinalAmount.toFixed(2)}`;
-                                });
-                            }
-
-                            Swal.fire({
-                                title: 'Success', 
-                                html: 'Order cancelled successfully.',
-                                icon: 'success'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error', data.message || 'Failed to cancel order', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'An error occurred while cancelling the order', 'error');
-                    });
-                });
-            }
-            
-            // Confirm cancel single item
-            const confirmCancelItem = document.getElementById('confirmCancelItem');
-            if (confirmCancelItem) {
-                confirmCancelItem.addEventListener('click', function() {
-                    const reason = document.getElementById('cancelItemReason').value;
-                    let finalReason = reason;
-                    
-                    if (reason === 'Other') {
-                        finalReason = document.getElementById('itemOtherReason').value;
+                    if (!data.success) {
+                        return Swal.fire('Error', data.message || 'Failed to cancel order', 'error');
                     }
-                    
-                    if (!finalReason) {
-                        Swal.fire('Error', 'Please provide a reason for cancellation', 'error');
+
+                    if (data.newFinalAmount !== undefined) {
+                        document.querySelectorAll('.final-total-amount')
+                            .forEach(el => el.textContent = `₹${data.newFinalAmount.toFixed(2)}`);
+                    }
+
+                    Swal.fire('Success', 'Order cancelled successfully', 'success')
+                    .then(()=> location.reload());
+                })
+                .catch(() => Swal.fire('Error', 'Server error', 'error'));
+            });
+        }
+
+
+        // cancel single item
+        const confirmCancelItem = document.getElementById('confirmCancelItem');
+        if (confirmCancelItem) {
+            confirmCancelItem.addEventListener('click', function() {
+                const reasonVal = cancelItemReason.value;
+                let finalReason = reasonVal === 'Other' 
+                    ? document.getElementById('itemOtherReason').value 
+                    : reasonVal;
+
+                if (!finalReason || !selectedItemData) {
+                    return Swal.fire('Error', 'Please provide a valid reason', 'error');
+                }
+
+                fetch(`/order/<%= order._id %>/cancel-item`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        reason: finalReason,
+                        itemIndex: selectedItemData.index,
+                        productId: selectedItemData.productId,
+                        quantity: selectedItemData.quantity
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.blocked) {
+                        Swal.fire('Session Expired', 'You have been logged out by admin.', 'warning')
+                        .then(()=> window.location.href='/login');
                         return;
                     }
-                    
-                    if (!selectedItemData) {
-                        Swal.fire('Error', 'No item selected for cancellation', 'error');
-                        return;
-                    }
-                    
-                    fetch(`/order/<%= order._id %>/cancel-item`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                            reason: finalReason,
-                            itemIndex: selectedItemData.index,
-                            productId: selectedItemData.productId,
-                            quantity: selectedItemData.quantity
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
 
-                            if (data.newFinalAmount !== undefined) {
-                                const totalElements = document.querySelectorAll('.final-total-amount');
-                                totalElements.forEach(element => {
-                                    element.textContent = `₹${data.newFinalAmount.toFixed(2)}`;
-                                });
-                            }
-                            
-                            let successMessage = data.message;
-                            
-                            Swal.fire({
-                                title: 'Success', 
-                                html: successMessage ,
-                                icon: 'success'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'An error occurred while cancelling the item', 'error');
-                    });
-                });
-            }
-            
-        // Confirm return order
+                    if (!data.success) {
+                        return Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
+                    }
+
+                    if (data.newFinalAmount !== undefined) {
+                        document.querySelectorAll('.final-total-amount')
+                            .forEach(el => el.textContent = `₹${data.newFinalAmount.toFixed(2)}`);
+                    }
+
+                    Swal.fire('Success', data.message, 'success')
+                    .then(()=> location.reload());
+                })
+                .catch(() => Swal.fire('Error','Server error','error'));
+            });
+        }
+
+
         const confirmReturn = document.getElementById('confirmReturn');
         if (confirmReturn) {
             confirmReturn.addEventListener('click', function() {
-                const reasonSelect = document.getElementById('returnReason');
-                const otherReason = document.getElementById('returnOtherReason');
-                let finalReason = '';
-                
-                if (reasonSelect.value === '') {
-                    reasonSelect.classList.add('is-invalid');
-                    return;
-                } else {
-                    reasonSelect.classList.remove('is-invalid');
+                const reasonSel = returnReason.value;
+                let finalReason = reasonSel === 'Other'
+                    ? document.getElementById('returnOtherReason').value.trim()
+                    : reasonSel;
+
+                if (!finalReason) {
+                    return Swal.fire('Error','Please provide a return reason','error');
                 }
-                
-                if (reasonSelect.value === 'Other') {
-                    if (!otherReason.value.trim()) {
-                        otherReason.classList.add('is-invalid');
-                        return;
-                    } else {
-                        otherReason.classList.remove('is-invalid');
-                        finalReason = otherReason.value;
-                    }
-                } else {
-                    finalReason = reasonSelect.value;
-                }
-                
+
                 fetch(`/order/<%= order._id %>/return`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reason: finalReason })
                 })
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        Swal.fire('Success', 'Return request submitted successfully', 'success')
-                            .then(() => {
-                                location.reload();
-                            });
-                    } else {
-                        Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
+
+                    if (data.blocked) {
+                        Swal.fire('Session Expired', 'You have been logged out by admin.', 'warning')
+                        .then(()=> window.location.href='/login');
+                        return;
                     }
+
+                    if (!data.success) {
+                        return Swal.fire('Error', data.message, 'error');
+                    }
+
+                    Swal.fire('Success','Return request submitted','success')
+                    .then(()=> location.reload());
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'An error occurred while submitting the return request', 'error');
-                });
+                .catch(() => Swal.fire('Error','Server error','error'));
             });
         }
-        });
 
-document.addEventListener('DOMContentLoaded', function() {
-    let selectedReturnItemData = null;
-    
-    const returnItemReason = document.getElementById('returnItemReason');
-    const returnItemOtherReasonContainer = document.getElementById('returnItemOtherReasonContainer');
-    
-    if (returnItemReason) {
-        returnItemReason.addEventListener('change', function() {
-            if (this.value === 'Other') {
-                returnItemOtherReasonContainer.style.display = 'block';
-            } else {
-                returnItemOtherReasonContainer.style.display = 'none';
-            }
-        });
-    }
-    
-    document.querySelectorAll('.return-item-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            selectedReturnItemData = {
-                index: this.getAttribute('data-item-index'),
-                productId: this.getAttribute('data-product-id'),
-                quantity: this.getAttribute('data-quantity'),
-                productName: this.getAttribute('data-product-name')
-            };
-            
-            document.getElementById('returnItemName').textContent = selectedReturnItemData.productName;
-            
-            document.getElementById('returnItemReason').value = '';
-            document.getElementById('returnItemOtherReason').value = '';
-            returnItemOtherReasonContainer.style.display = 'none';
-        });
     });
-    
-    const confirmReturnItem = document.getElementById('confirmReturnItem');
-    if (confirmReturnItem) {
-        confirmReturnItem.addEventListener('click', function() {
-            const reason = document.getElementById('returnItemReason').value;
-            let finalReason = reason;
-            
-            if (reason === 'Other') {
-                finalReason = document.getElementById('returnItemOtherReason').value;
-                if (!finalReason.trim()) {
-                    Swal.fire('Error', 'Please provide details for your return reason', 'error');
-                    return;
-                }
-            }
-            
-            if (!finalReason) {
-                Swal.fire('Error', 'Please select a reason for return', 'error');
-                return;
-            }
-            
-            if (!selectedReturnItemData) {
-                Swal.fire('Error', 'No item selected for return', 'error');
-                return;
-            }
-            
-            fetch(`/order/<%= order._id %>/return-item`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    reason: finalReason,
-                    itemIndex: selectedReturnItemData.index,
-                    productId: selectedReturnItemData.productId,
-                    quantity: selectedReturnItemData.quantity
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success', 'Return request submitted successfully', 'success').then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'An error occurred while submitting the return request', 'error');
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let selectedReturnItemData = null;
+        
+        const returnItemReason = document.getElementById('returnItemReason');
+        const returnItemOtherReasonContainer = document.getElementById('returnItemOtherReasonContainer');
+        
+        if (returnItemReason) {
+            returnItemReason.addEventListener('change', () =>
+                returnItemOtherReasonContainer.style.display =
+                    returnItemReason.value === 'Other' ? 'block' : 'none'
+            );
+        }
+        
+        document.querySelectorAll('.return-item-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedReturnItemData = {
+                    index: this.getAttribute('data-item-index'),
+                    productId: this.getAttribute('data-product-id'),
+                    quantity: this.getAttribute('data-quantity'),
+                    productName: this.getAttribute('data-product-name')
+                };
+                
+                document.getElementById('returnItemName').textContent = selectedReturnItemData.productName;
+                document.getElementById('returnItemReason').value = '';
+                document.getElementById('returnItemOtherReason').value = '';
+                returnItemOtherReasonContainer.style.display = 'none';
             });
         });
-    }
-});
         
+        const confirmReturnItem = document.getElementById('confirmReturnItem');
+        if (confirmReturnItem) {
+            confirmReturnItem.addEventListener('click', function() {
+                const reasonVal = returnItemReason.value;
+                let finalReason = reasonVal === 'Other'
+                    ? document.getElementById('returnItemOtherReason').value.trim()
+                    : reasonVal;
+
+                if (!finalReason || !selectedReturnItemData) {
+                    return Swal.fire('Error','Please complete return details','error');
+                }
+
+                fetch(`/order/<%= order._id %>/return-item`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reason: finalReason,
+                        itemIndex: selectedReturnItemData.index,
+                        productId: selectedReturnItemData.productId,
+                        quantity: selectedReturnItemData.quantity
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.blocked) {
+                        Swal.fire('Session Expired', 'You have been logged out by admin.', 'warning')
+                        .then(()=> window.location.href='/login');
+                        return;
+                    }
+
+                    if (!data.success) {
+                        return Swal.fire('Error', data.message || 'Failed to submit return request', 'error');
+                    }
+
+                    Swal.fire('Success','Return submitted','success')
+                    .then(()=> location.reload());
+                })
+                .catch(() => Swal.fire('Error','Server error','error'));
+            });
+        }
+    });
     </script>
+
 </body>
 </html>
 

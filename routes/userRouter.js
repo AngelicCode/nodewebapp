@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user/userController");
 const passport = require("passport");
-const {userAuth,isBlocked} = require("../middlewares/auth");
+const {userAuth} = require("../middlewares/auth");
 const productController = require("../controllers/user/productController");
 const profileController = require("../controllers/user/profileController");
 const wishlistController = require("../controllers/user/wishlistController");
@@ -18,12 +18,12 @@ const upload = require("../helpers/multer");
 router.get("/pageNotFound",userController.pageNotFound);
 
 //Product Management
-router.get("/productDetails",isBlocked,productController.productDetails);
+router.get("/productDetails",userAuth,productController.productDetails);
 router.post("/detailspageAddToCart",userAuth,productController.detailspageAddToCart);
 
 //Home page & Shopping page
 router.get("/",userController.loadHomepage);
-router.get("/shop",isBlocked,userController.loadShoppingPage);
+router.get("/shop",userAuth,userController.loadShoppingPage);
 router.get('/clear-filters', userAuth, (req, res) => {
     req.session.filterCategory = null;
     req.session.filterBrand = null;

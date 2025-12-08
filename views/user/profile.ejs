@@ -1286,21 +1286,26 @@
             formData.append('profilePhoto', fileInput.files[0]);
 
             try {
-                const response = await fetch('/update-profile-photo', { method: 'POST', body: formData });
-                const result = await response.json();
+                const response = await fetch('/update-profile-photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
 
-                if (result.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: result.message
-                    }).then(() => location.reload());
+                if (data.blocked) {
+                    Swal.fire({ icon:'warning', title:'Session Ended', text:'Admin has blocked you.' })
+                    .then(()=> window.location.href="/login");
+                    return;
+                }
+
+                if (data.success) {
+                    Swal.fire({ icon:'success', title:'Success', text:data.message })
+                    .then(()=> location.reload());
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: result.message });
+                    Swal.fire({ icon:'error', title:'Error', text:data.message });
                 }
             } catch (error) {
-                console.error('Error:', error);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while uploading the photo' });
+                Swal.fire({ icon:'error', title:'Error', text:'Upload failed' });
             }
         }
 
@@ -1308,34 +1313,28 @@
 
         async function removeProfilePhoto() {
             try {
-                const response = await fetch('/remove-profile-photo', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                const result = await response.json();
+                const response = await fetch('/remove-profile-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
 
-                if (result.success) {
-                    document.getElementById('profileImage').src = '/images/default-avatar.png';
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: result.message
-                    }).then(() => location.reload());
+                if (data.blocked) {
+                    Swal.fire({ icon:'warning', title:'Session Ended', text:'Admin has blocked you.' })
+                    .then(()=> window.location.href="/login");
+                    return;
+                }
+
+                if (data.success) {
+                    Swal.fire({ icon:'success', title:'Removed', text:data.message })
+                    .then(()=> location.reload());
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: result.message });
+                    Swal.fire({ icon:'error', title:'Error', text:data.message });
                 }
             } catch (error) {
-                console.error('Error:', error);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while removing the photo' });
+                Swal.fire({ icon:'error', title:'Error', text:'Remove failed' });
             }
         }
-
-        // ---------------- WALLET TAB EVENTS ----------------
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const walletTab = document.getElementById('track-orders-tab');
-            const walletHistoryTab = document.getElementById('wallet-history-tab');
-            
-            walletTab.addEventListener('shown.bs.tab', loadWalletBalance);
-            walletHistoryTab.addEventListener('shown.bs.tab', loadWalletHistory);
-        });
 
         // ---------------- LOAD WALLET BALANCE ----------------
 
@@ -1343,290 +1342,147 @@
             try {
                 const response = await fetch('/wallet-history');
                 const data = await response.json();
-                
+
+                if (data.blocked) {
+                    window.location.href="/login";
+                    return;
+                }
+
                 if (data.success) {
                     document.getElementById('walletBalance').textContent = `₹${data.walletBalance.toFixed(2)}`;
                 }
             } catch (error) {
-                console.error('Error loading wallet balance:', error);
+                console.error('Wallet load error:', error);
             }
         }
 
-        // ---------------- LOAD WALLET HISTORY + PAGINATION ----------------
+        // ---------------- LOAD WALLET HISTORY ----------------
 
         async function loadWalletHistory(page = 1) {
-        try {
-            const response = await fetch(`/wallet-history-data?page=${page}`);
-            const data = await response.json();
-            
-            if (data.success) {
-            const tableBody = document.getElementById('walletHistoryTable');
-            tableBody.innerHTML = '';
+            try {
+                const response = await fetch(`/wallet-history-data?page=${page}`);
+                const data = await response.json();
 
-            if (data.transactions.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No transactions found</td></tr>';
-                return;
+                if (data.blocked) {
+                    window.location.href="/login";
+                    return;
+                }
+
+                if (data.success) {
+                    const tableBody = document.getElementById('walletHistoryTable');
+                    tableBody.innerHTML = '';
+
+                    if (data.transactions.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No transactions found</td></tr>';
+                        return;
+                    }
+
+                    data.transactions.forEach(transaction => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(transaction.createdAt).toLocaleDateString();
+                        tr.innerHTML = `
+                            <td>${date}</td>
+                            <td>${transaction.description}</td>
+                            <td class="${transaction.type === 'credit' ? 'text-success' : 'text-danger'}">
+                                ${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount.toFixed(2)}
+                            </td>
+                            <td><span class="badge bg-${transaction.type === 'credit' ? 'success' : 'danger'}">${transaction.type}</span></td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+
+                    renderWalletPagination(data.totalPages, data.currentPage);
+                }
+            } catch (error) {
+                console.error('Wallet history error:', error);
             }
-
-            data.transactions.forEach(transaction => {
-                const row = document.createElement('tr');
-                const date = new Date(transaction.createdAt).toLocaleDateString();
-                const amountClass = transaction.type === 'credit' ? 'text-success' : 'text-danger';
-                const typeBadge = transaction.type === 'credit'
-                ? '<span class="badge bg-success">Credit</span>'
-                : '<span class="badge bg-danger">Debit</span>';
-
-                row.innerHTML = `
-                <td>${date}</td>
-                <td>${transaction.description}</td>
-                <td class="${amountClass}">${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount.toFixed(2)}</td>
-                <td>${typeBadge}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            renderWalletPagination(data.totalPages, data.currentPage);
-            }
-        } catch (error) {
-            console.error('Error loading wallet history:', error);
-        }
-        }
-
-        // ---------------- RENDER PAGINATION (GLASS STYLE) ----------------
-
-        function renderWalletPagination(totalPages, currentPage) {
-        const paginationContainer = document.getElementById('walletHistoryPagination');
-        paginationContainer.innerHTML = '';
-
-        const createPageLink = (page, text = null, active = false, disabled = false) => {
-            const a = document.createElement('a');
-            a.className = active ? 'active' : '';
-            a.href = "#";
-            a.textContent = text || page;
-            if (disabled) a.style.pointerEvents = 'none';
-            a.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadWalletHistory(page);
-            });
-            return a;
-        };
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pagination-glass';
-
-        if (currentPage > 1) {
-            wrapper.appendChild(createPageLink(currentPage - 1, 'Prev'));
-        }
-
-        for (let i = 1; i <= totalPages; i++) {
-            wrapper.appendChild(createPageLink(i, i, i === currentPage));
-        }
-
-        if (currentPage < totalPages) {
-            wrapper.appendChild(createPageLink(currentPage + 1, 'Next'));
-        }
-
-        paginationContainer.appendChild(wrapper);
         }
 
         // ---------------- ADD MONEY TO WALLET ----------------
 
         async function addMoneyToWallet() {
-            const amountInput = document.getElementById('addAmount');
-            const amount = parseFloat(amountInput.value);
-            
+            const amount = parseFloat(document.getElementById('addAmount').value);
             if (!amount || amount <= 0) {
-                Swal.fire('Error', 'Please enter a valid amount', 'error');
-                return;
+                return Swal.fire('Error', 'Enter valid amount', 'error');
             }
-            
+
             try {
                 const response = await fetch('/add-to-wallet', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount })
                 });
-                
                 const data = await response.json();
-                
+
+                if (data.blocked) {
+                    Swal.fire({ icon:'warning', title:'Session Ended', text:'Admin has blocked you.' })
+                    .then(()=> window.location.href="/login");
+                    return;
+                }
+
                 if (data.success) {
                     Swal.fire('Success', data.message, 'success');
-                    amountInput.value = '';
                     loadWalletBalance();
                     loadWalletHistory();
                 } else {
                     Swal.fire('Error', data.message, 'error');
                 }
-            } catch (error) {
-                console.error('Error adding money:', error);
-                Swal.fire('Error', 'Failed to add money to wallet', 'error');
+            } catch {
+                Swal.fire('Error', 'Failed to add', 'error');
             }
         }
 
-        function copyReferralLink() {
-            const referralLinkElement = document.getElementById('referralLink');
-            if (referralLinkElement) {
-                const referralLink = referralLinkElement.href;
-                
-                navigator.clipboard.writeText(referralLink).then(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Copied!',
-                        text: 'Referral link copied to clipboard',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    const tempInput = document.createElement('input');
-                    tempInput.value = referralLink;
-                    document.body.appendChild(tempInput);
-                    tempInput.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(tempInput);
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Copied!',
-                        text: 'Referral link copied to clipboard',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Referral link not available'
-                });
-            }
-        }       
-
-        async function verifyPayment(paymentResponse, orderData) {
-            try {
-                const response = await fetch("/verify-payment", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        razorpay_order_id: paymentResponse.razorpay_order_id,
-                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                        razorpay_signature: paymentResponse.razorpay_signature,
-                        orderData: orderData,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (data.status) {
-                    Swal.fire({
-                        icon: "success",
-                        title: "Payment Successful!",
-                        text: "Your payment has been processed successfully.",
-                        confirmButtonText: "View Orders"
-                    }).then(() => {
-                        window.location.href = "/userProfile?tab=orders";
-                    });
-                } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Verification Failed",
-                        text: data.message || "Payment verification failed",
-                    }).then(() => {
-                        window.location.href = "/order-failure?reason=verification_failed";
-                    });
-                }
-            } catch (error) {
-                console.error("Verification error:", error);
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "Payment verification error. Please contact support.",
-                });
-            }
-        }
+        // ---------------- RETRY PAYMENT FROM ORDERS ----------------
 
         async function retryPaymentFromOrders(orderId) {
             try {
-                console.log("Retrying payment for order:", orderId);
-                
-                Swal.fire({
-                    title: 'Preparing Payment',
-                    text: 'Please wait...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+                const res1 = await fetch(`/get-order-data/${orderId}`);
+                const data1 = await res1.json();
 
-                const response = await fetch(`/get-order-data/${orderId}`);
-                const data = await response.json();
-
-                if (data.status) {
-                    const orderData = data.orderData;
-                    
-                    const retryResponse = await fetch("/retry-payment", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ 
-                            orderData: orderData,
-                            orderId: orderId  
-                        })
-                    });
-
-                    const retryData = await retryResponse.json();
-                    
-                    if (retryData.status) {
-                        Swal.close();
-                        
-                        const options = {
-                            key: retryData.key_id, 
-                            amount: retryData.order.amount,
-                            currency: "INR",
-                            name: "QuickSip",
-                            description: "Order Payment Retry",
-                            order_id: retryData.order.id,
-                            handler: async function (response) {
-                                await verifyPayment(response, orderData);
-                            },
-                            prefill: {
-                                name: orderData?.shippingAddress?.name || "",
-                                email: orderData?.shippingAddress?.email || "",
-                                contact: orderData?.shippingAddress?.phone || "",
-                            },
-                            theme: {
-                                color: "#007bff",
-                            },
-                        };
-
-                        const rzp = new Razorpay(options);
-                        rzp.open();
-                    } else {
-                        Swal.fire({
-                            icon: "error",
-                            title: "Retry Failed",
-                            text: retryData.message || "Unable to retry payment.",
-                        });
-                    }
-                } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: data.message || "Failed to load order data.",
-                    });
+                if (data1.blocked) {
+                    window.location.href="/login";
+                    return;
                 }
-            } catch (err) {
-                console.error("Retry payment error:", err);
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "An unexpected error occurred.",
+
+                if (!data1.status) {
+                    Swal.fire('Error', data1.message, 'error');
+                    return;
+                }
+
+                const res2 = await fetch("/retry-payment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderData: data1.orderData, orderId })
                 });
+                const data2 = await res2.json();
+
+                if (data2.blocked) {
+                    window.location.href="/login";
+                    return;
+                }
+
+                if (!data2.status) {
+                    Swal.fire({ icon:"error", title:"Retry Failed", text:data2.message });
+                    return;
+                }
+
+                const rzp = new Razorpay({
+                    key: data2.key_id,
+                    order_id: data2.order.id,
+                    amount: data2.order.amount,
+                    currency: "INR",
+                    handler: async function (response) {
+                        await verifyPayment(response, data1.orderData);
+                    }
+                });
+
+                rzp.open();
+            } catch {
+                Swal.fire("Error", "Unexpected error occurred", "error");
             }
         }
 
-    </script>
+        </script>
 
     </body>
 </html>
