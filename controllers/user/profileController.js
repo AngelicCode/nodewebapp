@@ -494,7 +494,20 @@ const updateProfile = async (req, res) => {
     const userId = req.session.user;
     const { name, phone } = req.body;
     
-    if (phone && !/^\d{10}$/.test(phone)) {
+     const isValidPhone = (num) => {
+      if (!num) return true; 
+
+      if (!/^\d{10}$/.test(num)) return false;
+      if (!/^[6-9]/.test(num)) return false;
+
+      if (num === "0000000000" || num === "1000000000") return false;
+
+      if (/^(\d)\1{9}$/.test(num)) return false;
+
+      return true;
+    };
+
+    if (!isValidPhone(phone)) {
       return res.render("edit-profile", {
         user: { name, phone },
         message: "Please enter a valid 10-digit phone number"
@@ -503,21 +516,19 @@ const updateProfile = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { 
-        name: name,
-        phone: phone 
-      },
+      { name, phone },
       { new: true }
     );
 
     if (updatedUser) {
-      res.redirect("/userProfile");
-    } else {
-      res.render("edit-profile", {
-        user: { name, phone },
-        message: "Failed to update profile"
-      });
+      return res.redirect("/userProfile");
     }
+
+    return res.render("edit-profile", {
+      user: { name, phone },
+      message: "Failed to update profile"
+    });
+
   } catch (error) {
     console.error("Error updating profile:", error);
     res.redirect("/pageNotFound");

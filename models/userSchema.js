@@ -14,7 +14,7 @@ const userSchema = new Schema({
 
   },
   phone: {
-    type: Number,
+    type: String,
     required: false,
     sparse: true,
     default: null
