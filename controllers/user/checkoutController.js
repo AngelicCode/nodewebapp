@@ -305,47 +305,10 @@ const placeOrder = async(req,res)=>{
         try {
             const razorpayOrder = await createRazorpayOrder(total);
             
-            const newOrder = new Order({
-                userId: userId,
-                addressId: addressId,
-                shippingAddress: {
-                    addressType: selectedAddress.addressType,
-                    name: selectedAddress.name,
-                    city: selectedAddress.city,
-                    landMark: selectedAddress.landMark,
-                    state: selectedAddress.state,
-                    pincode: selectedAddress.pincode,
-                    phone: selectedAddress.phone,
-                    altPhone: selectedAddress.altPhone
-                },
-                paymentMethod: paymentMethod,
-                razorpayOrderId: razorpayOrder.id,
-                orderItems: orderItems,
-                total: parseFloat(subtotal),
-                discountedTotal: parseFloat(discountedSubtotal), 
-                totalSavings: parseFloat(totalSavings),
-                shipping: parseFloat(shipping),
-                tax: parseFloat(tax),
-                finalAmount: parseFloat(total),
-                status: 'pending',
-                paymentStatus: 'pending', 
-                couponDetails: coupon ? {
-                  couponCode: coupon.code,
-                  couponType: coupon.type,
-                  couponDiscount: coupon.discount,
-                  discountAmount: coupon.discountAmount
-                } : null,
-                discount: coupon ? coupon.discountAmount : 0,
-                couponDistribution
-            });
-
-            await newOrder.save();
-            
             return res.json({
                 status: true,
                 message: 'Razorpay order created',
                 razorpayOrder: razorpayOrder,
-                orderId: newOrder._id, 
                 orderData: {
                     addressId,
                     paymentMethod,
@@ -477,6 +440,7 @@ const createRazorpayOrder = async (amount, currency = 'INR') => {
 
 const verifyRazorpayPayment = async (req, res) => {
   try {
+
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -562,8 +526,7 @@ const verifyRazorpayPayment = async (req, res) => {
 
       couponDistribution = orderItems.map(item => {
         const itemTotalAfterOffer = item.price * item.quantity;
-        const itemCouponShare =
-          (itemTotalAfterOffer / discountedSubtotal) * couponDiscount;
+        const itemCouponShare = (itemTotalAfterOffer / discountedSubtotal) * couponDiscount;
 
         return {
           productId: item.productId,
@@ -574,63 +537,35 @@ const verifyRazorpayPayment = async (req, res) => {
         };
       });
     }
-
-    let order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-
-    if (order) {
-      order.orderItems = orderItems;
-      order.shippingAddress = selectedAddress;
-      order.total = parseFloat(subtotal);
-      order.discountedTotal = parseFloat(discountedSubtotal);
-      order.totalSavings = parseFloat(totalSavings);
-      order.shipping = parseFloat(shipping);
-      order.tax = parseFloat(tax);
-      order.finalAmount = parseFloat(total);
-      order.status = 'confirmed';
-      order.paymentStatus = 'paid';
-      order.razorpayPaymentId = razorpay_payment_id;
-      order.paidAt = new Date();
-      order.couponDetails = coupon ? {
+    
+    const order = new Order({
+      userId: userId,
+      addressId: addressId,
+      shippingAddress: selectedAddress,
+      paymentMethod: 'razorpay',
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      orderItems: orderItems,
+      total: parseFloat(subtotal),
+      discountedTotal: parseFloat(discountedSubtotal),
+      totalSavings: parseFloat(totalSavings),
+      shipping: parseFloat(shipping),
+      tax: parseFloat(tax),
+      finalAmount: parseFloat(total),
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      paidAt: new Date(),
+      couponDetails: coupon ? {
         couponCode: coupon.code,
         couponType: coupon.type,
         couponDiscount: coupon.discount,
         discountAmount: coupon.discountAmount
-      } : null;
-      order.discount = coupon ? coupon.discountAmount : 0;
-      order.couponDistribution = couponDistribution;
+      } : null,
+      discount: coupon ? coupon.discountAmount : 0,
+      couponDistribution
+    });
 
-      await order.save();
-
-    } else {
-      order = new Order({
-        userId: userId,
-        addressId: addressId,
-        shippingAddress: selectedAddress,
-        paymentMethod: 'razorpay',
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        orderItems: orderItems,
-        total: parseFloat(subtotal),
-        discountedTotal: parseFloat(discountedSubtotal),
-        totalSavings: parseFloat(totalSavings),
-        shipping: parseFloat(shipping),
-        tax: parseFloat(tax),
-        finalAmount: parseFloat(total),
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        paidAt: new Date(),
-        couponDetails: coupon ? {
-          couponCode: coupon.code,
-          couponType: coupon.type,
-          couponDiscount: coupon.discount,
-          discountAmount: coupon.discountAmount
-        } : null,
-        discount: coupon ? coupon.discountAmount : 0,
-        couponDistribution
-      });
-
-      await order.save();
-    }
+    await order.save();
 
     if (coupon) {
       await updateCouponUsage(coupon.code, userId);
