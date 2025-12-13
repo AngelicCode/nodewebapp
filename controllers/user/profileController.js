@@ -493,19 +493,34 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.session.user;
     const { name, phone } = req.body;
+
+     const isValidName = (name) => {
+  
+      if (!name) return false;
+      const trimmedName = name.trim();
+      if (trimmedName.length < 3) return false;
+      if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(trimmedName)) return false;
+
+      return true;
+    };
     
      const isValidPhone = (num) => {
       if (!num) return true; 
 
       if (!/^\d{10}$/.test(num)) return false;
       if (!/^[6-9]/.test(num)) return false;
-
       if (num === "0000000000" || num === "1000000000") return false;
-
       if (/^(\d)\1{9}$/.test(num)) return false;
 
       return true;
     };
+
+    if (!isValidName(name)) {
+      return res.render("edit-profile", {
+        user: { name, phone },
+        message: "Name must be at least 3 characters and contain only letters"
+      });
+    }
 
     if (!isValidPhone(phone)) {
       return res.render("edit-profile", {
@@ -516,7 +531,8 @@ const updateProfile = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, phone },
+      { name: name.trim(),
+        phone },
       { new: true }
     );
 
