@@ -37,6 +37,17 @@ const addProducts = [
   async (req, res) => {
     try {
       const products = req.body;
+      const regularPrice = Number(products.regularPrice);
+      const salePrice = Number(products.salePrice);
+
+      if (isNaN(regularPrice) || isNaN(salePrice)) {
+        return res.redirect("/admin/addProducts?error=Invalid price values");
+      }
+
+      if (regularPrice < salePrice) {
+        return res.redirect("/admin/addProducts?error=Regular price must be greater than or equal to sale price");
+      }
+
       const productExists = await Product.findOne({ productName: products.productName });
 
       if (productExists) {
@@ -220,6 +231,18 @@ const editProduct = [
     try {
       const id = req.params.id;
       const data = req.body;
+
+      const regularPrice = Number(data.regularPrice);
+      const salePrice = Number(data.salePrice);
+
+      if (isNaN(regularPrice) || isNaN(salePrice)) {
+        return res.redirect("/admin/products?error=Invalid price values");
+      }
+
+      if (regularPrice < salePrice) {
+        return res.redirect("/admin/products?error=Regular price must be greater than or equal to sale price");
+      }
+
       const existingProduct = await Product.findOne({
         productName: data.productName,
         _id: { $ne: id }
