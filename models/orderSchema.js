@@ -48,14 +48,7 @@ const orderSchema = new Schema({
           type: Number,
           required: true
       },
-      phone: {
-          type: Number,
-          required: true
-      },
-      altPhone: { 
-          type: Number,
-          required: false
-      }
+      
   },
    paymentMethod: {
       type: String,

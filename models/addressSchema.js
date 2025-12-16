@@ -39,11 +39,6 @@ const addressSchema = new Schema({
       required: true
 
     },
-    phone: {
-      type: String,
-      required: true
-
-    },
     altPhone: {
       type: String,
       required: true

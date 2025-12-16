@@ -590,7 +590,9 @@
                           <strong><%= addr.name %></strong>
                           <%= addr.addressType %>, <%= addr.landMark %>
                           <%= addr.city %>, <%= addr.state %> - <%= addr.pincode %>
-                          Phone: <%= addr.phone %> <% if (addr.altPhone) { %> | Alt: <%= addr.altPhone %> <% } %>
+                          Phone: <%= req.session.user.phone %>
+                          <% if (addr.altPhone) { %> | Alt: <%= addr.altPhone %> <% } %>
+
                           <div class="address-actions">
                             <button class="edit-address-btn" onclick="openEditAddressModal('<%= addr._id %>')">Edit</button>
                           </div>
@@ -775,12 +777,6 @@
                     title="Name should contain only letters and spaces (min 2 characters)">
             </div>
             <div class="form-group">
-                <label for="add-phone">Phone Number *</label>
-                <input type="tel" id="add-phone" name="phone" required 
-                    pattern="[0-9]{10}" 
-                    title="10 digit phone number">
-            </div>
-            <div class="form-group">
                 <label for="add-alt-phone">Alternate Phone (Optional)</label>
                 <input type="tel" id="add-alt-phone" name="altPhone" 
                     pattern="[0-9]{10}" 
@@ -851,10 +847,6 @@
                     <input type="text" id="edit-name" name="name" required>
                 </div>
                 <div class="form-group">
-                    <label for="edit-phone">Phone Number</label>
-                    <input type="tel" id="edit-phone" name="phone" required>
-                </div>
-                <div class="form-group">
                     <label for="edit-alt-phone">Alternate Phone (Optional)</label>
                     <input type="tel" id="edit-alt-phone" name="altPhone">
                 </div>
@@ -915,7 +907,6 @@
         if (address) {
             document.getElementById('edit-id').value = address._id;
             document.getElementById('edit-name').value = address.name || '';
-            document.getElementById('edit-phone').value = address.phone || '';
             document.getElementById('edit-alt-phone').value = address.altPhone || '';
             document.getElementById('edit-address-type').value = address.addressType || 'Home';
             document.getElementById('edit-landmark').value = address.landMark || '';
@@ -948,7 +939,7 @@
                         <strong>${addr.name}</strong>
                         ${addr.addressType}, ${addr.landMark}
                         ${addr.city}, ${addr.state} - ${addr.pincode}
-                        Phone: ${addr.phone} ${addr.altPhone ? `| Alt: ${addr.altPhone}` : ''}
+                        Phone: <%= req.session.user.phone %> ${addr.altPhone ? `| Alt: ${addr.altPhone}` : ''}
                         <div class="address-actions">
                             <button class="edit-address-btn" onclick="openEditAddressModal('${addr._id}')">Edit</button>
                         </div>
@@ -1325,7 +1316,6 @@
                 
                 try {
                     const name = formData.get('name').trim();
-                    const phone = formData.get('phone').trim();
                     const altPhone = formData.get('altPhone')?.trim();
                     const city = formData.get('city').trim();
                     const state = formData.get('state').trim();
@@ -1333,16 +1323,12 @@
                     const landMark = formData.get('landMark').trim();
                     const addressType = formData.get('addressType').trim();
                     
-                    if (!name || !phone || !city || !state || !pincode || !landMark || !addressType) {
+                    if (!name || !city || !state || !pincode || !landMark || !addressType) {
                         throw new Error('Please fill all required fields');
                     }
                     
                     if (!/^[A-Za-z ]{2,}$/.test(name)) {
                         throw new Error('Name should contain only letters and spaces (min 2 characters)');
-                    }
-                    
-                    if (!/^\d{10}$/.test(phone)) {
-                        throw new Error('Phone number must be 10 digits');
                     }
                     
                     if (altPhone && !/^\d{10}$/.test(altPhone)) {

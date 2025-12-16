@@ -272,6 +272,12 @@
                 <h2><i class="fas fa-map-marker-alt" style="margin-right: 15px; color: #4facfe;"></i>Delivery Address</h2>
                 
             </div>
+
+            <% if (typeof message !== "undefined") { %>
+                <div class="alert alert-danger text-center mb-4">
+                    <%= message %>
+                </div>
+                <% } %>
             
             <form id="addressForm" method="POST" action="/addAddress">
                 <div class="row">
@@ -305,10 +311,7 @@
                 </div>
                 
                 <div class="row">
-                    <div class="form-group col-md-4">
-                        <label for="phone"><i class="fas fa-phone"></i>Phone:</label>
-                        <input type="number" class="form-control" id="phone" name="phone" required placeholder="10-digit number">
-                    </div>
+                    
                     <div class="form-group col-md-4">
                         <label for="altPhone"><i class="fas fa-phone-alt"></i>Alternate Phone:</label>
                         <input type="number" class="form-control" id="altPhone" name="altPhone" required placeholder="10-digit number">
@@ -333,7 +336,7 @@
 
         function validateForm() {
             let isValid = true;
-            const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
+            const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "altPhone"];
             requiredFields.forEach(function(field) {
                 const input = document.getElementById(field);
                 const inputValue = input.value.trim();
@@ -362,11 +365,23 @@
             const landMark = document.getElementById('landMark').value;
             const state = document.getElementById('state').value;
             const pincode = document.getElementById('pincode').value;
-            const phone = document.getElementById('phone').value;
             const altPhone = document.getElementById('altPhone').value;
             const namePattern = /^[A-Za-z\s]+$/;
             const pincodePattern = /^\d{6}$/;
-            const phonePattern = /^\d{10}$/;
+            function isValidAltPhone(phone) {
+                phone = phone.trim();
+
+                if (!/^\d{10}$/.test(phone)) return false;
+                if (!/^[6-9]/.test(phone)) return false;
+                if (phone === "0000000000" || phone === "1000000000") return false;
+                if (/^(\d)\1{9}$/.test(phone)) return false;
+
+                const counts = {};
+                for (const d of phone) counts[d] = (counts[d] || 0) + 1;
+                if (Object.values(counts).some(c => c >= 9)) return false;
+
+                return true;
+            }
             
             if (!namePattern.test(name)) {
                 Swal.fire({
@@ -413,33 +428,17 @@
                 });
                 isValid = false;
             }
-            if (!phonePattern.test(phone)) {
+          
+            if (!isValidAltPhone(altPhone)) {
                 Swal.fire({
                     title: 'Error',
-                    text: 'Phone number should be a 10-digit number.',
+                    text: 'Please enter a valid alternate phone number.',
                     icon: 'error',
                     confirmButtonColor: '#4facfe'
                 });
-                isValid = false;
-            }
-            if (!phonePattern.test(altPhone)) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Alternate phone number should be a 10-digit number.',
-                    icon: 'error',
-                    confirmButtonColor: '#4facfe'
-                });
-                isValid = false;
-            }
-            if (phone === altPhone) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Phone number and alternate phone number should be different.',
-                    icon: 'error',
-                    confirmButtonColor: '#4facfe'
-                });
-                isValid = false;
-            }
+                return false;
+                }
+            
             return isValid;
         }
 

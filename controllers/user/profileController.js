@@ -358,17 +358,39 @@ const verifyForgotPassOtp = async (req,res)=>{
     try {
       const userId = req.session.user;
       const userData = await User.findOne({_id:userId})
-      const {addressType,name,city,landMark,state,pincode,phone,altPhone} = req.body;
+      const {addressType,name,city,landMark,state,pincode,altPhone} = req.body;
+
+      const isValidAltPhone = (num) => {
+        if (!num) return false;
+
+        if (!/^\d{10}$/.test(num)) return false;
+        if (!/^[6-9]/.test(num)) return false;
+        if (num === "0000000000" || num === "1000000000") return false;
+        if (/^(\d)\1{9}$/.test(num)) return false;
+
+        const counts = {};
+        for (const d of num) counts[d] = (counts[d] || 0) + 1;
+        if (Object.values(counts).some(count => count >= 9)) return false;
+
+        return true;
+      };
+
+      if (!isValidAltPhone(altPhone)) {
+        return res.render("add-address", {
+          message: "Please enter a valid 10-digit alternate phone number"
+        });
+      }
+
       const userAddress = await Address.findOne({userId:userData._id});
       if(!userAddress){
         const newAddress = new Address({
           userId:userData._id,
-          address:[{addressType,name,city,landMark,state,pincode,phone,altPhone}]
+          address:[{addressType,name,city,landMark,state,pincode,altPhone}]
         })
         await newAddress.save();
 
       }else{
-        userAddress.address.push({addressType,name,city,landMark,state,pincode,phone,altPhone,});
+        userAddress.address.push({addressType,name,city,landMark,state,pincode,altPhone,});
         await userAddress.save();
       }
 
@@ -385,8 +407,8 @@ const verifyForgotPassOtp = async (req,res)=>{
   const editAddress = async (req,res)=>{
     try {
       const addressId = req.query.id;
-      const user = req.session.user;
-      const cartCount = await getCartCount(user);
+      const userId = req.session.user;
+      const cartCount = await getCartCount(userId);
       const currAddress = await Address.findOne({"address._id":addressId,});
 
       if(!currAddress){
@@ -401,9 +423,12 @@ const verifyForgotPassOtp = async (req,res)=>{
         return res.redirect("/pageNotFound");
       }
 
+      const user = await User.findById(userId).select("phone");
+
       res.render("edit-address",{
         address:addressData,
-        user:user,
+        user:userId,
+        userPhone: user.phone,
         cartCount: cartCount,
 
       })
@@ -420,6 +445,48 @@ const verifyForgotPassOtp = async (req,res)=>{
       const data = req.body;
       const addressId = req.query.id;
       const user = req.session.user;
+
+      const isValidAltPhone = (num) => {
+        if (!num) return false;
+
+        const phone = String(num).trim();
+
+        if (!/^\d{10}$/.test(phone)) return false;
+
+        if (!/^[6-9]/.test(phone)) return false;
+
+        if (phone === "0000000000" || phone === "1000000000") return false;
+
+        if (/^(\d)\1{9}$/.test(phone)) return false;
+
+        const counts = {};
+        for (const d of phone) counts[d] = (counts[d] || 0) + 1;
+        if (Object.values(counts).some(count => count >= 9)) return false;
+
+        return true;
+      };
+
+      const currentUser = await User.findById(user).select("phone");
+
+      if (!isValidAltPhone(data.altPhone)) {
+        return res.render("edit-address", {
+          message: "Please enter a valid 10-digit alternate phone number",
+          address: {
+            ...data,
+            _id: addressId
+          },
+          userPhone: currentUser?.phone || "",
+        });
+      }
+
+      let phone = data.phone;
+      await User.findByIdAndUpdate(user, {
+        phone
+      });
+
+      const updatedUser = await User.findById(user).select("phone");
+      req.session.user.phone = updatedUser.phone;
+
       const findAddress = await Address.findOne({"address._id":addressId});
 
       if(!findAddress){
@@ -436,7 +503,6 @@ const verifyForgotPassOtp = async (req,res)=>{
             landMark: data.landMark,
             state: data.state,
             pincode: data.pincode,
-            phone: data.phone,
             altPhone: data.altPhone,
           }
         }}
@@ -537,6 +603,8 @@ const updateProfile = async (req, res) => {
     );
 
     if (updatedUser) {
+      req.session.user.phone = updatedUser.phone;
+      req.session.user.name = updatedUser.name;
       return res.redirect("/userProfile");
     }
 

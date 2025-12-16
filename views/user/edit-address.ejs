@@ -304,7 +304,14 @@
             </div>
 
             <div class="form-container">
-                <form id="addressForm" method="POST" action="/editAddress?id=<%= address._id.toLocaleString() %>">
+
+                <% if (typeof message !== "undefined") { %>
+                    <div class="alert alert-danger text-center mb-4">
+                        <%= message %>
+                    </div>
+                    <% } %>
+
+                <form id="addressForm" method="POST" action="/editAddress?id=<%= address && address._id ? address._id : '' %>">
                     <div class="row form-row form-floating-effect">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -421,13 +428,14 @@
                                 </label>
                                 <div class="position-relative">
                                     <i class="fas fa-phone input-icon"></i>
-                                    <input type="number" 
-                                           class="form-control with-icon" 
-                                           id="phone" 
-                                           value="<%= address.phone %>" 
-                                           name="phone" 
-                                           placeholder="10-digit phone number"
-                                           required>
+                                    <input type="number"
+                                        class="form-control with-icon"
+                                        id="phone"
+                                        name="phone"
+                                        value="<%= userPhone || '' %>"
+                                        placeholder="10-digit phone number"
+                                        required>
+
                                 </div>
                             </div>
                         </div>

@@ -97,8 +97,15 @@
         <!-- Phone Number -->
         <div class="relative">
           <label for="phone" class="block mb-1 font-medium text-gray-700">Phone Number</label>
-          <input type="tel" id="phone" name="phone" 
-                 class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-aqua-500 transition">
+          <input
+          type="text"
+          id="phone"
+          name="phone"
+          maxlength="10"
+          inputmode="numeric"
+          oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-aqua-500 transition">
+
           <div id="error3" class="error-message"></div>
         </div>
 
@@ -215,19 +222,41 @@
       }
     }
 
-    function phoneValidateChecking(e) {
-      const phoneval = phoneid.value;
+    function phoneValidateChecking() {
+      const phoneval = phoneid.value.trim();
 
-      if (phoneval.trim() === "") {
+      if (!phoneval) {
         error3.style.display = "block";
-        error3.innerHTML = "Enter valid phone number";
-      } else if (phoneval.length < 10 || phoneval.length > 10) {
-        error3.style.display = "block";
-        error3.innerHTML = "Enter 10 digit";
-      } else {
-        error3.style.display = "none";
-        error3.innerHTML = "";
+        error3.innerHTML = "Phone number is required";
+        return;
       }
+
+      if (!/^\d{10}$/.test(phoneval)) {
+        error3.style.display = "block";
+        error3.innerHTML = "Phone number must be exactly 10 digits";
+        return;
+      }
+
+      if (!/^[6-9]/.test(phoneval)) {
+        error3.style.display = "block";
+        error3.innerHTML = "Phone number must start with 6, 7, 8, or 9";
+        return;
+      }
+
+      if (/^(\d)\1{9}$/.test(phoneval)) {
+        error3.style.display = "block";
+        error3.innerHTML = "Invalid phone number";
+        return;
+      }
+
+      if (/(\d)\1{7,}/.test(phoneval)) {
+        error3.style.display = "block";
+        error3.innerHTML = "Invalid phone number";
+        return;
+      }
+
+      error3.style.display = "none";
+      error3.innerHTML = "";
     }
 
     function passValidateChecking(e) {

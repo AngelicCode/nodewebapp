@@ -214,8 +214,8 @@
           },
           prefill: {
             name: orderData?.shippingAddress?.name || "",
-            email: orderData?.shippingAddress?.email || "",
-            contact: orderData?.shippingAddress?.phone || "",
+            email: orderData?.userEmail || "",     
+            contact: orderData?.userPhone || "", 
           },
           theme: {
             color: "#007bff",

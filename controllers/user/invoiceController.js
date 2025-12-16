@@ -34,6 +34,8 @@ const downloadInvoice = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
+         const user = await User.findById(order.userId).select("phone name");
+
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         
         res.setHeader('Content-Type', 'application/pdf');
@@ -104,9 +106,14 @@ const downloadInvoice = async (req, res) => {
            .font('Helvetica')
            .fillColor('#2c3e50')
            .text(`Name: ${order.shippingAddress.name}`, 50, currentY)
-           .text(`Phone: ${order.shippingAddress.phone}`, 200, currentY);
+           .text(`Phone: ${user?.phone || 'N/A'}`, 200, currentY);
 
         currentY += 15;
+
+        if (order.shippingAddress.altPhone) {
+         doc.text(`Alternate Phone: ${order.shippingAddress.altPhone}`, 50, currentY);
+         currentY += 15;
+         }
 
         const addressText = `Address: ${order.shippingAddress.landMark}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`;
         doc.text(addressText, 50, currentY, { width: 400 });

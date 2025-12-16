@@ -93,13 +93,10 @@ const checkoutAddAddress = async(req,res)=>{
       return res.status(401).json({ status: false, message: 'User not authenticated' });
         }
 
-      const {addressType,name,city,landMark,state,pincode,phone,altPhone} = req.body;
-      if(!name || !city || !state || !pincode || !phone){
-        return res.status(400).json({status:false,message:"Missing required fields"});
-      }
+      const {addressType,name,city,landMark,state,pincode,altPhone} = req.body;
 
-      if (!/^\d{10}$/.test(phone)) {
-        return res.status(400).json({ status: false, message: 'Phone number must be 10 digits' });
+      if(!name || !city || !state || !pincode){
+        return res.status(400).json({status:false,message:"Missing required fields"});
       }
 
       if (!/^\d{6}$/.test(pincode)) {
@@ -117,12 +114,12 @@ const checkoutAddAddress = async(req,res)=>{
         landMark,
         state,
         pincode,
-        phone,
         altPhone: altPhone || undefined,
         
       };
 
       const userAddress = await Address.findOne({userId:userId});
+
       if(!userAddress){
         const newAddress = new Address({
           userId:userId,
@@ -151,13 +148,10 @@ const checkoutEditAddress = async(req,res)=>{
       return res.status(401).json({status:false,message:"User is not authenticated"});
     }
 
-    const {name,city,state,pincode,phone,altPhone,addressType,landMark} = req.body;
-    if(!name || !city || !state || !pincode || !phone || !addressType || !landMark){
-      return res.status(400).json({status:false,message:"Missing required fields"});
-    }
+    const {name,city,state,pincode,altPhone,addressType,landMark} = req.body;
 
-     if (!/^\d{10}$/.test(phone)) {
-      return res.status(400).json({ status: false, message: 'Phone number must be 10 digits' });
+    if(!name || !city || !state || !pincode || !addressType || !landMark){
+      return res.status(400).json({status:false,message:"Missing required fields"});
     }
 
     if (!/^\d{6}$/.test(pincode)) {
@@ -176,7 +170,6 @@ const checkoutEditAddress = async(req,res)=>{
           "address.$.city": city,
           "address.$.state": state,
           "address.$.pincode": pincode,
-          "address.$.phone": phone,
           "address.$.altPhone": altPhone || undefined,
           "address.$.addressType": addressType,
           "address.$.landMark": landMark
@@ -340,8 +333,7 @@ const placeOrder = async(req,res)=>{
                 landMark: selectedAddress.landMark,
                 state: selectedAddress.state,
                 pincode: selectedAddress.pincode,
-                phone: selectedAddress.phone,
-                altPhone: selectedAddress.altPhone
+                
             },
             paymentMethod: paymentMethod,
             orderItems: orderItems,
@@ -541,7 +533,14 @@ const verifyRazorpayPayment = async (req, res) => {
     const order = new Order({
       userId: userId,
       addressId: addressId,
-      shippingAddress: selectedAddress,
+      shippingAddress: {
+        addressType: selectedAddress.addressType,
+        name: selectedAddress.name,
+        city: selectedAddress.city,
+        landMark: selectedAddress.landMark,
+        state: selectedAddress.state,
+        pincode: selectedAddress.pincode
+      },
       paymentMethod: 'razorpay',
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
@@ -600,7 +599,8 @@ const verifyRazorpayPayment = async (req, res) => {
 
 const orderFailure = async (req, res) => {
   try {
-    const reason = req.query.reason || 'unknown';    
+    const reason = req.query.reason || 'unknown'; 
+    const orderId = req.query.orderId;   
 
     const reasonMessages = {
       'payment_failed': 'Your payment could not be processed.',
@@ -616,9 +616,9 @@ const orderFailure = async (req, res) => {
     const orderAmount = req.query.amount ? parseFloat(req.query.amount) : 0;
 
     let orderData = null;
-    if (req.query.orderData) {
+    if (orderId) {
       try {
-        orderData = JSON.parse(req.query.orderData);
+        orderData = await Order.findById(orderId).lean();
       } catch (err) {
         console.warn('Invalid orderData JSON:', err);
       }

@@ -164,6 +164,10 @@ const signup = async (req,res)=>{
     return res.render("signup",{message:"User with this email already exists"});
    }
 
+   if (!/^\d{10}$/.test(phone)) {
+    return res.render("signup", { message: "Enter a valid 10-digit phone number" });
+  }
+
    const otp = generateOtp();
 
    console.log("Generated:",otp);
@@ -275,6 +279,9 @@ const refCode = async (req, res) => {
 
 const resendOtp = async (req,res)=>{
   try{
+    if (!req.session.userData?.email) {
+      return res.status(400).json({ success: false, message: "Session expired" });
+    }
     const {email} = req.session.userData;
 
     if(!email){

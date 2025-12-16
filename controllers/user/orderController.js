@@ -92,11 +92,13 @@ const getOrderDetails = async (req,res)=>{
       return res.redirect("/userProfile?tab=orders");
     }
 
+    const user = await User.findById(userId).select("phone");
+
     const statusSummary = calculateOrderStatus(order.orderItems, order.status);
     
     res.render("order-details",{
       order,
-      user:req.session.user,
+      user,
       statusSummary,
       cartCount: cartCount,
     });

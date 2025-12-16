@@ -854,10 +854,12 @@
                                                     <i class="fas fa-building"></i> <%= address.city %>, <%= address.state %><br>
                                                     <i class="fas fa-map-marker-alt"></i> <%= address.landMark %><br>
                                                     <i class="fas fa-mail-bulk"></i> Pincode: <%= address.pincode %><br>
-                                                    <i class="fas fa-phone"></i> <%= address.phone %><br>
-                                                    <% if(address.altPhone) { %>
-                                                    <i class="fas fa-phone-alt"></i> <%= address.altPhone %><br>
+                                                    <i class="fas fa-phone"></i> <%= user.phone || 'N/A' %><br>
+
+                                                    <% if (address.altPhone) { %>
+                                                        <i class="fas fa-phone-alt"></i> <%= address.altPhone %><br>
                                                     <% } %>
+
                                                 </address>
                                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                                     <a href="/editAddress?id=<%= address._id %>" class="btn-small">
