@@ -699,7 +699,7 @@
             <div class="dashboard-header">
             <p style="color: black; font-size: 1.8rem; font-weight: 600; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
             Manage your hydration journey
-            <i class="fas fa-wine-bottle" style="margin-left: 10px; color: #4db8d4;"></i>
+            <i class="fas fa-tint" style="margin-left: 10px; color: #4db8d4;"></i>
             </p>
 
             </div>
@@ -1631,6 +1631,31 @@
                 input.type = 'password';
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
+        }
+
+        function copyReferralLink() {
+            const linkEl = document.getElementById("referralLink");
+
+            if (!linkEl) {
+                Swal.fire("Error", "Referral link not found", "error");
+                return;
+            }
+
+            const link = linkEl.href || linkEl.textContent;
+
+            navigator.clipboard.writeText(link)
+                .then(() => {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Copied!",
+                        text: "Referral link copied to clipboard",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                })
+                .catch(() => {
+                    Swal.fire("Error", "Failed to copy referral link", "error");
+                });
         }
         
         </script>
