@@ -17,29 +17,19 @@
         box-sizing: border-box;
       }
 
+      html,
       body {
         margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color:  white !important;
+      }
+
+      body {
         font-family: "Montserrat", sans-serif;
-        background: linear-gradient(135deg, #e0f7fa, #80deea, #4dd0e1);
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        color: #263238;
-        background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
-      }
-
-      @keyframes gradient {
-        0% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-        100% {
-          background-position: 0% 50%;
-        }
       }
 
       .login-container {

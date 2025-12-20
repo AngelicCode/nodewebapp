@@ -2,6 +2,12 @@ const express = require("express");
 const path = require("path");
 const app = express();
 
+        app.use((req, res, next) => {
+          res.setHeader("Access-Control-Allow-Origin", "https://87976f38786a.ngrok-free.app");
+          next();
+        });
+    
+
 const {
   corsMiddleware,
   nocacheMiddleware,
