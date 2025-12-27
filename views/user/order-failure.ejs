@@ -173,15 +173,20 @@
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-      const orderData = <%- JSON.stringify(orderData) %>;
+      const orderData = <%- orderData ? JSON.stringify(orderData) : 'null' %>;
     </script>
 
 <script>
   
   async function retryPayment(orderData) {
     try {
-      if (typeof orderData === "string") {
-        orderData = JSON.parse(orderData);
+      if (!orderData || typeof orderData !== "object") {
+        Swal.fire({
+          icon: "error",
+          title: "Retry Failed",
+          text: "Order information is missing. Please place the order again.",
+        });
+        return;
       }
 
       console.log("Retrying payment with:", orderData);

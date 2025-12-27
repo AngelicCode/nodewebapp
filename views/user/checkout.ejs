@@ -964,14 +964,14 @@
         window.history.back();
     }
 
-    async function initiateRazorpayPayment(orderData, razorpayOrder) {
+    async function initiateRazorpayPayment(orderId, razorpayOrder) {
         const options = {
             key: '<%= process.env.RAZORPAY_KEY_ID %>', 
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency || "INR",
             name: "QuickSip",
             description: "Order Payment",
-            order_id: razorpayOrder.id,
+            order_id: razorpayOrder.id, // This is the RP order ID
 
             handler: async function(response) {
                 try {
@@ -982,7 +982,7 @@
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            orderData: orderData
+                            // No need to send orderData back
                         })
                     });
 
@@ -997,19 +997,22 @@
                         updateCartAfterCheckout();
                         window.location.href = `/order-success/${result.orderId}`;
                     } else {
-                        window.location.href = `/order-failure?reason=verification_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                        // Backend failed verification, likely signature mismatch
+                         window.location.href = `/order-failure?reason=verification_failed&orderId=${orderId}`;
                     }
 
                 } catch (error) {
                     console.error('Payment verification error:', error);
-                    window.location.href = `/order-failure?reason=server_error&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                    window.location.href = `/order-failure?reason=server_error&orderId=${orderId}`;
                 }
             },
 
             modal: {
                 ondismiss: async function() {
+                    // When modal is closed without payment
                     try {
-                        const failureResponse = await fetch("/payment-failure", {
+                        // Notify backend to mark as failed
+                        await fetch("/payment-failure", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -1018,19 +1021,11 @@
                             })
                         });
                         
-                        const failureData = await failureResponse.json();
-
-                        if (failureData.blocked) {
-                            window.location.href = "/login";
-                            return;
-                        }
-
-                        const orderId = failureData.orderId || '';
-                        
-                        window.location.href = `/order-failure?reason=payment_failed&amount=${orderData.total}&orderId=${orderId}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                        // Redirect to failure page
+                        window.location.href = `/order-failure?reason=payment_cancelled&orderId=${orderId}`;
                     } catch (error) {
                         console.error('Error recording payment cancellation:', error);
-                        window.location.href = `/order-failure?reason=payment_failed&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                        window.location.href = `/order-failure?reason=payment_cancelled&orderId=${orderId}`;
                     }
                 }
             },
@@ -1038,7 +1033,7 @@
             prefill: {
                 name: "<%= req.session.user.name %>",
                 email: "<%= req.session.user.email %>",
-                contact: "" 
+                contact: "<%= req.session.user.phone %>" 
             },
 
             theme: { 
@@ -1048,12 +1043,12 @@
 
         const rzp = new Razorpay(options);
 
-        // Handle payment failure
+        // Handle payment failure (transaction failure)
         rzp.on('payment.failed', async function(response) {
             const errorReason = response.error.description || 'payment_failed';
             
             try {
-                const failureResponse = await fetch("/payment-failure", {
+                await fetch("/payment-failure", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -1062,19 +1057,10 @@
                     })
                 });
                 
-                const failureData = await failureResponse.json();
-
-                if (failureData.blocked) {
-                    window.location.href = "/login";
-                    return;
-                }
-
-                const orderId = failureData.orderId || '';
-                
-                window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&amount=${orderData.total}&orderId=${orderId}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&orderId=${orderId}`;
             } catch (error) {
                 console.error('Error recording payment failure:', error);
-                window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&amount=${orderData.total}&orderData=${encodeURIComponent(JSON.stringify(orderData))}`;
+                 window.location.href = `/order-failure?reason=${encodeURIComponent(errorReason)}&orderId=${orderId}`;
             }
         });
 
@@ -1148,14 +1134,6 @@
             const orderData = {
                 addressId: addressId,
                 paymentMethod: paymentMethod,
-                cartItems: <%- JSON.stringify(cartItems) %>,
-                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('₹', '')),
-                discountedSubtotal: parseFloat(document.getElementById('discounted-subtotal')?.textContent.replace('₹', '') || document.getElementById('subtotal').textContent.replace('₹', '')),
-                totalSavings: parseFloat(document.getElementById('total-savings')?.textContent.replace('₹', '') || 0),
-                shipping: parseFloat(document.getElementById('shipping').textContent.replace('₹', '')),
-                tax: parseFloat(document.getElementById('tax').textContent.replace('₹', '')),
-                total: parseFloat(document.getElementById('total').textContent.replace('₹', '')),
-                total: orderTotal,
                 coupon: appliedCoupon ? {
                     code: appliedCoupon.code,
                     discountAmount: appliedCoupon.discountAmount
@@ -1193,7 +1171,8 @@
             }
 
             if (paymentMethod === 'razorpay') {
-                await initiateRazorpayPayment(orderData, result.razorpayOrder);
+                // Pass orderId and RP order details to helper
+                await initiateRazorpayPayment(result.orderId, result.razorpayOrder);
             } else {
                 if (!result.orderId) {
                     window.location.href = '/order-failure?reason=order_id_missing';
