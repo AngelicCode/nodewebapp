@@ -205,13 +205,13 @@
       
       <form method="POST" action="/admin/login" id="adminLoginForm" onsubmit="return validateForm()">
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email">Email Address <span class="text-danger">*</span></label>
           <input type="email" id="email" name="email" placeholder="Enter your email" />
           <div id="emailError" class="validation-error"></div>
         </div>
 
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="password">Password <span class="text-danger">*</span></label>
           <input type="password" id="password" name="password" placeholder="Enter your password"/>
           <span class="toggle-password" onclick="togglePassword()">
             <i id="eye-icon" class="fas fa-eye"></i>

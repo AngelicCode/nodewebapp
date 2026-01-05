@@ -1,164 +1,165 @@
 <%- include("../../views/partials/user/header") %>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - Quick sip</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-blue: #5a8dc7;
-            --accent-blue: #7ba5d8;
-            --light-blue: #e8f4f8;
-            --button-green: #71cd14;
-            --button-green-hover: #5ba411;
-            --text-dark: #2c3e50;
-            --border-radius: 20px;
-            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
+    <!DOCTYPE html>
+    <html lang="en">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f9ff; 
-            min-height: 100vh;
-            color: var(--text-dark);
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Edit Profile - Quick sip</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        <style>
+            :root {
+                --primary-blue: #5a8dc7;
+                --accent-blue: #7ba5d8;
+                --light-blue: #e8f4f8;
+                --button-green: #71cd14;
+                --button-green-hover: #5ba411;
+                --text-dark: #2c3e50;
+                --border-radius: 20px;
+                --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
 
-        .card {
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            border: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-        }
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f5f9ff;
+                min-height: 100vh;
+                color: var(--text-dark);
+            }
 
-        .card-header {
-            background: var(--button-green);
-            color: white;
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
-            padding: 25px;
-            border: none;
-            font-weight: 600;
-        }
+            .card {
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-light);
+                border: none;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(15px);
+            }
 
-        .btn-success {
-            background: var(--button-green);
-            border: none;
-            border-radius: 12px;
-            padding: 12px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+            .card-header {
+                background: var(--button-green);
+                color: white;
+                border-radius: var(--border-radius) var(--border-radius) 0 0;
+                padding: 25px;
+                border: none;
+                font-weight: 600;
+            }
 
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(113, 205, 20, 0.4);
-            background: var(--button-green-hover);
-        }
+            .btn-success {
+                background: var(--button-green);
+                border: none;
+                border-radius: 12px;
+                padding: 12px 25px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
 
-        .btn-secondary {
-            background: #6c757d;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+            .btn-success:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(113, 205, 20, 0.4);
+                background: var(--button-green-hover);
+            }
 
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
-            background: #5a6268;
-        }
+            .btn-secondary {
+                background: #6c757d;
+                border: none;
+                border-radius: 12px;
+                padding: 12px 25px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
 
-        .form-control {
-            border-radius: 12px;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
+                background: #5a6268;
+            }
 
-        .form-control:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(90, 141, 199, 0.25);
-        }
+            .form-control {
+                border-radius: 12px;
+                padding: 12px 15px;
+                border: 2px solid #e9ecef;
+                transition: all 0.3s ease;
+            }
 
-    </style>
-</head>
-<body>
-    
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h4 class="mb-0"><i class="fas fa-user-edit"></i> Edit Profile</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        <% if (typeof message !== 'undefined') { %>
-                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                <%= message %>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <% } %>
+            .form-control:focus {
+                border-color: var(--primary-blue);
+                box-shadow: 0 0 0 0.2rem rgba(90, 141, 199, 0.25);
+            }
+        </style>
+    </head>
 
-                        <form action="/update-profile" method="POST">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">
-                                    <i class="fas fa-user"></i> Full Name
-                                </label>
-                                <input type="text" class="form-control" id="name" name="name" 
-                                       value="<%= user.name %>" required>
-                            </div>
+    <body>
 
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">
-                                    <i class="fas fa-phone"></i> Phone Number
-                                </label>
-                                <input type="tel" class="form-control" id="phone" name="phone" 
-                                       value="<%= user.phone || '' %>" 
-                                       pattern="[0-9]{10}" 
-                                       placeholder="Enter 10-digit phone number">
-                                <div class="form-text">Optional - 10 digits only</div>
-                            </div>
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            <h4 class="mb-0"><i class="fas fa-user-edit"></i> Edit Profile</h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <% if (typeof message !=='undefined' ) { %>
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <%= message %>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                <% } %>
 
-                            <div class="mb-3">
-                                <label for="email" class="form-label">
-                                    <i class="fas fa-envelope"></i> Email Address
-                                </label>
-                                <input type="email" class="form-control" id="email" 
-                                       value="<%= user.email %>" disabled>
-                                <div class="form-text">To change email, use the "Change Email" option</div>
-                            </div>
+                                    <form action="/update-profile" method="POST">
+                                        <div class="mb-3">
+                                            <label for="name" class="form-label">
+                                                <i class="fas fa-user"></i> Full Name <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="name" name="name"
+                                                value="<%= user.name %>" required>
+                                        </div>
 
-                            <div class="d-flex justify-content-between mt-4">
-                                <a href="/userProfile" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Back to Profile
-                                </a>
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-save"></i> Update Profile
-                                </button>
-                            </div>
-                        </form>
+                                        <div class="mb-3">
+                                            <label for="phone" class="form-label">
+                                                <i class="fas fa-phone"></i> Phone Number
+                                            </label>
+                                            <input type="tel" class="form-control" id="phone" name="phone"
+                                                value="<%= user.phone || '' %>" pattern="[0-9]{10}"
+                                                placeholder="Enter 10-digit phone number">
+                                            <div class="form-text">Optional - 10 digits only</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">
+                                                <i class="fas fa-envelope"></i> Email Address
+                                            </label>
+                                            <input type="email" class="form-control" id="email"
+                                                value="<%= user.email %>" disabled>
+                                            <div class="form-text">To change email, use the "Change Email" option</div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <a href="/userProfile" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left"></i> Back to Profile
+                                            </a>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Update Profile
+                                            </button>
+                                        </div>
+                                    </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.getElementById('phone').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 10) {
-                this.value = this.value.slice(0, 10);
-            }
-        });
-    </script>
-</body>
-</html>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.getElementById('phone').addEventListener('input', function (e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
+                }
+            });
+        </script>
+    </body>
 
-<%- include("../../views/partials/user/footer") %>
+    </html>
+
+    <%- include("../../views/partials/user/footer") %>

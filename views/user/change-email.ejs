@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f9ff; 
+            background-color: #f5f9ff;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,8 +23,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(20px, -20px); }
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(20px, -20px);
+            }
         }
 
         .container {
@@ -84,8 +92,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
         }
 
         .water-bottle-icon::before {
@@ -95,8 +110,15 @@
         }
 
         @keyframes drop {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
         }
 
         .card-title {
@@ -160,9 +182,19 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
 
         .error-message {
@@ -226,37 +258,44 @@
             .container {
                 padding: 10px;
             }
-            
+
             .card {
                 padding: 30px 20px;
             }
-            
+
             .logo h1 {
                 font-size: 2rem;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="card">
             <div class="logo">
                 <div class="water-bottle-icon"></div>
                 <h1>Quick Sip</h1>
-              
+
             </div>
-            
+
             <h4 class="card-title">Enter Current Email</h4>
-            
+
             <form method="post" action="/change-email" onsubmit="return validateLoginForm()">
                 <div class="form-group">
-                    <input class="form-control" name="email" placeholder="Enter your email address" type="text" id="email">
+                    <label for="email"
+                        style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600;">Email Address
+                        <span style="color: #e74c3c;">*</span></label>
+                    <input class="form-control" name="email" placeholder="Enter your email address" type="text"
+                        id="email">
 
-                    <div class="error-message" id="email-error"><%= typeof emailError !== "undefined" ? emailError : "" %></div>
+                    <div class="error-message" id="email-error">
+                        <%= typeof emailError !=="undefined" ? emailError : "" %>
+                    </div>
 
                     <div class="error-message" id="email-error"></div>
                 </div>
-                
+
                 <div class="form-group">
                     <button type="submit" class="btn">Verify Email</button>
                 </div>
@@ -286,10 +325,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const emailInput = document.getElementById('email');
-            
-            emailInput.addEventListener('input', function() {
+
+            emailInput.addEventListener('input', function () {
                 if (this.classList.contains('is-invalid')) {
                     this.classList.remove('is-invalid');
                     document.getElementById('email-error').textContent = '';
@@ -298,4 +337,5 @@
         });
     </script>
 </body>
+
 </html>

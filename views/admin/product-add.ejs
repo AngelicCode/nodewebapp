@@ -1,338 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <%- include("../../views/partials/admin/header") %>
-  
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <!-- SweetAlert2 CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css" crossorigin="anonymous">
-  <!-- Cropper.js CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet" crossorigin="anonymous">
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous">
-  <!-- Cropper.js JS (loaded early with defer) -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js" crossorigin="anonymous"></script>
 
-  <style>
-    :root {
-      --primary-color: #0B6E8F;
-      --primary-dark: #095673;
-      --secondary-color: #E5F4F9;
-      --accent-color: #72C1D9;
-      --text-color: #2C3E50;
-      --background-color: #F8FCFF;
-      --border-radius: 8px;
-      --card-shadow: 0 8px 20px rgba(11, 110, 143, 0.08);
-    }
-  
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background-color: var(--background-color);
-      color: var(--text-color);
-    }
-  
-    .content-main {
-      padding: 2rem;
-      background: linear-gradient(to bottom, #F8FCFF 0%, #E5F4F9 100%);
-    }
-  
-    .water-wave-header {
-      background: linear-gradient(135deg, var(--primary-color) 0%, #3498db 100%);
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
-      padding: 2rem;
-      margin-bottom: 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-  
-    .water-wave-header::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 40px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='%23FFFFFF'%3E%3C/path%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='%23FFFFFF'%3E%3C/path%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='%23FFFFFF'%3E%3C/path%3E%3C/svg%3E") no-repeat;
-      background-size: cover;
-    }
-  
-    .content-title {
-      color: white;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      position: relative;
-      z-index: 1;
-      font-size: 2rem;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-  
-    .water-icon {
-      position: absolute;
-      right: 30px;
-      top: 20px;
-      width: 100px;
-      height: 100px;
-      opacity: 0.2;
-      color: white;
-    }
-  
-    .card {
-      border: none;
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-      background: #fff;
-      margin-bottom: 2rem;
-    }
-  
-    .card-header {
-      background-color: white;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      padding: 1.5rem;
-    }
-  
-    .card-body {
-      padding: 2rem;
-    }
-  
-    .form-label {
-      font-weight: 600;
-      color: var(--text-color);
-      margin-bottom: 10px;
-      font-size: 0.9rem;
-    }
-  
-    .form-control, textarea, .form-select {
-      width: 100%;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border: 1px solid #e1e5eb;
-      border-radius: var(--border-radius);
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-    }
-  
-    .form-control:focus, textarea:focus, .form-select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(11, 110, 143, 0.15);
-      outline: none;
-    }
-  
-    .btn {
-      border-radius: var(--border-radius);
-      font-weight: 600;
-      padding: 12px 20px;
-      transition: all 0.3s ease;
-      letter-spacing: 0.3px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-  
-    .btn-primary {
-      background-color: var(--primary-color);
-      border: none;
-      color: white;
-    }
-  
-    .btn-primary:hover {
-      background-color: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(11, 110, 143, 0.2);
-    }
-  
-    .error-message {
-      color: #e53e3e;
-      font-size: 0.8rem;
-      margin-top: 5px;
-      margin-bottom: 10px;
-    }
-  
-    .thumbnails-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-  
-    .thumbnail {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      margin: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-  
-    .thumbnail img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  
-    .thumbnail-actions {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 5px;
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-    }
-  
-    .img-container {
-      max-height: 70vh;
-      overflow: auto;
-    }
-  
-    .remove-icon {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background-color: rgba(255, 255, 255, 0.7);
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-weight: bold;
-    }
-  
-    .image-upload-box {
-      border: 2px dashed #d1d8e3;
-      border-radius: var(--border-radius);
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 20px;
-    }
-  
-    .image-upload-box:hover {
-      border-color: var(--primary-color);
-      background-color: var(--secondary-color);
-    }
-  
-    .d-none {
-      display: none !important;
-    }
-  
-    .price-group {
-      display: flex;
-      gap: 15px;
-    }
-  
-    .price-input {
-      position: relative;
-    }
-  
-    .price-input:before {
-      content: "$";
-      position: absolute;
-      left: 16px;
-      top: 6.5px;
-      color: #666;
-    }
-  
-    .price-input input {
-      padding-left: 30px;
-    }
-  
-    .section-title {
-      color: var(--primary-color);
-      margin-bottom: 1.5rem;
-      font-weight: 600;
-      font-size: 1.2rem;
-      position: relative;
-      padding-bottom: 10px;
-    }
-  
-    .section-title:after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 50px;
-      height: 3px;
-      background-color: var(--accent-color);
-      border-radius: 2px;
-    }
-  
-    .form-section {
-      background-color: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-  
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      margin-left: -10px;
-      margin-right: -10px;
-    }
-  
-    .form-col {
-      flex: 1;
-      padding: 0 10px;
-      min-width: 200px;
-    }
-  
-    .submit-container {
-      text-align: right;
-      padding-top: 1rem;
-    }
-  
-    @media (max-width: 768px) {
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"
+      crossorigin="anonymous">
+    <!-- Cropper.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet"
+      crossorigin="anonymous">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+      crossorigin="anonymous">
+    <!-- Cropper.js JS (loaded early with defer) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"
+      crossorigin="anonymous"></script>
+
+    <style>
+      :root {
+        --primary-color: #0B6E8F;
+        --primary-dark: #095673;
+        --secondary-color: #E5F4F9;
+        --accent-color: #72C1D9;
+        --text-color: #2C3E50;
+        --background-color: #F8FCFF;
+        --border-radius: 8px;
+        --card-shadow: 0 8px 20px rgba(11, 110, 143, 0.08);
+      }
+
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+      }
+
       .content-main {
-        padding: 1rem;
+        padding: 2rem;
+        background: linear-gradient(to bottom, #F8FCFF 0%, #E5F4F9 100%);
       }
-  
+
+      .water-wave-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #3498db 100%);
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .water-wave-header::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='%23FFFFFF'%3E%3C/path%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='%23FFFFFF'%3E%3C/path%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='%23FFFFFF'%3E%3C/path%3E%3C/svg%3E") no-repeat;
+        background-size: cover;
+      }
+
+      .content-title {
+        color: white;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 1;
+        font-size: 2rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .water-icon {
+        position: absolute;
+        right: 30px;
+        top: 20px;
+        width: 100px;
+        height: 100px;
+        opacity: 0.2;
+        color: white;
+      }
+
+      .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        background: #fff;
+        margin-bottom: 2rem;
+      }
+
+      .card-header {
+        background-color: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+      }
+
       .card-body {
-        padding: 1rem;
+        padding: 2rem;
       }
-  
-      .price-group {
-        flex-direction: column;
-        gap: 0;
+
+      .form-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 10px;
+        font-size: 0.9rem;
       }
-  
-      .form-col {
-        flex: 0 0 100%;
+
+      .form-control,
+      textarea,
+      .form-select {
+        width: 100%;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border: 1px solid #e1e5eb;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .form-control:focus,
+      textarea:focus,
+      .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(11, 110, 143, 0.15);
+        outline: none;
+      }
+
+      .btn {
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(11, 110, 143, 0.2);
+      }
+
+      .error-message {
+        color: #e53e3e;
+        font-size: 0.8rem;
+        margin-top: 5px;
         margin-bottom: 10px;
       }
-  
-      .submit-container {
-        text-align: center;
+
+      .thumbnails-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
       }
-    }
-  
-    .drag-over {
-      background-color: #f8f9fa !important;
-      border-color: #0B6E8F !important;
-    }
-  
-    #cropButton:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-  
-    .cropper-container {
-      max-height: 70vh;
-    }
-  
-    .cropper-modal {
-      background-color: rgba(0,0,0,0.5);
-    }
-  </style>
+
+      .thumbnail {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .thumbnail-actions {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px;
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+      }
+
+      .img-container {
+        max-height: 70vh;
+        overflow: auto;
+      }
+
+      .remove-icon {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(255, 255, 255, 0.7);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .image-upload-box {
+        border: 2px dashed #d1d8e3;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+      }
+
+      .image-upload-box:hover {
+        border-color: var(--primary-color);
+        background-color: var(--secondary-color);
+      }
+
+      .d-none {
+        display: none !important;
+      }
+
+      .price-group {
+        display: flex;
+        gap: 15px;
+      }
+
+      .price-input {
+        position: relative;
+      }
+
+      .price-input:before {
+        content: "$";
+        position: absolute;
+        left: 16px;
+        top: 6.5px;
+        color: #666;
+      }
+
+      .price-input input {
+        padding-left: 30px;
+      }
+
+      .section-title {
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        font-size: 1.2rem;
+        position: relative;
+        padding-bottom: 10px;
+      }
+
+      .section-title:after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 50px;
+        height: 3px;
+        background-color: var(--accent-color);
+        border-radius: 2px;
+      }
+
+      .form-section {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-left: -10px;
+        margin-right: -10px;
+      }
+
+      .form-col {
+        flex: 1;
+        padding: 0 10px;
+        min-width: 200px;
+      }
+
+      .submit-container {
+        text-align: right;
+        padding-top: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .content-main {
+          padding: 1rem;
+        }
+
+        .card-body {
+          padding: 1rem;
+        }
+
+        .price-group {
+          flex-direction: column;
+          gap: 0;
+        }
+
+        .form-col {
+          flex: 0 0 100%;
+          margin-bottom: 10px;
+        }
+
+        .submit-container {
+          text-align: center;
+        }
+      }
+
+      .drag-over {
+        background-color: #f8f9fa !important;
+        border-color: #0B6E8F !important;
+      }
+
+      #cropButton:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .cropper-container {
+        max-height: 70vh;
+      }
+
+      .cropper-modal {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+    </style>
 </head>
 
 <body>
@@ -340,98 +351,106 @@
     <div class="water-wave-header">
       <h2 class="content-title">Add Water Bottle Product</h2>
       <svg class="water-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12,20.5c-3.31,0-6-2.69-6-6c0-4.5,6-10.5,6-10.5s6,6,6,10.5C18,17.81,15.31,20.5,12,20.5z M12,5.5 c-1.44,2.16-4,6.38-4,9c0,2.21,1.79,4,4,4s4-1.79,4-4C16,11.88,13.44,7.66,12,5.5z"/>
-        <path d="M12,18.5c-2.21,0-4-1.79-4-4c0-0.55,0.45-1,1-1s1,0.45,1,1c0,1.1,0.9,2,2,2s2-0.9,2-2c0-0.55,0.45-1,1-1s1,0.45,1,1 C16,16.71,14.21,18.5,12,18.5z"/>
+        <path
+          d="M12,20.5c-3.31,0-6-2.69-6-6c0-4.5,6-10.5,6-10.5s6,6,6,10.5C18,17.81,15.31,20.5,12,20.5z M12,5.5 c-1.44,2.16-4,6.38-4,9c0,2.21,1.79,4,4,4s4-1.79,4-4C16,11.88,13.44,7.66,12,5.5z" />
+        <path
+          d="M12,18.5c-2.21,0-4-1.79-4-4c0-0.55,0.45-1,1-1s1,0.45,1,1c0,1.1,0.9,2,2,2s2-0.9,2-2c0-0.55,0.45-1,1-1s1,0.45,1,1 C16,16.71,14.21,18.5,12,18.5z" />
       </svg>
     </div>
 
     <div class="row">
       <div class="col-lg-8 mx-auto">
-        <form onsubmit="return validateForm()" id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
+        <form onsubmit="return validateForm()" id="productForm" method="POST" action="/admin/addProducts"
+          enctype="multipart/form-data">
 
           <!-- Basic Info Section -->
           <div class="form-section">
             <h4 class="section-title">Basic Information</h4>
             <div class="form-row">
               <div class="form-col">
-                <label class="form-label">Product Name</label>
+                <label class="form-label">Product Name <span class="text-danger">*</span></label>
                 <input type="text" name="productName" placeholder="Enter bottle name" class="form-control" />
                 <div id="productName-error" class="error-message"></div>
               </div>
               <div class="form-col">
-                <label class="form-label">Brand</label>
+                <label class="form-label">Brand <span class="text-danger">*</span></label>
                 <select name="brand" class="form-select">
                   <% brand.forEach(function(br) { %>
-                    <option value="<%= br._id %>"><%= br.brandName %></option>
-                  <% }) %>
+                    <option value="<%= br._id %>">
+                      <%= br.brandName %>
+                    </option>
+                    <% }) %>
                 </select>
                 <div id="brand-error" class="error-message"></div>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-col">
-                <label class="form-label">Description</label>
-                <textarea name="description" rows="4" class="form-control" placeholder="Describe the water bottle"></textarea>
+                <label class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea name="description" rows="4" class="form-control"
+                  placeholder="Describe the water bottle"></textarea>
                 <div id="description-error" class="error-message"></div>
               </div>
             </div>
           </div>
-          
+
           <!-- Pricing and Inventory Section -->
           <div class="form-section">
             <h4 class="section-title">Pricing & Inventory</h4>
             <div class="form-row">
               <div class="form-col">
-                <label class="form-label">Regular Price</label>
+                <label class="form-label">Regular Price <span class="text-danger">*</span></label>
                 <div class="price-input">
                   <input type="number" name="regularPrice" class="form-control" placeholder="0.00" step="0.01">
                 </div>
                 <div id="regularPrice-error" class="error-message"></div>
               </div>
               <div class="form-col">
-                <label class="form-label">Sale Price</label>
+                <label class="form-label">Sale Price <span class="text-danger">*</span></label>
                 <div class="price-input">
                   <input type="number" name="salePrice" class="form-control" placeholder="0.00" step="0.01">
                 </div>
                 <div id="salePrice-error" class="error-message"></div>
               </div>
               <div class="form-col">
-                <label class="form-label">Quantity</label>
+                <label class="form-label">Quantity <span class="text-danger">*</span></label>
                 <input type="number" name="quantity" class="form-control" placeholder="0" min="0">
                 <div id="quantity-error" class="error-message"></div>
               </div>
             </div>
           </div>
-          
+
           <!-- Category Section -->
           <div class="form-section">
             <h4 class="section-title">Category</h4>
             <div class="form-row">
               <div class="form-col">
-                <label class="form-label">Product Category</label>
+                <label class="form-label">Product Category <span class="text-danger">*</span></label>
                 <select name="category" class="form-select">
-                  <% categories.forEach(cat => { %>
-                    <option value="<%= cat._id %>"><%= cat.name %></option>
-                  <% }) %>
+                  <% categories.forEach(cat=> { %>
+                    <option value="<%= cat._id %>">
+                      <%= cat.name %>
+                    </option>
+                    <% }) %>
                 </select>
                 <div id="category-error" class="error-message"></div>
               </div>
             </div>
           </div>
-          
+
           <!-- Image Upload Section -->
           <div class="form-section">
             <h4 class="section-title">Product Images</h4>
             <div class="form-group">
-              <label class="form-label">Upload Images (Max 4)</label>
+              <label class="form-label">Upload Images (Max 4) <span class="text-danger">*</span></label>
               <div class="image-upload-box" id="uploadBox">
                 <p>Click to upload or drag & drop images</p>
                 <input type="file" name="images" id="imageInput" class="d-none" multiple accept="image/*">
               </div>
               <div id="imagePreview" class="thumbnails-container mt-3"></div>
               <div id="images-error" class="error-message"></div>
-              
+
               <!-- Cropper Modal -->
               <div class="modal fade" id="cropModal" tabindex="-1">
                 <div class="modal-dialog modal-lg">
@@ -454,7 +473,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Submit Button -->
           <div class="form-section">
             <div class="submit-container">
@@ -469,23 +488,25 @@
   <!-- SweetAlert2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js" crossorigin="anonymous"></script>
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
 
   <script>
 
     function validateForm() {
-  const files = document.querySelector('[name="images"]').files;
-  if (files.length === 0) {
-    alert("Please select at least one image");
-    return false;
-  }
-  return true;
-}
+      const files = document.querySelector('[name="images"]').files;
+      if (files.length === 0) {
+        alert("Please select at least one image");
+        return false;
+      }
+      return true;
+    }
 
     let currentCropper = null;
     let currentFileIndex = null;
     const croppedImages = [];
-    const fileTypes = []; 
+    const fileTypes = [];
 
     function checkCropperAvailability() {
       if (typeof Cropper !== 'function') {
@@ -510,7 +531,7 @@
           aspectRatio: 1,
           viewMode: 1,
           autoCropArea: 0.8,
-          ready: function() {
+          ready: function () {
             const cropButton = document.getElementById('cropButton');
             if (cropButton) {
               cropButton.disabled = false;
@@ -529,7 +550,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const uploadBox = document.getElementById('uploadBox');
       const imageInput = document.getElementById('imageInput');
       const imagePreview = document.getElementById('imagePreview');
@@ -543,7 +564,7 @@
         imageInput.click();
       });
 
-      imageInput.addEventListener('change', function() {
+      imageInput.addEventListener('change', function () {
         if (this.files.length > 0) {
           addFiles(this.files);
         }
@@ -566,39 +587,39 @@
         }
       });
 
-      
-function addFiles(newFiles) {
-  const availableSlots = 4 - croppedImages.length;
 
-  if (newFiles.length > availableSlots) {
-    Swal.fire('Error', `You can only add ${availableSlots} more image(s)`, 'error');
-    return;
-  }
+      function addFiles(newFiles) {
+        const availableSlots = 4 - croppedImages.length;
 
-  Array.from(newFiles).slice(0, availableSlots).forEach((file, index) => {
-    if (!file.type.match('image.*')) {
-      Swal.fire('Error', 'Only image files are allowed', 'error');
-      return;
-    }
+        if (newFiles.length > availableSlots) {
+          Swal.fire('Error', `You can only add ${availableSlots} more image(s)`, 'error');
+          return;
+        }
 
-    fileTypes[croppedImages.length + index] = file.type;
+        Array.from(newFiles).slice(0, availableSlots).forEach((file, index) => {
+          if (!file.type.match('image.*')) {
+            Swal.fire('Error', 'Only image files are allowed', 'error');
+            return;
+          }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (file.type === 'image/gif') {
-        croppedImages[croppedImages.length + index] = e.target.result;
-        renderThumbnails();
-        updateFileInput();
-      } else {
-        openCropper(e.target.result, croppedImages.length + index);
+          fileTypes[croppedImages.length + index] = file.type;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (file.type === 'image/gif') {
+              croppedImages[croppedImages.length + index] = e.target.result;
+              renderThumbnails();
+              updateFileInput();
+            } else {
+              openCropper(e.target.result, croppedImages.length + index);
+            }
+          };
+          reader.onerror = () => {
+            Swal.fire('Error', 'Failed to read image file', 'error');
+          };
+          reader.readAsDataURL(file);
+        });
       }
-    };
-    reader.onerror = () => {
-      Swal.fire('Error', 'Failed to read image file', 'error');
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
       function renderThumbnails() {
         imagePreview.innerHTML = '';
@@ -664,7 +685,7 @@ function addFiles(newFiles) {
         cropperImage.onload = null;
         cropperImage.onerror = null;
 
-        cropperImage.onload = function() {
+        cropperImage.onload = function () {
           try {
             currentCropper = initializeCropper(cropperImage);
             if (currentCropper) {
@@ -677,7 +698,7 @@ function addFiles(newFiles) {
           }
         };
 
-        cropperImage.onerror = function() {
+        cropperImage.onerror = function () {
           Swal.fire('Error', 'Failed to load the image', 'error');
           cropButton.disabled = false;
           cropButton.innerHTML = 'Crop & Save';
@@ -686,7 +707,7 @@ function addFiles(newFiles) {
         cropperImage.src = imageSrc;
       }
 
-      cropButton.addEventListener('click', function(e) {
+      cropButton.addEventListener('click', function (e) {
         e.preventDefault();
         if (!currentCropper) return;
 
@@ -736,7 +757,7 @@ function addFiles(newFiles) {
 
       const cropModalEl = document.getElementById('cropModal');
       if (cropModalEl) {
-        cropModalEl.addEventListener('shown.bs.modal', function() {
+        cropModalEl.addEventListener('shown.bs.modal', function () {
           const cropperImage = document.getElementById('cropperImage');
           if (!cropperImage || !cropperImage.complete) return;
 
@@ -749,7 +770,7 @@ function addFiles(newFiles) {
           }
         });
 
-        cropModalEl.addEventListener('hidden.bs.modal', function() {
+        cropModalEl.addEventListener('hidden.bs.modal', function () {
           try {
             if (currentCropper) {
               currentCropper.destroy();
@@ -768,7 +789,7 @@ function addFiles(newFiles) {
 
       function removeImage(index) {
         croppedImages.splice(index, 1);
-        fileTypes.splice(index, 1); 
+        fileTypes.splice(index, 1);
         renderThumbnails();
         updateFileInput();
       }
@@ -777,13 +798,13 @@ function addFiles(newFiles) {
         const dt = new DataTransfer();
         croppedImages.forEach((dataURL, index) => {
           const arr = dataURL.split(',');
-          const mime = fileTypes[index] || 'image/jpeg'; 
+          const mime = fileTypes[index] || 'image/jpeg';
           const bstr = atob(arr[1]);
           const u8arr = new Uint8Array(bstr.length);
           for (let i = 0; i < bstr.length; i++) {
             u8arr[i] = bstr.charCodeAt(i);
           }
-          const fileName = `image_${index}.${mime.split('/')[1]}`; 
+          const fileName = `image_${index}.${mime.split('/')[1]}`;
           dt.items.add(new File([u8arr], fileName, { type: mime }));
         });
         imageInput.files = dt.files;
@@ -846,7 +867,7 @@ function addFiles(newFiles) {
         });
       }
 
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', function (e) {
         if (!validateForm()) {
           e.preventDefault();
           const firstError = document.querySelector('.error-message[style="display: block;"]');
@@ -858,7 +879,7 @@ function addFiles(newFiles) {
     });
   </script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const urlParams = new URLSearchParams(window.location.search);
       const success = urlParams.get('success');
       const error = urlParams.get('error');
@@ -886,7 +907,8 @@ function addFiles(newFiles) {
       }
     });
   </script>
-  
+
   <%- include("../../views/partials/admin/footer") %>
 </body>
+
 </html>
