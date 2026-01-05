@@ -198,9 +198,9 @@ const placeOrder = async(req,res)=>{
         return res.status(401).json({ status: false, message: 'User not authenticated' });
     }
 
-     const { addressId, paymentMethod, coupon } = req.body; // Removed redundant fields from body, calculating secure values on backend
+     const { addressId, paymentMethod, coupon } = req.body; 
 
-     const validatedItems = req.validatedCartItems; // Using items validated by middleware
+     const validatedItems = req.validatedCartItems; 
     
     if (!validatedItems || validatedItems.length === 0) {
       return res.status(400).json({ 

@@ -2,17 +2,18 @@ const express = require("express");
 const path = require("path");
 const app = express();
 
-        app.use((req, res, next) => {
-          res.setHeader("Access-Control-Allow-Origin", "https://87976f38786a.ngrok-free.app");
-          next();
-        });
-    
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://87976f38786a.ngrok-free.app");
+  next();
+});
+
 
 const {
   corsMiddleware,
   nocacheMiddleware,
   cacheControlMiddleware,
-  sessionMiddleware,
+  userSession,
+  adminSession,
   userSessionMiddleware,
   uploadsMiddleware,
   productImagesMiddleware,
@@ -51,9 +52,7 @@ db();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(sessionMiddleware);
-app.use(passport.initialize());
-app.use(passport.session());
+// Middleware moved to specific routes
 app.use(nocacheMiddleware);
 app.use(cacheControlMiddleware);
 
@@ -65,10 +64,8 @@ app.set("views", [
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads/profile-photos", express.static(path.join(__dirname, "public/uploads/profile-photos")));
-app.use(userSessionMiddleware);
-
-app.use("/", userRouter);
-app.use("/admin", adminRouter);
+app.use("/admin", adminSession, adminRouter);
+app.use("/", userSession, passport.initialize(), passport.session(), userSessionMiddleware, userRouter);
 
 app.use("/uploads", uploadsMiddleware);
 app.use('/uploads/product-images', productImagesMiddleware);
