@@ -5,7 +5,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const sharp = require("sharp");
 const multer = require('multer');
-const upload = require("../../helpers/multer"); 
+const upload = require("../../helpers/multer");
 const User = require("../../models/userSchema");
 
 const getProductAddPage = async (req, res) => {
@@ -57,7 +57,7 @@ const addProducts = [
       const images = [];
       if (req.files && req.files.length > 0) {
         const destDir = path.resolve("public", "Uploads", "product-images");
-        await fs.mkdir(destDir, { recursive: true }).catch(() => {});
+        await fs.mkdir(destDir, { recursive: true }).catch(() => { });
 
         for (const file of req.files) {
           const originalPath = path.resolve(file.path);
@@ -104,7 +104,7 @@ const addProducts = [
             );
           }
         }
-       }
+      }
 
       const newProduct = new Product({
         productName: products.productName,
@@ -120,7 +120,7 @@ const addProducts = [
       });
 
       await newProduct.save();
-      return res.redirect("/admin/addProducts?success=Product added successfully!");
+      return res.redirect("/admin/products?success=Product added successfully!");
     } catch (error) {
       console.error("Error saving product:", error);
       return res.redirect("/admin/addProducts?error=Failed to add product");
@@ -130,7 +130,7 @@ const addProducts = [
 
 const getAllProducts = async (req, res) => {
   try {
-    
+
     const search = req.query.search?.trim() || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
@@ -142,7 +142,7 @@ const getAllProducts = async (req, res) => {
 
     const query = {};
     if (search) {
-      query.productName = {$regex: new RegExp(search, "i") };
+      query.productName = { $regex: new RegExp(search, "i") };
     }
 
     const productData = await Product.find(query)
@@ -273,7 +273,7 @@ const editProduct = [
 
       if (req.files && req.files.length > 0) {
         const destDir = path.resolve("public", "Uploads", "product-images");
-        await fs.mkdir(destDir, { recursive: true }).catch(() => {});
+        await fs.mkdir(destDir, { recursive: true }).catch(() => { });
 
         const newImages = [];
         for (const file of req.files) {
