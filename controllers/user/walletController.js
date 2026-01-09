@@ -6,7 +6,7 @@ const { refundToWallet } = require("../../helpers/walletHelper");
 const getWalletHistory = async (req, res) => {
   try {
     const userId = req.session.user._id;
-    
+
     const user = await User.findById(userId).select('wallet');
     const transactions = await Wallet.find({ userId })
       .populate('orderId', 'orderId')
@@ -14,8 +14,8 @@ const getWalletHistory = async (req, res) => {
 
     res.json({
       success: true,
-      walletBalance: user.wallet,
-      transactions 
+      walletBalance: typeof user.wallet === "number" ? user.wallet : 0,
+      transactions
     });
 
   } catch (error) {
@@ -60,6 +60,11 @@ const addToWallet = async (req, res) => {
     }
 
     const user = await User.findById(userId);
+
+    if (typeof user.wallet !== "number") {
+      user.wallet = 0;
+    }
+
     user.wallet += parseFloat(amount);
     await user.save();
 
@@ -87,5 +92,5 @@ module.exports = {
   getWalletHistory,
   addToWallet,
   getWalletHistoryData,
-  
+
 };

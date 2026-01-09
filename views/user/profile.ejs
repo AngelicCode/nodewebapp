@@ -1098,7 +1098,8 @@
                                                                                                             class="text-success">-₹
                                                                                                             <%= itemCoupon.couponDiscount.toFixed(2)
                                                                                                                 %>
-                                                                                                                coupon</small>
+                                                                                                                coupon
+                                                                                                        </small>
                                                                                                         <% } %>
                                                                                             </td>
                                                                                             <td>
@@ -1123,14 +1124,14 @@
                                                                                                                 class="text-info">Refunded:
                                                                                                                 ₹<%= totalAdjustment.toFixed(2)
                                                                                                                     %>
-                                                                                                                    </small>
+                                                                                                            </small>
                                                                                                             <% } %>
                                                                                                                 <% } else
                                                                                                                     { %>
                                                                                                                     <strong>₹
                                                                                                                         <%= order.finalAmount.toFixed(2)
                                                                                                                             %>
-                                                                                                                            </strong>
+                                                                                                                    </strong>
 
                                                                                                                     <% if
                                                                                                                         (totalAdjustment>
@@ -1882,6 +1883,26 @@
                         Swal.fire("Error", "Failed to copy referral link", "error");
                     });
             }
+
+            function renderWalletPagination(totalPages, currentPage) {
+                const container = document.getElementById("walletHistoryPagination");
+                if (!container) return;
+
+                container.innerHTML = "";
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement("button");
+                    btn.textContent = i;
+                    btn.className = `btn btn-sm mx-1 ${i === currentPage ? 'btn-dark' : 'btn-outline-dark'}`;
+                    btn.onclick = () => loadWalletHistory(i);
+                    container.appendChild(btn);
+                }
+                }
+
+                document.addEventListener("DOMContentLoaded", () => {
+                loadWalletBalance();
+                loadWalletHistory();
+                });
 
         </script>
 

@@ -139,7 +139,7 @@ const orderSchema = new Schema({
    },
    shipping: {  
       type: Number,
-      default: 0
+      default: 50
    },
    createdAt: {
       type: Date,

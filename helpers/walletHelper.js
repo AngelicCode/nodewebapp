@@ -5,12 +5,17 @@ const Order = require("../models/orderSchema");
 const refundToWallet = async (orderId, refundAmount, description) => {
   try {
     const order = await Order.findById(orderId).populate('userId');
-    
+
     if (!order) {
       throw new Error('Order not found');
     }
 
     const user = await User.findById(order.userId);
+
+    if (typeof user.wallet !== "number") {
+      user.wallet = 0;
+    }
+
     user.wallet += refundAmount;
     await user.save();
 

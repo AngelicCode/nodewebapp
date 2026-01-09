@@ -360,9 +360,8 @@ const placeOrder = async(req,res)=>{
             shipping: parseFloat(shipping),
             tax: parseFloat(tax),
             finalAmount: parseFloat(finalAmount),
-            // Set initial status
             status: 'pending', 
-            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending', // Pending payment for RP
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending', 
             razorpayOrderId: razorpayOrder ? razorpayOrder.id : null, 
             couponDetails: couponDetails,
             discount: couponDiscount,
@@ -623,9 +622,6 @@ const handleFailedPayment = async (req, res) => {
 const handlePaymentFailure = async (req, res) => {
   try {
     const { razorpay_order_id, error } = req.body;
-
-    console.log('Recording payment failure for order:', razorpay_order_id);
-
     const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
 
     if (order) {
@@ -634,9 +630,6 @@ const handlePaymentFailure = async (req, res) => {
         order.status = 'failed';
         await order.save();
         
-        console.log('Payment failure recorded for order:', order.orderId);
-        console.log('Order saved to DB with _id:', order._id);
-        console.log('Order status:', order.status, 'Payment status:', order.paymentStatus);
       } else {
         console.log('Order already paid, not updating to failed');
       }
