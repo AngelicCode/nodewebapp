@@ -626,24 +626,33 @@
                                     const shippingRefunded = allCancelled ? order.shipping : 0;
                                     %>
 
-                                    <% if (cancelledTotal > 0) { %>
+                                    <% if (order.paymentMethod !== 'cod' && cancelledTotal > 0) { %>
+                                        
                                     <div class="alert alert-warning py-2 mb-2">
-                                    <strong><i class="fas fa-times-circle me-1"></i> Items Cancelled</strong>
-                                    <div class="d-flex justify-content-between">
+                                        <strong>
+                                        <i class="fas fa-times-circle me-1"></i> Items Cancelled
+                                        </strong>
+
+                                        <div class="d-flex justify-content-between">
                                         <span>Cancelled items refund:</span>
                                         <span class="text-danger">-₹<%= cancelledTotal.toFixed(2) %></span>
-                                    </div>
-                                    <% if (shippingRefunded > 0) { %>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Shipping refund (all cancelled):</span>
-                                        <span class="text-danger">-₹<%= shippingRefunded.toFixed(2) %></span>
-                                    </div>
-                                    <% } %>
-                                    <hr class="my-1">
-                                    <div class="d-flex justify-content-between">
+                                        </div>
+
+                                        <% if (shippingRefunded > 0) { %>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Shipping refund (all cancelled):</span>
+                                            <span class="text-danger">-₹<%= shippingRefunded.toFixed(2) %></span>
+                                        </div>
+                                        <% } %>
+
+                                        <hr class="my-1">
+
+                                        <div class="d-flex justify-content-between">
                                         <strong>Total Reduction:</strong>
-                                        <strong class="text-danger">-₹<%= (cancelledTotal + shippingRefunded).toFixed(2) %></strong>
-                                    </div>
+                                        <strong class="text-danger">
+                                            -₹<%= (cancelledTotal + shippingRefunded).toFixed(2) %>
+                                        </strong>
+                                        </div>
                                     </div>
                                     <% } %>
 
