@@ -8,7 +8,7 @@ const Coupon = require("../../models/couponSchema");
 const salesreportPage = async (req, res) => {
   try {
     const { reportType, startDate, endDate } = req.query;
-    
+
     let dateFilter = {};
     const currentDate = new Date();
 
@@ -21,23 +21,23 @@ const salesreportPage = async (req, res) => {
           endOfDay.setHours(23, 59, 59, 999);
           dateFilter.createdAt = { $gte: startOfDay, $lte: endOfDay };
           break;
-        
+
         case 'weekly':
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           dateFilter.createdAt = { $gte: oneWeekAgo, $lte: currentDate };
           break;
-        
+
         case 'monthly':
           const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
           dateFilter.createdAt = { $gte: startOfMonth, $lte: currentDate };
           break;
-        
+
         case 'yearly':
           const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
           dateFilter.createdAt = { $gte: startOfYear, $lte: currentDate };
           break;
-        
+
         case 'custom':
           if (startDate && endDate) {
             const customStart = new Date(startDate);
@@ -49,8 +49,8 @@ const salesreportPage = async (req, res) => {
       }
     }
 
-    const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
+    const statusFilter = {
+      status: { $in: ["delivered", "confirmed", "processing", "shipped", "return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -67,16 +67,25 @@ const salesreportPage = async (req, res) => {
 
     const totalOfferSavings = orders.reduce((sum, order) => {
       const offerSavings = (order.total || 0) - (order.discountedTotal || order.total);
-      return sum + Math.max(0, offerSavings); 
+      return sum + Math.max(0, offerSavings);
     }, 0);
 
     const totalOriginalRevenue = orders.reduce((sum, order) => {
       return sum + (order.total || 0);
     }, 0);
 
-    const salesData = orders.map(order => {
+    // Pagination Logic
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    const paginatedOrders = orders.slice(startIndex, endIndex);
+
+    const salesData = paginatedOrders.map(order => {
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
-      
+
       return {
         orderId: order.orderId,
         orderDate: order.createdAt,
@@ -90,7 +99,7 @@ const salesreportPage = async (req, res) => {
         couponCode: order.couponDetails?.couponCode || 'None',
         couponAmount: order.couponDetails?.discountAmount || 0,
         finalAmount: order.finalAmount || 0,
-        offerSavings: orderOfferSavings 
+        offerSavings: orderOfferSavings
       };
     });
 
@@ -102,10 +111,14 @@ const salesreportPage = async (req, res) => {
       totalCouponDeduction: totalCouponDeduction.toFixed(2),
       totalOfferSavings: totalOfferSavings.toFixed(2),
       totalOriginalRevenue: totalOriginalRevenue.toFixed(2),
-      currentFilters: { 
-        reportType: reportType || 'daily', 
-        startDate: startDate || '', 
-        endDate: endDate || '' 
+      currentPage: page,
+      totalPages: totalPages,
+      limit: limit,
+      search: '',
+      currentFilters: {
+        reportType: reportType || 'daily',
+        startDate: startDate || '',
+        endDate: endDate || ''
       }
     });
 
@@ -120,10 +133,11 @@ const salesreportPage = async (req, res) => {
       totalCouponDeduction: 0,
       totalOfferSavings: 0,
       totalOriginalRevenue: 0,
-      currentFilters: { 
-        reportType: 'daily', 
-        startDate: '', 
-        endDate: '' 
+      search: '', 
+      currentFilters: {
+        reportType: 'daily',
+        startDate: '',
+        endDate: ''
       }
     });
   }
@@ -132,7 +146,7 @@ const salesreportPage = async (req, res) => {
 const downloadSalesReportPDF = async (req, res) => {
   try {
     const { reportType, startDate, endDate } = req.query;
-    
+
     let dateFilter = {};
     const currentDate = new Date();
 
@@ -145,23 +159,23 @@ const downloadSalesReportPDF = async (req, res) => {
           endOfDay.setHours(23, 59, 59, 999);
           dateFilter.createdAt = { $gte: startOfDay, $lte: endOfDay };
           break;
-        
+
         case 'weekly':
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           dateFilter.createdAt = { $gte: oneWeekAgo, $lte: currentDate };
           break;
-        
+
         case 'monthly':
           const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
           dateFilter.createdAt = { $gte: startOfMonth, $lte: currentDate };
           break;
-        
+
         case 'yearly':
           const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
           dateFilter.createdAt = { $gte: startOfYear, $lte: currentDate };
           break;
-        
+
         case 'custom':
           if (startDate && endDate) {
             const customStart = new Date(startDate);
@@ -173,8 +187,8 @@ const downloadSalesReportPDF = async (req, res) => {
       }
     }
 
-    const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
+    const statusFilter = {
+      status: { $in: ["delivered", "confirmed", "processing", "shipped", "return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -223,7 +237,7 @@ const downloadSalesReportPDF = async (req, res) => {
     doc.fontSize(10).font('Helvetica');
     doc.text(`Total Orders: ${totalOrders}`);
     doc.text(`Total Sales: ₹${totalSalesAmount.toFixed(2)}`);
-    doc.text(`Coupon Deduction: ₹${totalCouponDeduction.toFixed(2)}`); 
+    doc.text(`Coupon Deduction: ₹${totalCouponDeduction.toFixed(2)}`);
     doc.text(`Offer Deduction: ₹${totalOfferSavings.toFixed(2)}`);
     doc.text(`Original Revenue: ₹${totalOriginalRevenue.toFixed(2)}`);
     doc.moveDown();
@@ -231,14 +245,14 @@ const downloadSalesReportPDF = async (req, res) => {
     doc.fontSize(10);
     const tableTop = doc.y;
     const rowHeight = 20;
-    
+
     const columns = [
       { name: 'Order ID', width: 90, x: 50 },
       { name: 'Date', width: 70, x: 140 },
       { name: 'Customer', width: 80, x: 210 },
       { name: 'Amount', width: 70, x: 290 },
       { name: 'Offer Deduction', width: 70, x: 360 },
-      { name: 'Coupon Deduction', width: 70, x: 430 }, 
+      { name: 'Coupon Deduction', width: 70, x: 430 },
       { name: 'Final Amt', width: 70, x: 500 }
     ];
 
@@ -247,8 +261,8 @@ const downloadSalesReportPDF = async (req, res) => {
       doc.text(col.name, col.x, tableTop, { width: col.width, align: 'left' });
     });
 
-    doc.moveTo(50, tableTop + 15).lineTo(570, tableTop + 15).stroke(); 
-    
+    doc.moveTo(50, tableTop + 15).lineTo(570, tableTop + 15).stroke();
+
     let currentY = tableTop + rowHeight;
 
     doc.font('Helvetica');
@@ -259,29 +273,29 @@ const downloadSalesReportPDF = async (req, res) => {
       }
 
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
-      
+
       const rowData = [
         order.orderId,
         order.createdAt.toLocaleDateString(),
         (order.userId?.name || 'Guest').substring(0, 10),
         `₹${order.total}`,
         `₹${orderOfferSavings}`,
-        `₹${order.couponDetails?.discountAmount || 0}`, 
+        `₹${order.couponDetails?.discountAmount || 0}`,
         `₹${order.finalAmount}`
       ];
 
       columns.forEach((col, index) => {
-        doc.text(rowData[index], col.x, currentY, { 
-          width: col.width, 
+        doc.text(rowData[index], col.x, currentY, {
+          width: col.width,
           align: 'left'
         });
       });
 
-      doc.moveTo(50, currentY + 15).lineTo(570, currentY + 15).stroke(); 
+      doc.moveTo(50, currentY + 15).lineTo(570, currentY + 15).stroke();
       currentY += rowHeight;
     });
 
-    doc.end();  
+    doc.end();
 
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -292,7 +306,7 @@ const downloadSalesReportPDF = async (req, res) => {
 const downloadSalesReportExcel = async (req, res) => {
   try {
     const { reportType, startDate, endDate } = req.query;
-    
+
     let dateFilter = {};
     const currentDate = new Date();
 
@@ -305,23 +319,23 @@ const downloadSalesReportExcel = async (req, res) => {
           endOfDay.setHours(23, 59, 59, 999);
           dateFilter.createdAt = { $gte: startOfDay, $lte: endOfDay };
           break;
-        
+
         case 'weekly':
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           dateFilter.createdAt = { $gte: oneWeekAgo, $lte: currentDate };
           break;
-        
+
         case 'monthly':
           const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
           dateFilter.createdAt = { $gte: startOfMonth, $lte: currentDate };
           break;
-        
+
         case 'yearly':
           const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
           dateFilter.createdAt = { $gte: startOfYear, $lte: currentDate };
           break;
-        
+
         case 'custom':
           if (startDate && endDate) {
             const customStart = new Date(startDate);
@@ -333,8 +347,8 @@ const downloadSalesReportExcel = async (req, res) => {
       }
     }
 
-    const statusFilter = { 
-      status: { $in: ["delivered", "confirmed", "processing", "shipped","return rejected"] },
+    const statusFilter = {
+      status: { $in: ["delivered", "confirmed", "processing", "shipped", "return rejected"] },
       paymentStatus: { $in: ["paid", "success"] }
     };
 
@@ -382,7 +396,7 @@ const downloadSalesReportExcel = async (req, res) => {
 
     orders.forEach(order => {
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
-      
+
       worksheet.addRow({
         orderId: order.orderId,
         date: order.createdAt.toLocaleDateString(),
@@ -396,25 +410,25 @@ const downloadSalesReportExcel = async (req, res) => {
     });
 
     const summaryRow = worksheet.rowCount + 2;
-    
+
     worksheet.getCell(`A${summaryRow}`).value = 'Summary';
     worksheet.getCell(`A${summaryRow}`).font = { bold: true, size: 14 };
-    
+
     worksheet.getCell(`A${summaryRow + 1}`).value = 'Total Orders:';
     worksheet.getCell(`B${summaryRow + 1}`).value = totalOrders;
-    
+
     worksheet.getCell(`A${summaryRow + 2}`).value = 'Total Sales:';
     worksheet.getCell(`B${summaryRow + 2}`).value = totalSalesAmount;
     worksheet.getCell(`B${summaryRow + 2}`).numFmt = '₹#,##0.00';
-    
+
     worksheet.getCell(`A${summaryRow + 3}`).value = 'Coupon Deduction:';
     worksheet.getCell(`B${summaryRow + 3}`).value = totalCouponDeduction;
     worksheet.getCell(`B${summaryRow + 3}`).numFmt = '₹#,##0.00';
-    
+
     worksheet.getCell(`A${summaryRow + 4}`).value = 'Offer Deduction:';
     worksheet.getCell(`B${summaryRow + 4}`).value = totalOfferSavings;
     worksheet.getCell(`B${summaryRow + 4}`).numFmt = '₹#,##0.00';
-    
+
     worksheet.getCell(`A${summaryRow + 5}`).value = 'Original Revenue:';
     worksheet.getCell(`B${summaryRow + 5}`).value = totalOriginalRevenue;
     worksheet.getCell(`B${summaryRow + 5}`).numFmt = '₹#,##0.00';
@@ -446,5 +460,5 @@ const downloadSalesReportExcel = async (req, res) => {
 
 
 module.exports = {
-  salesreportPage,downloadSalesReportPDF,downloadSalesReportExcel,
+  salesreportPage, downloadSalesReportPDF, downloadSalesReportExcel,
 };
