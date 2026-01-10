@@ -361,8 +361,11 @@
                             <th>Customer</th>
                             <th>Payment Method</th>
                             <th>Total Amount</th>
+                            <th>Shipping</th>
                             <th>Offer Deduction</th>
                             <th>Coupon Deduction</th>
+                            <th>Cancelled Ded.</th>
+                            <th>Return Ded.</th>
                             <th>Final Amount</th>
                           </tr>
                         </thead>
@@ -384,9 +387,15 @@
                                 </td>
                                 <td>₹<%= order.totalAmount %>
                                 </td>
+                                <td>₹<%= order.shipping %>
+                                </td>
                                 <td>₹<%= order.offerSavings %>
                                 </td>
                                 <td>₹<%= order.couponAmount %>
+                                </td>
+                                <td>₹<%= order.cancelledDeduction %>
+                                </td>
+                                <td>₹<%= order.returnDeduction %>
                                 </td>
                                 <td>₹<%= order.finalAmount %>
                                 </td>

@@ -86,6 +86,14 @@ const salesreportPage = async (req, res) => {
     const salesData = paginatedOrders.map(order => {
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
 
+      const cancelledDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'cancelled' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
+
+      const returnDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'returned' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
+
       return {
         orderId: order.orderId,
         orderDate: order.createdAt,
@@ -99,7 +107,10 @@ const salesreportPage = async (req, res) => {
         couponCode: order.couponDetails?.couponCode || 'None',
         couponAmount: order.couponDetails?.discountAmount || 0,
         finalAmount: order.finalAmount || 0,
-        offerSavings: orderOfferSavings
+        offerSavings: orderOfferSavings,
+        shipping: order.shipping || 0,
+        cancelledDeduction: cancelledDeduction,
+        returnDeduction: returnDeduction
       };
     });
 
@@ -133,7 +144,7 @@ const salesreportPage = async (req, res) => {
       totalCouponDeduction: 0,
       totalOfferSavings: 0,
       totalOriginalRevenue: 0,
-      search: '', 
+      search: '',
       currentFilters: {
         reportType: 'daily',
         startDate: '',
@@ -247,13 +258,16 @@ const downloadSalesReportPDF = async (req, res) => {
     const rowHeight = 20;
 
     const columns = [
-      { name: 'Order ID', width: 90, x: 50 },
-      { name: 'Date', width: 70, x: 140 },
-      { name: 'Customer', width: 80, x: 210 },
-      { name: 'Amount', width: 70, x: 290 },
-      { name: 'Offer Deduction', width: 70, x: 360 },
-      { name: 'Coupon Deduction', width: 70, x: 430 },
-      { name: 'Final Amt', width: 70, x: 500 }
+      { name: 'Order ID', width: 60, x: 20 },
+      { name: 'Date', width: 50, x: 80 },
+      { name: 'Customer', width: 60, x: 130 },
+      { name: 'Amount', width: 50, x: 190 },
+      { name: 'Shipping', width: 50, x: 240 },
+      { name: 'Offer Ded.', width: 50, x: 290 },
+      { name: 'Coupon Ded.', width: 50, x: 340 },
+      { name: 'Cancel Ded.', width: 50, x: 390 },
+      { name: 'Return Ded.', width: 50, x: 440 },
+      { name: 'Final Amt', width: 50, x: 490 }
     ];
 
     doc.font('Helvetica-Bold');
@@ -274,13 +288,24 @@ const downloadSalesReportPDF = async (req, res) => {
 
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
 
+      const cancelledDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'cancelled' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
+
+      const returnDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'returned' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
+
       const rowData = [
         order.orderId,
         order.createdAt.toLocaleDateString(),
         (order.userId?.name || 'Guest').substring(0, 10),
         `₹${order.total}`,
+        `₹${order.shipping || 0}`,
         `₹${orderOfferSavings}`,
         `₹${order.couponDetails?.discountAmount || 0}`,
+        `₹${cancelledDeduction}`,
+        `₹${returnDeduction}`,
         `₹${order.finalAmount}`
       ];
 
@@ -382,8 +407,11 @@ const downloadSalesReportExcel = async (req, res) => {
       { header: 'Customer', key: 'customer', width: 20 },
       { header: 'Payment Method', key: 'payment', width: 15 },
       { header: 'Total Amount', key: 'total', width: 15 },
+      { header: 'Shipping', key: 'shipping', width: 12 },
       { header: 'Offer Deduction', key: 'offerDeduction', width: 15 },
       { header: 'Coupon Deduction', key: 'couponDeduction', width: 15 },
+      { header: 'Cancelled Deduction', key: 'cancelledDeduction', width: 18 },
+      { header: 'Return Deduction', key: 'returnDeduction', width: 18 },
       { header: 'Final Amount', key: 'final', width: 15 }
     ];
 
@@ -396,6 +424,13 @@ const downloadSalesReportExcel = async (req, res) => {
 
     orders.forEach(order => {
       const orderOfferSavings = Math.max(0, (order.total || 0) - (order.discountedTotal || order.total));
+      const cancelledDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'cancelled' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
+
+      const returnDeduction = order.orderItems.reduce((acc, item) => {
+        return item.itemStatus === 'returned' ? acc + (item.price * item.quantity) : acc;
+      }, 0);
 
       worksheet.addRow({
         orderId: order.orderId,
@@ -403,8 +438,11 @@ const downloadSalesReportExcel = async (req, res) => {
         customer: order.userId?.name || 'Guest',
         payment: order.paymentMethod,
         total: order.total,
+        shipping: order.shipping || 0,
         offerDeduction: orderOfferSavings,
         couponDeduction: order.couponDetails?.discountAmount || 0,
+        cancelledDeduction: cancelledDeduction,
+        returnDeduction: returnDeduction,
         final: order.finalAmount
       });
     });
