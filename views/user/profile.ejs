@@ -1888,21 +1888,29 @@
                 const container = document.getElementById("walletHistoryPagination");
                 if (!container) return;
 
-                container.innerHTML = "";
+                let html = '<div class="pagination-glass">';
+
+                if (currentPage > 1) {
+                    html += `<a href="javascript:void(0)" onclick="loadWalletHistory(${currentPage - 1})">Prev</a>`;
+                }
 
                 for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement("button");
-                    btn.textContent = i;
-                    btn.className = `btn btn-sm mx-1 ${i === currentPage ? 'btn-dark' : 'btn-outline-dark'}`;
-                    btn.onclick = () => loadWalletHistory(i);
-                    container.appendChild(btn);
-                }
+                    const activeClass = i === currentPage ? 'active' : '';
+                    html += `<a href="javascript:void(0)" class="${activeClass}" onclick="loadWalletHistory(${i})">${i}</a>`;
                 }
 
-                document.addEventListener("DOMContentLoaded", () => {
+                if (currentPage < totalPages) {
+                    html += `<a href="javascript:void(0)" onclick="loadWalletHistory(${currentPage + 1})">Next</a>`;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
                 loadWalletBalance();
                 loadWalletHistory();
-                });
+            });
 
         </script>
 
