@@ -224,7 +224,7 @@ const downloadSalesReportPDF = async (req, res) => {
     }, 0);
 
     const PDFDocument = require('pdfkit');
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=sales-report-${Date.now()}.pdf`);
@@ -257,17 +257,19 @@ const downloadSalesReportPDF = async (req, res) => {
     const tableTop = doc.y;
     const rowHeight = 20;
 
+    // A4 Landscape width is ~842pts. Margins 50. Usable width ~742.
+    // Starting closer to the left edge (x=40) to maximize space.
     const columns = [
-      { name: 'Order ID', width: 60, x: 20 },
-      { name: 'Date', width: 50, x: 80 },
-      { name: 'Customer', width: 60, x: 130 },
-      { name: 'Amount', width: 50, x: 190 },
-      { name: 'Shipping', width: 50, x: 240 },
-      { name: 'Offer Ded.', width: 50, x: 290 },
-      { name: 'Coupon Ded.', width: 50, x: 340 },
-      { name: 'Cancel Ded.', width: 50, x: 390 },
-      { name: 'Return Ded.', width: 50, x: 440 },
-      { name: 'Final Amt', width: 50, x: 490 }
+      { name: 'Order ID', width: 85, x: 40 },
+      { name: 'Date', width: 70, x: 130 },
+      { name: 'Customer', width: 80, x: 205 },
+      { name: 'Amount', width: 60, x: 290 },
+      { name: 'Shipping', width: 55, x: 355 },
+      { name: 'Offer Ded.', width: 70, x: 415 },
+      { name: 'Coupon Ded.', width: 70, x: 490 },
+      { name: 'Cancel Ded.', width: 70, x: 565 },
+      { name: 'Return Ded.', width: 70, x: 640 },
+      { name: 'Final Amt', width: 70, x: 715 }
     ];
 
     doc.font('Helvetica-Bold');
@@ -275,14 +277,15 @@ const downloadSalesReportPDF = async (req, res) => {
       doc.text(col.name, col.x, tableTop, { width: col.width, align: 'left' });
     });
 
-    doc.moveTo(50, tableTop + 15).lineTo(570, tableTop + 15).stroke();
+    // Extend line to cover the wider table (40 to 785)
+    doc.moveTo(40, tableTop + 15).lineTo(785, tableTop + 15).stroke();
 
     let currentY = tableTop + rowHeight;
 
     doc.font('Helvetica');
     orders.forEach((order) => {
-      if (currentY > 700) {
-        doc.addPage();
+      if (currentY > 500) { // Reduced page height check for landscape
+        doc.addPage({ layout: 'landscape', size: 'A4', margin: 50 });
         currentY = 50;
       }
 
@@ -316,7 +319,7 @@ const downloadSalesReportPDF = async (req, res) => {
         });
       });
 
-      doc.moveTo(50, currentY + 15).lineTo(570, currentY + 15).stroke();
+      doc.moveTo(40, currentY + 15).lineTo(785, currentY + 15).stroke();
       currentY += rowHeight;
     });
 
