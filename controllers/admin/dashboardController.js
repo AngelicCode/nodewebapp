@@ -15,14 +15,14 @@ const { getSalesData,
 const getDashboard = async (req, res) => {
   try {
     const filter = req.query.filter || 'monthly';
-        
+
     const salesData = await getSalesData(filter);
     const customerData = await getCustomerGrowthData(filter);
     const topProducts = await getTopSellingProducts();
     const topCategories = await getTopSellingCategories();
     const topBrands = await getTopSellingBrands();
     const categoryPerformance = await getCategoryPerformanceData();
-    const stats = await getDashboardStats();
+    const stats = await getDashboardStats(filter);
 
     res.render("dashboard", {
       salesData,
@@ -44,14 +44,14 @@ const getDashboard = async (req, res) => {
 const getDashboardData = async (req, res) => {
   try {
     const filter = req.query.filter || 'monthly';
-    
+
     const salesData = await getSalesData(filter);
     const customerData = await getCustomerGrowthData(filter);
     const topProducts = await getTopSellingProducts();
     const topCategories = await getTopSellingCategories();
     const topBrands = await getTopSellingBrands();
     const categoryPerformance = await getCategoryPerformanceData();
-    const stats = await getDashboardStats();
+    const stats = await getDashboardStats(filter);
 
     res.json({
       success: true,
