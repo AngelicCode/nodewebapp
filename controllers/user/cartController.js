@@ -6,24 +6,24 @@ const Wishlist = require("../../models/wishlistSchema");
 const { getCartCount } = require('../../helpers/cartHelper');
 const { getLargestOffer } = require('../../helpers/offerHelper');
 
-const testCart = async(req,res)=>{
+const testCart = async (req, res) => {
   try {
-    res.json({ 
-        status: true, 
-        message: "All cart items are valid" 
+    res.json({
+      status: true,
+      message: "All cart items are valid"
     });
 
   } catch (error) {
     console.error(error);
-    
+
   }
 }
 
-const getCartPage = async(req,res)=>{
+const getCartPage = async (req, res) => {
   try {
-    
+
     const id = req.session.user._id;
-    if(!id){
+    if (!id) {
       return res.redirect("/login");
     }
 
@@ -31,47 +31,69 @@ const getCartPage = async(req,res)=>{
 
     const page = parseInt(req.query.page) || 1;
     const limit = 3;
-    const skip = (page-1) *limit;
+    const skip = (page - 1) * limit;
 
-    const cart = await Cart.findOne({userId:id})
-    .populate({
-      path:"items.productId",
-      populate:[{
-        path:"category"
-      },
-    {
-      path:"brand"
-    }]
-    }).lean();
+    const cart = await Cart.findOne({ userId: id })
+      .populate({
+        path: "items.productId",
+        populate: [{
+          path: "category"
+        },
+        {
+          path: "brand"
+        }]
+      });
 
-    if(!cart || !cart.items || cart.items.length == 0){
-      return res.render("cart",{
-        user:req.session.user,
-        data:[],
-        quantity:0,
-        grandTotal:0,
+    if (!cart || !cart.items || cart.items.length == 0) {
+      return res.render("cart", {
+        user: req.session.user,
+        data: [],
+        quantity: 0,
+        grandTotal: 0,
         discountedTotal: 0,
         totalSavings: 0,
         currentPage: page,
         totalPages: 1,
         query: {},
         cartCount
-
       })
     }
 
-    const filteredItems = cart.items.filter(item=>{
-      const product= item.productId;
+    // Sync prices with current product prices/offers
+    let priceUpdated = false;
+    for (const item of cart.items) {
+      const product = item.productId;
+      if (product) {
+        const currentOffer = await getLargestOffer(product._id);
+        const finalPrice = currentOffer.percentage > 0 ? currentOffer.finalPrice : product.salePrice;
+
+        if (item.price !== finalPrice || item.originalPrice !== product.salePrice) {
+          item.price = finalPrice;
+          item.originalPrice = product.salePrice;
+          item.totalPrice = finalPrice * item.quantity;
+          priceUpdated = true;
+        }
+      }
+    }
+
+    if (priceUpdated) {
+      await cart.save();
+    }
+
+    const filteredItems = cart.items.filter(item => {
+      const product = item.productId;
       return product && !product.isBlocked &&
-             product.category && product.category.isListed !== false &&
-             product.brand && !product.brand.isBlocked;
+        product.category && product.category.isListed !== false &&
+        product.brand && !product.brand.isBlocked;
     });
 
     const itemsWithOffers = await Promise.all(
-      filteredItems.map(async item=>({
-        ...item,
-        offer: await getLargestOffer(item.productId._id)
-      }))
+      filteredItems.map(async item => {
+        const itemObj = item.toObject();
+        itemObj.productId = item.productId;
+        itemObj.offer = await getLargestOffer(item.productId._id);
+        return itemObj;
+      })
     );
 
     const validItems = itemsWithOffers.filter(item => item.productId.quantity > 0);
@@ -84,15 +106,18 @@ const getCartPage = async(req,res)=>{
       .slice(skip, skip + limit);
 
     const data = paginatedItems.map(item => {
-      const originalPrice = item.originalPrice; 
-      const finalPrice = item.price;           
+      const product = item.productId;
+      const productObj = product.toObject ? product.toObject() : product;
+
+      const originalPrice = item.originalPrice;
+      const finalPrice = item.price;
 
       const itemOriginalTotal = originalPrice * item.quantity;
       const itemFinalTotal = finalPrice * item.quantity;
       const savings = itemOriginalTotal - itemFinalTotal;
 
       return {
-        ...item.productId,
+        ...productObj,
         cartQuantity: item.quantity,
         cartTotal: itemFinalTotal,
         originalTotal: itemOriginalTotal,
@@ -101,7 +126,7 @@ const getCartPage = async(req,res)=>{
         savings: savings,
         offer: item.offer,
         itemId: item._id,
-        inStock: item.productId.quantity > 0,
+        inStock: product.quantity > 0,
       };
     });
 
@@ -119,7 +144,7 @@ const getCartPage = async(req,res)=>{
 
     req.session.grandTotal = discountedTotal;
 
-     res.render("cart", {
+    res.render("cart", {
       user: req.session.user,
       data,
       quantity,
@@ -131,7 +156,7 @@ const getCartPage = async(req,res)=>{
       query: req.query || {},
       cartCount
     });
-  
+
   } catch (error) {
     console.error(error);
     res.redirect("/pageNotFound");
@@ -202,7 +227,7 @@ const addToCart = async (req, res) => {
           originalPrice: product.salePrice,
           totalPrice: finalPrice,
           addedAt: new Date()
-          
+
         }]
       });
     } else {
@@ -216,9 +241,9 @@ const addToCart = async (req, res) => {
           originalPrice: product.salePrice,
           totalPrice: finalPrice,
           addedAt: new Date()
-          
+
         });
-       } else {
+      } else {
         const existingItem = cart.items[existingItemIndex];
         existingItem.price = finalPrice;
         existingItem.originalPrice = product.salePrice;
@@ -233,9 +258,9 @@ const addToCart = async (req, res) => {
       { $pull: { products: { productId: productId } } }
     );
 
-    res.json({ 
+    res.json({
       status: true,
-      cartCount:cartCount,
+      cartCount: cartCount,
     });
 
   } catch (error) {
@@ -265,15 +290,15 @@ const changeQuantity = async (req, res) => {
     if (!product) return res.status(404).json({ status: false, message: "Product not found" });
 
     if (
-      product.isBlocked || 
-      !product.category || 
-      product.category.isListed === false || 
-      !product.brand || 
+      product.isBlocked ||
+      !product.category ||
+      product.category.isListed === false ||
+      !product.brand ||
       product.brand.isBlocked
     ) {
-      return res.status(400).json({ 
-        status: false, 
-        message: "This product is no longer available" 
+      return res.status(400).json({
+        status: false,
+        message: "This product is no longer available"
       });
     }
 
@@ -333,7 +358,7 @@ const changeQuantity = async (req, res) => {
         product.brand && !product.brand.isBlocked &&
         product.quantity > 0
       ) {
-        return sum + item.totalPrice; 
+        return sum + item.totalPrice;
       }
       return sum;
     }, 0);
@@ -359,29 +384,29 @@ const changeQuantity = async (req, res) => {
   }
 };
 
-const deleteProduct = async(req,res)=>{
+const deleteProduct = async (req, res) => {
   try {
     const productId = req.query.id;
     const userId = req.session.user._id;
-    if(!userId){
+    if (!userId) {
       res.redirect("/login");
     }
 
-    const cart = await Cart.findOne({userId});
-    const itemIndex = cart.items.findIndex((item)=>item.productId.toString() === productId);
+    const cart = await Cart.findOne({ userId });
+    const itemIndex = cart.items.findIndex((item) => item.productId.toString() === productId);
 
-    cart.items.splice(itemIndex,1);
+    cart.items.splice(itemIndex, 1);
     await cart.save();
     const cartCount = await getCartCount(userId);
 
-    if (req.headers['content-type'] === 'application/json' || 
-        req.headers.accept?.includes('application/json')) {
-      return res.json({ 
-        success: true, 
+    if (req.headers['content-type'] === 'application/json' ||
+      req.headers.accept?.includes('application/json')) {
+      return res.json({
+        success: true,
         cartCount: cartCount,
       });
     } else {
-    return res.redirect("/cart");
+      return res.redirect("/cart");
     }
 
   } catch (error) {
@@ -389,7 +414,7 @@ const deleteProduct = async(req,res)=>{
     if (req.headers['content-type'] === 'application/json') {
       return res.status(500).json({ success: false, error: "Server error" });
     } else {
-    return res.redirect('/pageNotFound');  
+      return res.redirect('/pageNotFound');
     }
   }
 };
@@ -398,31 +423,31 @@ const checkProductAvailability = async (productId, requestedQuantity) => {
   const product = await Product.findById(productId)
     .populate('category')
     .populate('brand');
-  
+
   if (!product) {
     return { available: false, message: "Product not found" };
   }
-  
+
   if (product.isBlocked) {
     return { available: false, message: "Product is unavailable" };
   }
-  
+
   if (!product.brand || product.brand.isBlocked) {
     return { available: false, message: "Brand is unavailable" };
   }
-  
+
   if (!product.category || product.category.isListed === false) {
     return { available: false, message: "Category is unavailable" };
   }
-  
+
   if (product.quantity < requestedQuantity) {
-    return { 
-      available: false, 
+    return {
+      available: false,
       message: `Only ${product.quantity} units available`,
       availableQuantity: product.quantity
     };
   }
-  
+
   return { available: true, product };
 };
 
