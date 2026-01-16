@@ -10,7 +10,7 @@ const userAuth = async (req, res, next) => {
     const user = await User.findById(req.session.user);
 
     if (!user || user.isBlocked) {
-      req.session.destroy(() => {});
+      req.session.destroy(() => { });
       return handleBlocked(req, res);
     }
 
@@ -29,11 +29,11 @@ function handleBlocked(req, res) {
 
   if (isAjax) {
     res.status(401).json({ blocked: true });
-    return; 
+    return;
   }
 
   res.redirect("/login");
-  return; 
+  return;
 }
 
 
@@ -46,7 +46,17 @@ const adminAuth = (req, res, next) => {
 };
 
 
+
+const checkSession = (req, res, next) => {
+  if (req.session.user) {
+    return res.redirect("/")
+  }
+  next();
+}
+
+
 module.exports = {
   userAuth,
   adminAuth,
+  checkSession
 };
