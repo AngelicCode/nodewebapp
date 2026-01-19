@@ -131,12 +131,40 @@
                 box-shadow: none !important;
             }
 
-            .search-section .search-form .search-button:focus,
             .search-section .search-form .search-button:active {
                 background: #000 !important;
                 color: white !important;
                 outline: none !important;
                 box-shadow: none !important;
+            }
+
+            .search-form {
+                position: relative;
+            }
+
+            .clear-search-btn {
+                position: absolute;
+                right: 120px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 24px;
+                color: #999;
+                text-decoration: none;
+                cursor: pointer;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+                z-index: 10;
+            }
+
+            .clear-search-btn:hover {
+                color: #333;
+                background-color: #f0f0f0;
+                text-decoration: none;
             }
 
             .product-list-container {
@@ -651,9 +679,18 @@
             <section class="search-section">
                 <form action="/shop" method="GET" class="search-form">
                     <input type="text" name="search" placeholder="Search for water bottles..."
-                        style="margin-left: 30px; border-radius: 30px;" value="<%= query.search || '' %>"
-                        class="search-input" />
-                    <button type="submit" class="search-button">Search</button>
+                        style="margin-left: 30px; border-radius: 30px; padding-right: 40px;"
+                        value="<%= query.search || '' %>" class="search-input" />
+                    <% if (query.search) { %>
+                        <a href="/shop?<%= new URLSearchParams({
+                            ...(query.category && query.category !== 'undefined' && {category: query.category}),
+                            ...(query.brand && query.brand !== 'undefined' && {brand: query.brand}),
+                            ...(query.minPrice && query.minPrice !== 'undefined' && {minPrice: query.minPrice}),
+                            ...(query.maxPrice && query.maxPrice !== 'undefined' && {maxPrice: query.maxPrice}),
+                            ...(query.sort && {sort: query.sort})
+                            }).toString() %>" class="clear-search-btn">&times;</a>
+                        <% } %>
+                            <button type="submit" class="search-button">Search</button>
                 </form>
             </section>
 
@@ -874,12 +911,12 @@
                                             </span>
                                             <% } else { %>
                                                 Price: <strong>₹<%= products[i].salePrice.toLocaleString('en-IN') %>
-                                                        </strong>
+                                                </strong>
                                                 <% if (products[i].regularPrice && products[i].regularPrice>
                                                     products[i].salePrice) { %>
                                                     <span class="text-muted" style="opacity: 0.5;">
                                                         <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %>
-                                                                </strike>
+                                                        </strike>
                                                     </span>
                                                     <% } %>
                                                         <% } %>
