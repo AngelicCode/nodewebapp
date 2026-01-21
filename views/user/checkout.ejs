@@ -730,7 +730,7 @@
                         <% } %>
                         <div class="summary-row">
                             <span>Shipping:</span>
-                            <span id="shipping">₹50</span>
+                            <span id="shipping">₹<%= shipping %></span>
                         </div>
                         <div class="summary-row">
                             <span>Tax:</span>
@@ -747,7 +747,7 @@
                         <div class="summary-row total">
                             <span>Total:</span>
                             <span id="total">
-                                ₹<%= ((discountedSubtotal || cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0)) + 50).toFixed(2) %>
+                                ₹<%= ((discountedSubtotal || cartItems.reduce((total, item) => total + (item.productId.salePrice * item.quantity), 0)) + shipping).toFixed(2) %>
                             </span>
                         </div>
                         </div>
