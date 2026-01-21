@@ -200,7 +200,7 @@ const downloadInvoice = async (req, res) => {
          .fillColor('#2c3e50');
 
       const subtotal = order.total;
-      const shipping = order.status !== 'cancelled' ? 50 : 0;
+      const shipping = order.status !== 'cancelled' ? order.shipping : 0;
       const offerSavings = order.discountedTotal && order.discountedTotal < order.total ? order.total - order.discountedTotal : 0;
       const couponDiscount = order.couponDetails?.discountAmount || 0;
 
